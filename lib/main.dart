@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pwa_install/pwa_install.dart';
 
 void main() {
+  PWAInstall().setup(installCallback: () {
+    debugPrint('APP INSTALLED!');
+  });
+  PWAInstall().promptInstall_();
   runApp(MyApp());
 }
 
@@ -38,6 +43,7 @@ class Document {
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
+
 }
 
 class _MyAppState extends State<MyApp> {
