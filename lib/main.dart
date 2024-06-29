@@ -85,6 +85,7 @@ class _MyAppState extends State<MyApp> {
         title: 'PADELTID',
         home: Scaffold(
           appBar: AppBar(
+            scrolledUnderElevation: 0.0,
             title: Row(
               children: [
                 Baseline(
@@ -305,25 +306,37 @@ class _MyAppState extends State<MyApp> {
                           decoration: BoxDecoration(
                             color: Colors.lime, // Set your desired background color
                           ),
-                          child: Container(
-                            decoration:  BoxDecoration(
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(16.0),
-                                topRight: Radius.circular(16.0),
-                              ),                              color: Colors.white, // Set your desired background color
-                            ),
-                            child: ListView.separated(
-                              itemCount: dateWidgets.length,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(0,8.0,0,0),
+                            child: Container(
+                              decoration:  BoxDecoration(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(16.0),
+                                  topRight: Radius.circular(16.0),
+                                ),
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.25), // Shadow color with opacity
+                                    spreadRadius: 1, // Spread radius
+                                    blurRadius: 4, // Blur radius
+                                    offset: Offset(0, -1), // Offset (x, y), negative y to have the shadow on top
+                                  ),
+                                ],// Set your desired background color
+                              ),
+                              child: ListView.separated(
+                                itemCount: dateWidgets.length,
 
-                              separatorBuilder: (BuildContext context, int index) {
-                                return Divider(
-                                  color: Colors.grey, // Customize the color of the divider
-                                  thickness: 1.0, // Set the thickness of the divider
-                                );
-                              },
-                              itemBuilder: (BuildContext context, int index) {
-                                return dateWidgets[index];
-                              },
+                                separatorBuilder: (BuildContext context, int index) {
+                                  return Divider(
+                                    color: Colors.grey, // Customize the color of the divider
+                                    thickness: 1.0, // Set the thickness of the divider
+                                  );
+                                },
+                                itemBuilder: (BuildContext context, int index) {
+                                  return dateWidgets[index];
+                                },
+                              ),
                             ),
                           ),
                         );
