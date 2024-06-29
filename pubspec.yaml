@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  animated_visibility: ^0.0.4
   http: ^0.13.3
   shared_preferences: ^2.0.10
 
