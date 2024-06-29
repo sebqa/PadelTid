@@ -86,11 +86,12 @@ class _MyAppState extends State<MyApp> {
               fontSize: 24, // Adjust the font size
               fontWeight: FontWeight.bold, // Make it bold
               fontFamily: 'Roboto', // Choose a nice font family
+              color: Colors.white
             ),
           ),
           centerTitle: true, // Center the title
           elevation: 0, // Remove the shadow
-          backgroundColor: Colors.transparent, // Make the background transparent
+          backgroundColor: Colors.purple, // Make the background transparent
         ),
         body: Column(
           children: [
