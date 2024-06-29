@@ -139,6 +139,7 @@ class _MyAppState extends State<MyApp> {
                     final List<Widget> dateWidgets = [];
                     groupedDocuments.forEach((date, documents) {
                       final parsedDate = DateTime.parse(date);
+
                       documents.sort((a, b) => a.time.compareTo(b.time));
                       final weekdayName = [
                         'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
