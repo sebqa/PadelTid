@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:animated_visibility/animated_visibility.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(MaterialApp(home:MyApp()));
 }
 
 class Document {
@@ -77,11 +77,79 @@ class _MyAppState extends State<MyApp> {
       print('Failed to fetch documents: $e');
     }
   }
+  void showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Adjust Thresholds'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Column(
+                  children: [
+                    Text('Wind Speed: ${windSpeedThreshold.round()} m/s'),
+                    Slider(
+                      value: windSpeedThreshold,
+                      min: 0,
+                      max: 50,
+                      divisions: 50,
+                      onChanged: (double value) {
+                        setState(() {
+                          windSpeedThreshold = value;
+                        });
+                        updateThresholds();
+                      },
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text('Precipitation Probability: ${precipitationProbabilityThreshold.round()}%'),
+                    Slider(
+                      value: precipitationProbabilityThreshold,
+                      min: 0,
+                      max: 100,
+                      divisions: 100,
+                      onChanged: (double value) {
+                        setState(() {
+                          precipitationProbabilityThreshold = value;
+                        });
+                        updateThresholds();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
 
     return MaterialApp(
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+
+        supportedLocales: [
+          Locale('en', 'US'),
+        ],
         title: 'PADELTID',
         home: Scaffold(
           appBar: AppBar(
@@ -125,62 +193,12 @@ class _MyAppState extends State<MyApp> {
                 color: Colors.white,
                 icon: const Icon(Icons.tune),
                 tooltip: 'Show filter',
-                onPressed: () {
-                  // handle the press
-                  setState(() {
-                    showSliders = !showSliders; // Toggle visibility
-                  });
-                },
+                onPressed: showSettingsDialog
               ),
             ],// Make the background transparent
           ),
           body: Column(
               children: [
-
-                AnimatedVisibility(
-                  visible: showSliders,
-                  child: Column(
-                    children: [
-
-                      Column(
-                        children: [
-                          Text('Wind Speed: ${windSpeedThreshold.round()} m/s'),
-                          Slider(
-                            value: windSpeedThreshold,
-                            min: 0,
-                            max: 50,
-                            divisions: 50,
-                            onChanged: (double value) {
-                              setState(() {
-                                windSpeedThreshold = value;
-                              });
-                              updateThresholds();
-                            },
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          Text(
-                              'Precipitation Probability: ${precipitationProbabilityThreshold
-                                  .round()}%'),
-                          Slider(
-                            value: precipitationProbabilityThreshold,
-                            min: 0,
-                            max: 100,
-                            divisions: 100,
-                            onChanged: (double value) {
-                              setState(() {
-                                precipitationProbabilityThreshold = value;
-                              });
-                              updateThresholds();
-                            },
-                          ),
-                        ],
-                      ),
-                    ],),
-                ),
-
 
                 Expanded(
 
