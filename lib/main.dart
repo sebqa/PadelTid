@@ -90,6 +90,7 @@ class _MyAppState extends State<MyApp> {
                   fontSize: 28, // Adjust the font size
                   fontWeight: FontWeight.normal, // Make it bold
                   fontFamily: 'Roboto', // Choose a nice font family
+                color: Colors.white
               ),
             ),
             centerTitle: true, // Center the title
@@ -97,6 +98,7 @@ class _MyAppState extends State<MyApp> {
             backgroundColor: Colors.lime,
             actions: [
               IconButton(
+                color: Colors.white,
                 icon: const Icon(Icons.tune),
                 tooltip: 'Show filter',
                 onPressed: () {
