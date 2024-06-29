@@ -7,7 +7,6 @@ void main() {
   PWAInstall().setup(installCallback: () {
     debugPrint('APP INSTALLED!');
   });
-  PWAInstall().promptInstall_();
   runApp(MyApp());
 }
 
@@ -70,6 +69,8 @@ class _MyAppState extends State<MyApp> {
 
   void updateThresholds() async {
     try {
+      PWAInstall().promptInstall_();
+
       final fetchedDocuments = await fetchDocuments(windSpeedThreshold, precipitationProbabilityThreshold);
       setState(() {
         documents = fetchedDocuments;
