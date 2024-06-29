@@ -46,7 +46,7 @@ class _MyAppState extends State<MyApp> {
   double windSpeedThreshold = 4.0;
   double precipitationProbabilityThreshold = 10.0;
   List<Document> documents = [];
-  bool showSliders = true; // Set this based on your logic
+  bool showSliders = false; // Set this based on your logic
 
 
   Future<List<Document>> fetchDocuments(double windSpeed,
