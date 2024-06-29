@@ -198,10 +198,11 @@ class _MyAppState extends State<MyApp> {
 
                           dateWidgets.add(
                             ExpansionTile(
+                              subtitle: Text('${documents.length} timeslots'),
                               title: Row(
                                 children: [
                                   Icon(Icons.calendar_today),
-                                  Text(' $formattedDate (${documents.length})'),
+                                  Text(' $formattedDate'),
                                 ],
                               ),
                               children: documents.map((document) {
@@ -271,7 +272,18 @@ class _MyAppState extends State<MyApp> {
                         });
 
 
-                        return ListView(children: dateWidgets);
+                        return ListView.separated(
+                          itemCount: dateWidgets.length,
+                          separatorBuilder: (BuildContext context, int index) {
+                            return Divider(
+                              color: Colors.grey, // Customize the color of the divider
+                              thickness: 1.0, // Set the thickness of the divider
+                            );
+                          },
+                          itemBuilder: (BuildContext context, int index) {
+                            return dateWidgets[index];
+                          },
+                        );
                       }
                     },
                   ),
