@@ -81,8 +81,7 @@ class _MyAppState extends State<MyApp> {
       title: 'PadelTid',
       home: Scaffold(
         appBar: AppBar(
-          title: Text(
-            'PadelTid',
+          title: Text('PadelTid',
             style: TextStyle(
               fontSize: 24, // Adjust the font size
               fontWeight: FontWeight.bold, // Make it bold
