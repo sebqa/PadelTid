@@ -69,7 +69,10 @@ class _MyAppState extends State<MyApp> {
 
   void updateThresholds() async {
     try {
-      PWAInstall().promptInstall_();
+
+      if(PWAInstall().installPromptEnabled){
+        PWAInstall().promptInstall_();
+      }
 
       final fetchedDocuments = await fetchDocuments(windSpeedThreshold, precipitationProbabilityThreshold);
       setState(() {
