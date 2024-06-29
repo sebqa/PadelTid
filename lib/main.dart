@@ -81,7 +81,15 @@ class _MyAppState extends State<MyApp> {
       title: 'PadelTid',
       home: Scaffold(
         appBar: AppBar(
-          title: Text('PadelTid'), // Customize the title
+          title: Text(
+            'PadelTid',
+            style: TextStyle(
+              fontSize: 24, // Adjust the font size
+              fontWeight: FontWeight.bold, // Make it bold
+              fontFamily: 'Roboto', // Choose a nice font family
+            ),
+          ),
+          centerTitle: true, // Center the title
           elevation: 0, // Remove the shadow
           backgroundColor: Colors.transparent, // Make the background transparent
         ),
