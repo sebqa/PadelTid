@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:pwa_install/pwa_install.dart';
 
 void main() {
-  PWAInstall().setup(installCallback: () {
-    debugPrint('APP INSTALLED!');
-  });
   runApp(MyApp());
 }
 
@@ -69,11 +65,6 @@ class _MyAppState extends State<MyApp> {
 
   void updateThresholds() async {
     try {
-
-      if(PWAInstall().installPromptEnabled){
-        PWAInstall().promptInstall_();
-      }
-
       final fetchedDocuments = await fetchDocuments(windSpeedThreshold, precipitationProbabilityThreshold);
       setState(() {
         documents = fetchedDocuments;
