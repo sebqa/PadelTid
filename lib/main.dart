@@ -82,20 +82,43 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
 
     return MaterialApp(
-        title: 'PadelTid',
+        title: 'PADELTID',
         home: Scaffold(
           appBar: AppBar(
-            title: Text('PADELTID',
-              style: TextStyle(
-                  fontSize: 28, // Adjust the font size
-                  fontWeight: FontWeight.normal, // Make it bold
-                  fontFamily: 'Roboto', // Choose a nice font family
-                color: Colors.white
-              ),
+            title: Row(
+              children: [
+                Baseline(
+                  baselineType: TextBaseline.alphabetic,
+                  baseline: 28.0, // Adjust this value as needed
+                  child: Text(
+                    'PADEL',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.normal,
+                      fontFamily: 'Roboto',
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Baseline(
+                  baselineType: TextBaseline.alphabetic,
+                  baseline: 28.0, // Same baseline value
+                  child: Text(
+                    'TID',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.normal,
+                      fontFamily: 'Roboto',
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
             centerTitle: true, // Center the title
-            elevation: 16,
+            elevation: 0,
             backgroundColor: Colors.lime,
+
             actions: [
               IconButton(
                 color: Colors.white,
@@ -159,6 +182,7 @@ class _MyAppState extends State<MyApp> {
 
 
                 Expanded(
+
                   child: FutureBuilder<List<Document>>(
                     future: fetchDocuments(
                         windSpeedThreshold, precipitationProbabilityThreshold),
@@ -199,92 +223,109 @@ class _MyAppState extends State<MyApp> {
                               .month}/${parsedDate.year}';
 
                           dateWidgets.add(
-                            ExpansionTile(
-                              subtitle: Text('${documents.length} timeslots'),
-                              title: Row(
-                                children: [
-                                  Icon(Icons.calendar_today),
-                                  Text(' $formattedDate'),
-                                ],
-                              ),
-                              children: documents.map((document) {
-                                return Column(
+                            Theme(
+                              data: ThemeData().copyWith(dividerColor: Colors.transparent),
+                              child: ExpansionTile(
+                                subtitle: Text('${documents.length} timeslots'),
+                                title: Row(
                                   children: [
-                                    ListTile(
-                                      title: Row(
-                                        children: [
-                                          Icon(Icons.schedule),
-                                          Text(' ${document.time}'),
-                                        ],
-                                      ),
-                                      subtitle: Row(
-                                        mainAxisAlignment: MainAxisAlignment
-                                            .spaceBetween,
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment
-                                                .start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Icon(Icons.air),
-                                                  Text(' ${document
-                                                      .windSpeed} m/s'),
-                                                ],
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Icon(Icons
-                                                      .thermostat_outlined),
-                                                  Text(' ${document
-                                                      .airTemperature}°C'),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment
-                                                .start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Icon(Icons.umbrella),
-                                                  Text(' ${document
-                                                      .precipitationProbability}%'),
-                                                ],
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Icon(Icons.calendar_today),
-                                                  Text(' ${document
-                                                      .availableSlots}'),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Divider(), // Add a separator
+                                    Icon(Icons.calendar_today),
+                                    Text(' $formattedDate'),
                                   ],
-                                );
-                              }).toList(),
+                                ),
+                                children: documents.map((document) {
+                                  return Column(
+                                    children: [
+                                      ListTile(
+                                        title: Row(
+                                          children: [
+                                            Icon(Icons.schedule),
+                                            Text(' ${document.time}'),
+                                          ],
+                                        ),
+                                        subtitle: Row(
+                                          mainAxisAlignment: MainAxisAlignment
+                                              .spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment
+                                                  .start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.air),
+                                                    Text(' ${document
+                                                        .windSpeed} m/s'),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons
+                                                        .thermostat_outlined),
+                                                    Text(' ${document
+                                                        .airTemperature}°C'),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment
+                                                  .start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.umbrella),
+                                                    Text(' ${document
+                                                        .precipitationProbability}%'),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.calendar_today),
+                                                    Text(' ${document
+                                                        .availableSlots}'),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Divider(), // Add a separator
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
                             ),
                           );
                         });
 
 
-                        return ListView.separated(
-                          itemCount: dateWidgets.length,
-                          separatorBuilder: (BuildContext context, int index) {
-                            return Divider(
-                              color: Colors.grey, // Customize the color of the divider
-                              thickness: 1.0, // Set the thickness of the divider
-                            );
-                          },
-                          itemBuilder: (BuildContext context, int index) {
-                            return dateWidgets[index];
-                          },
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.lime, // Set your desired background color
+                          ),
+                          child: Container(
+                            decoration:  BoxDecoration(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(16.0),
+                                topRight: Radius.circular(16.0),
+                              ),                              color: Colors.white, // Set your desired background color
+                            ),
+                            child: ListView.separated(
+                              itemCount: dateWidgets.length,
+
+                              separatorBuilder: (BuildContext context, int index) {
+                                return Divider(
+                                  color: Colors.grey, // Customize the color of the divider
+                                  thickness: 1.0, // Set the thickness of the divider
+                                );
+                              },
+                              itemBuilder: (BuildContext context, int index) {
+                                return dateWidgets[index];
+                              },
+                            ),
+                          ),
                         );
                       }
                     },
