@@ -90,42 +90,55 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
           centerTitle: true, // Center the title
-          elevation: 0, // Remove the shadow
+          elevation: 4, // Remove the shadow
           backgroundColor: Colors.purple, // Make the background transparent
         ),
         body: Column(
           children: [
-            Column(
+            ExpansionPanelList(
+              elevation: 1,
+              expandedHeaderPadding: EdgeInsets.all(0),
+              expansionCallback: (int index, bool isExpanded) {
+                // Handle expansion state changes here
+                // You can update the state to expand/collapse the panel
+              },
               children: [
-                Text('Wind Speed: ${windSpeedThreshold.round()} m/s'),
-                Slider(
-                  value: windSpeedThreshold,
-                  min: 0,
-                  max: 50,
-                  divisions: 50,
-                  onChanged: (double value) {
-                    setState(() {
-                      windSpeedThreshold = value;
-                    });
-                    updateThresholds();
+                ExpansionPanel(
+                  headerBuilder: (BuildContext context, bool isExpanded) {
+                    return ListTile(
+                      title: Text('Wind Speed: ${windSpeedThreshold.round()} m/s'),
+                    );
                   },
-                ),
-              ],
-            ),
-            Column(
-              children: [
-                Text('Precipitation Probability: ${precipitationProbabilityThreshold.round()}%'),
-                Slider(
-                  value: precipitationProbabilityThreshold,
-                  min: 0,
-                  max: 100,
-                  divisions: 100,
-                  onChanged: (double value) {
-                    setState(() {
-                      precipitationProbabilityThreshold = value;
-                    });
-                    updateThresholds();
-                  },
+                  body: Column(
+                    children: [
+                      Slider(
+                        value: windSpeedThreshold,
+                        min: 0,
+                        max: 50,
+                        divisions: 50,
+                        onChanged: (double value) {
+                          setState(() {
+                            windSpeedThreshold = value;
+                          });
+                          updateThresholds();
+                        },
+                      ),
+                      Text('Precipitation Probability: ${precipitationProbabilityThreshold.round()}%'),
+                      Slider(
+                        value: precipitationProbabilityThreshold,
+                        min: 0,
+                        max: 100,
+                        divisions: 100,
+                        onChanged: (double value) {
+                          setState(() {
+                            precipitationProbabilityThreshold = value;
+                          });
+                          updateThresholds();
+                        },
+                      ),
+                    ],
+                  ),
+                  isExpanded: true, // Set this to control initial expansion state
                 ),
               ],
             ),
