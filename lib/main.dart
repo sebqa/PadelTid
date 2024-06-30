@@ -57,7 +57,6 @@ class _MyAppState extends State<MyApp> {
             .toString()}&precipitation_probability_threshold=${precipitationProbabilityThreshold
             .toString()}&showUnavailableSlots=$showUnavailableSlots');
     final response = await http.get(url);
-
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
       return jsonList.map((json) => Document.fromJson(json)).toList();
