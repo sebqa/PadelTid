@@ -9,7 +9,7 @@ void main() {
 
 class Document {
   final double airTemperature;
-  final int availableSlots;
+  final int? availableSlots;
   final String date;
   final double precipitationProbability;
   final String time;
@@ -45,16 +45,17 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   double windSpeedThreshold = 4.0;
   double precipitationProbabilityThreshold = 10.0;
+  bool showUnavailableSlots = true;
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
 
 
   Future<List<Document>> fetchDocuments(double windSpeed,
-      double precipitationProbability) async {
+      double precipitationProbability, bool showUnavailableSlots) async {
     final url = Uri.parse(
         'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=${windSpeedThreshold
             .toString()}&precipitation_probability_threshold=${precipitationProbabilityThreshold
-            .toString()}');
+            .toString()}&showUnavailableSlots=false');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -68,7 +69,7 @@ class _MyAppState extends State<MyApp> {
   void updateThresholds() async {
     try {
       final fetchedDocuments = await fetchDocuments(
-          windSpeedThreshold, precipitationProbabilityThreshold);
+          windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots);
       setState(() {
         documents = fetchedDocuments;
       });
@@ -81,56 +82,77 @@ class _MyAppState extends State<MyApp> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Adjust Thresholds'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Column(
-                  children: [
-                    Text('Wind Speed: ${windSpeedThreshold.round()} m/s'),
-                    Slider(
-                      value: windSpeedThreshold,
-                      min: 0,
-                      max: 50,
-                      divisions: 50,
-                      onChanged: (double value) {
-                        setState(() {
-                          windSpeedThreshold = value;
-                        });
-                        updateThresholds();
-                      },
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    Text('Precipitation Probability: ${precipitationProbabilityThreshold.round()}%'),
-                    Slider(
-                      value: precipitationProbabilityThreshold,
-                      min: 0,
-                      max: 100,
-                      divisions: 100,
-                      onChanged: (double value) {
-                        setState(() {
-                          precipitationProbabilityThreshold = value;
-                        });
-                        updateThresholds();
-                      },
-                    ),
-                  ],
-                ),
-              ],
+        return StatefulBuilder(
+          builder: (context, state) => AlertDialog(
+            title: Text('Adjust Thresholds'),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  Column(
+                    children: [
+                      Text('Wind Speed: ${windSpeedThreshold.round()} m/s'),
+                      Slider(
+                        value: windSpeedThreshold,
+                        min: 0,
+                        max: 50,
+                        divisions: 50,
+                        onChanged: (double value) {
+                          state(() {
+                            windSpeedThreshold = value;
+                          });
+                          updateThresholds();
+                        },
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text('Precipitation Probability: ${precipitationProbabilityThreshold.round()}%'),
+                      Slider(
+                        value: precipitationProbabilityThreshold,
+                        min: 0,
+                        max: 100,
+                        divisions: 100,
+                        onChanged: (double value) {
+                          state(() {
+                            precipitationProbabilityThreshold = value;
+                          });
+                          updateThresholds();
+                        },
+                      ),
+
+                    ],
+                  ),
+
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: showUnavailableSlots,
+                        onChanged: (bool? newValue) {
+                          if (newValue != null) {
+                            state(() {
+                              showUnavailableSlots = newValue;
+                              updateThresholds();
+                            });
+                          }
+                        },
+                      ),
+                      Text('Show unavailable timeslots'),
+                    ],
+                  )
+
+                ],
+              ),
             ),
+            actions: <Widget>[
+              TextButton(
+                child: Text('Close'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
         );
       },
     );
@@ -204,7 +226,7 @@ class _MyAppState extends State<MyApp> {
 
                   child: FutureBuilder<List<Document>>(
                     future: fetchDocuments(
-                        windSpeedThreshold, precipitationProbabilityThreshold),
+                        windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(child: CircularProgressIndicator());
@@ -325,7 +347,7 @@ class _MyAppState extends State<MyApp> {
                             color: Colors.lime, // Set your desired background color
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(0,8.0,0,0),
+                            padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
                             child: Container(
                               decoration:  BoxDecoration(
                                 borderRadius: BorderRadius.only(
