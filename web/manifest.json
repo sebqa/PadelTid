@@ -1,11 +1,11 @@
 {
-    "name": "flutter_android",
-    "short_name": "flutter_android",
+    "name": "PADELTID",
+    "short_name": "PADELTID",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "PADELTID",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
