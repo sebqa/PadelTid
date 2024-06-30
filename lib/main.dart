@@ -323,7 +323,7 @@ class _MyAppState extends State<MyApp> {
                                                   children: [
                                                     Icon(Icons.calendar_today),
                                                     Text(' ${document
-                                                        .availableSlots}'),
+                                                        .availableSlots ?? "0"}'),
                                                   ],
                                                 ),
                                               ],
