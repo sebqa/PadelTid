@@ -45,7 +45,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   double windSpeedThreshold = 4.0;
   double precipitationProbabilityThreshold = 10.0;
-  bool showUnavailableSlots = true;
+  bool showUnavailableSlots = false;
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
 
@@ -55,7 +55,7 @@ class _MyAppState extends State<MyApp> {
     final url = Uri.parse(
         'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=${windSpeedThreshold
             .toString()}&precipitation_probability_threshold=${precipitationProbabilityThreshold
-            .toString()}&showUnavailableSlots=false');
+            .toString()}&showUnavailableSlots=$showUnavailableSlots');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
