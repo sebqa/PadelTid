@@ -65,17 +65,18 @@ class _MyAppState extends State<MyApp> {
   }
 
   void initSharedPreferences() async {
-    prefs = await SharedPreferences.getInstance();
-    // Other initialization logic (e.g., setting default values)
-
-    windSpeedThreshold = prefs.getDouble('windSpeedThreshold')!;
-    precipitationProbabilityThreshold = prefs.getDouble('precipitationProbabilityThreshold')!;
 
 
   }
 
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
+    prefs = await SharedPreferences.getInstance();
+    // Other initialization logic (e.g., setting default values)
+
+    windSpeedThreshold = prefs.getDouble('windSpeedThreshold')!;
+    precipitationProbabilityThreshold = prefs.getDouble('precipitationProbabilityThreshold')!;
+
     final url = Uri.parse(
         'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=${windSpeedThreshold
             .toString()}&precipitation_probability_threshold=${precipitationProbabilityThreshold
