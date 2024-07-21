@@ -368,7 +368,6 @@ class _MyAppState extends State<MyApp> {
                           );
                         });
 
-
                         return Container(
                           decoration: BoxDecoration(
                             color: Colors.lime, // Set your desired background color
