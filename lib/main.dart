@@ -63,9 +63,10 @@ class _MyAppState extends State<MyApp> {
     prefs = await SharedPreferences.getInstance();
     // Other initialization logic (e.g., setting default values)
 
-    windSpeedThreshold = prefs.getDouble('windSpeedThreshold')!;
-    precipitationProbabilityThreshold = prefs.getDouble('precipitationProbabilityThreshold')!;
-    this.showUnavailableSlots = prefs.getBool('showUnavailableSlots')!;
+    windSpeedThreshold = prefs.getDouble('windSpeedThreshold') ?? 4.0;
+    precipitationProbabilityThreshold =
+        prefs.getDouble('precipitationProbabilityThreshold') ?? 10.0;
+    showUnavailableSlots = prefs.getBool('showUnavailableSlots') ?? false;
 
 
     final url = Uri.parse(
