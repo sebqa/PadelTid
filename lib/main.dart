@@ -58,17 +58,6 @@ class _MyAppState extends State<MyApp> {
   bool showSliders = false; // Set this based on your logic
   late SharedPreferences prefs; // Declare prefs as late
 
-  @override
-  void initState() {
-    super.initState();
-    initSharedPreferences(); // Initialize prefs
-  }
-
-  void initSharedPreferences() async {
-
-
-  }
-
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
     prefs = await SharedPreferences.getInstance();
@@ -76,6 +65,8 @@ class _MyAppState extends State<MyApp> {
 
     windSpeedThreshold = prefs.getDouble('windSpeedThreshold')!;
     precipitationProbabilityThreshold = prefs.getDouble('precipitationProbabilityThreshold')!;
+    this.showUnavailableSlots = prefs.getBool('showUnavailableSlots')!;
+
 
     final url = Uri.parse(
         'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=${windSpeedThreshold
@@ -95,6 +86,7 @@ class _MyAppState extends State<MyApp> {
     try {
       prefs.setDouble('windSpeedThreshold', windSpeedThreshold);
       prefs.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
+      prefs.setBool('showUnavailableSlots', showUnavailableSlots);
 
       final fetchedDocuments = await fetchDocuments(
           windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots);
