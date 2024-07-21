@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(MaterialApp(home:MyApp()));
+void main() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  runApp(MaterialApp(home:MyApp(prefs:prefs)));
 }
 
 class Document {
@@ -37,18 +40,39 @@ class Document {
 }
 
 class MyApp extends StatefulWidget {
+  final SharedPreferences prefs;
+
+  MyApp({required this.prefs});
+
   @override
   _MyAppState createState() => _MyAppState();
 
 }
 
 class _MyAppState extends State<MyApp> {
+
   double windSpeedThreshold = 4.0;
   double precipitationProbabilityThreshold = 10.0;
   bool showUnavailableSlots = false;
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
+  late SharedPreferences prefs; // Declare prefs as late
 
+  @override
+  void initState() {
+    super.initState();
+    initSharedPreferences(); // Initialize prefs
+  }
+
+  void initSharedPreferences() async {
+    prefs = await SharedPreferences.getInstance();
+    // Other initialization logic (e.g., setting default values)
+
+    windSpeedThreshold = prefs.getDouble('windSpeedThreshold')!;
+    precipitationProbabilityThreshold = prefs.getDouble('precipitationProbabilityThreshold')!;
+
+
+  }
 
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
@@ -66,7 +90,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   void updateThresholds() async {
+
     try {
+      prefs.setDouble('windSpeedThreshold', windSpeedThreshold);
+      prefs.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
+
       final fetchedDocuments = await fetchDocuments(
           windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots);
       setState(() {
