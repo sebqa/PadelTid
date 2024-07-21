@@ -50,6 +50,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  Color sliderColor = Color(0xFFf9aa08);
+  Color primaryColor = Color(0xFFCDDC39); // Remove the FF for opacity as primarySwatch handles it
 
   double windSpeedThreshold = 4.0;
   double precipitationProbabilityThreshold = 10.0;
@@ -117,6 +119,7 @@ class _MyAppState extends State<MyApp> {
                         min: 0,
                         max: 50,
                         divisions: 50,
+                        activeColor: sliderColor,
                         onChanged: (double value) {
                           state(() {
                             windSpeedThreshold = value;
@@ -134,6 +137,7 @@ class _MyAppState extends State<MyApp> {
                         min: 0,
                         max: 100,
                         divisions: 100,
+                        activeColor: sliderColor,
                         onChanged: (double value) {
                           state(() {
                             precipitationProbabilityThreshold = value;
@@ -182,8 +186,14 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-
-    return MaterialApp(
+return MaterialApp(
+        theme: ThemeData(
+          colorScheme: ColorScheme.light().copyWith(primary: primaryColor),
+          sliderTheme: SliderThemeData(
+            activeTrackColor: Colors.red, // Set your desired color here
+            // Other properties can be customized as well
+          ),        // ... other theme properties
+        ),
         localizationsDelegates: [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
@@ -250,7 +260,9 @@ class _MyAppState extends State<MyApp> {
                         windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
+                        return Center(child: CircularProgressIndicator(
+                          color: sliderColor,
+                        ));
                       } else if (snapshot.hasError) {
                         return Center(child: Text('Error loading documents'));
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
