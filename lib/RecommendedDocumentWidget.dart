@@ -18,14 +18,27 @@ class RecommendedDocumentWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           //show the proprties date, windSpeed and airTemperature with some style
-          Text('Date: ${document.date}'),
+          //check if date is today
+Text('Date: ${_getDisplayDate(document.date)}'),
+          Text('Time: ${document.time}'),
           Text('Wind speed: ${document.windSpeed} m/s'),
           Text('Temperature: ${document.airTemperature}°C'), 
-          
+
           
           // Add more properties as needed
         ],
       ),
     );
+  }
+}
+String _getDisplayDate(String dateStr) {
+  DateTime now = DateTime.now();
+  DateTime date = DateTime.parse(dateStr);
+  if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    return 'Today';
+  } else if (date.year == now.year && date.month == now.month && date.day == now.day + 1) {
+    return 'Tomorrow';
+  } else {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }

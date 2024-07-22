@@ -3,30 +3,30 @@
     "short_name": "PADELTID",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#CDDC39FF",
-    "theme_color": "#CDDC39FF",
+    "background_color": "#bbd4d0",
+    "theme_color": "#bbd4d0",
     "description": "PADELTID",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
         {
-            "src": "icons/logo192.png",
+            "src": "icons/Icon-192.png",
             "sizes": "192x192",
             "type": "image/png"
         },
         {
-            "src": "icons/logo512.png",
+            "src": "icons/Icon-512.png",
             "sizes": "512x512",
             "type": "image/png"
         },
         {
-            "src": "icons/logo192.png",
+            "src": "icons/Icon-maskable-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "icons/logo512.png",
+            "src": "icons/Icon-maskable-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
