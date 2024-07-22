@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/RecommendedDocumentWidget.dart';
-import 'package:flutter_application_1/main.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/recommended_documents_lv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -226,9 +224,10 @@ return MaterialApp(
           ),
           body: Column(
               children: [
+                Text('Recommended Timeslots'),
                  SizedBox(
-          height: 150, // Set the height of the horizontal ListView
-          child: RecommendedDocumentsListView(recommendedDocuments: documents,)
+          height: 100, // Set the height of the horizontal ListView
+          child: RecommendedDocumentsListView(recommendedDocuments: documents)
         ),
 
                 Expanded(

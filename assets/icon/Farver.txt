@@ -1,0 +1,7 @@
+bbd4d0 - blå
+f0d6d4 - lyserød
+f8af55 - gul
+f2d734 - gul/orange
+f1e821 - orange
+d5f32f - bold
+d5f32f - bold skygge
