@@ -56,7 +56,7 @@ flutter_launcher_icons:
   min_sdk_android: 21 # android min sdk min:16, default 21
   web:
     generate: true
-    image_path: "assets/icon/iconblue.png"
+    image_path: "assets/icon/maskable_icon.png"
     background_color: "#bbd4d0"
     theme_color: "#bbd4d0"
   windows:
