@@ -18,7 +18,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Color sliderColor = Color(0xFFf9aa08);
-  Color primaryColor = Color(0xFFCDDC39); // Remove the FF for opacity as primarySwatch handles it
 
   double windSpeedThreshold = 4.0;
   double precipitationProbabilityThreshold = 10.0;
@@ -161,11 +160,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
 return MaterialApp(
-        theme: ThemeData(
-      colorScheme: ColorScheme.light().copyWith(primary: primaryColor),
-
-                  // ... other theme properties
-        ),
         localizationsDelegates: [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
@@ -212,23 +206,34 @@ return MaterialApp(
   ),
             elevation: 0,
             backgroundColor: Colors.white,
+// Make the background transparent
+          ),
+          body: Column(
+              children: [
+                
 
-            actions: [
-              IconButton(
+              
+                Text('Recommended Timeslots'),
+                 SizedBox(
+          height: 100, // Set the height of the horizontal ListView
+          child:           documents != null
+              ? RecommendedDocumentsListView(
+                  recommendedDocuments: documents,
+                )
+              : CircularProgressIndicator(
+                  color: sliderColor,
+                ),
+
+         
+
+          
+          
+        ),IconButton(
                 color: Colors.black,
                 icon: const Icon(Icons.tune),
                 tooltip: 'Show filter',
                 onPressed: showSettingsDialog
               ),
-            ],// Make the background transparent
-          ),
-          body: Column(
-              children: [
-                Text('Recommended Timeslots'),
-                 SizedBox(
-          height: 100, // Set the height of the horizontal ListView
-          child: RecommendedDocumentsListView(recommendedDocuments: documents)
-        ),
 
                 Expanded(
 
