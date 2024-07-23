@@ -171,7 +171,11 @@ class _HomePageState extends State<HomePage> {
     ],
     title: 'PADELTID',
     home: Scaffold(
-      
+      floatingActionButton: FloatingActionButton(
+                        child: const Icon(Icons.tune),
+                        onPressed: showSettingsDialog,
+
+  ),
       
       body: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -233,18 +237,6 @@ class _HomePageState extends State<HomePage> {
             ),
             
           ),
-          SliverPersistentHeader(delegate: _StickyHeaderDelegate(
-            child:  Container(
-              color: Colors.white,
-              child: IconButton(
-                    color: Colors.black,
-                    icon: const Icon(Icons.tune),
-                    tooltip: 'Show filter',
-                    onPressed: showSettingsDialog,
-                  ),
-            ),
-            
-          )),
           SliverList(
   delegate: SliverChildBuilderDelegate(
     (context, index) {
@@ -275,7 +267,29 @@ final Map<String, List<Document>> groupedDocuments = {};
                             'Sunday'
                           ];
 
-            return ListView.builder(
+            return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white, // Set your desired background color
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
+                            child: Container(
+                              decoration:  BoxDecoration(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(16.0),
+                                  topRight: Radius.circular(16.0),
+                                ),
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.25), // Shadow color with opacity
+                                    spreadRadius: 1, // Spread radius
+                                    blurRadius: 4, // Blur radius
+                                    offset: Offset(0, -1), // Offset (x, y), negative y to have the shadow on top
+                                  ),
+                                ],// Set your desired background color
+                              ),
+                              child: ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               itemCount: groupedDocuments.length,
@@ -303,6 +317,9 @@ final Map<String, List<Document>> groupedDocuments = {};
                       .toList(),
                 );
               },
+            ),
+                          ),
+                        ),
             );
           } else {
             return Center(
