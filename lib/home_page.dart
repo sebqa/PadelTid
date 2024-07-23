@@ -156,91 +156,89 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-return MaterialApp(
-        localizationsDelegates: [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-
-        supportedLocales: [
-          Locale('en', 'US'),
-        ],
-        title: 'PADELTID',
-        home: Scaffold(
-          appBar: AppBar(
-            scrolledUnderElevation: 0.0,
-            title: Center(
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Baseline(
-          baselineType: TextBaseline.alphabetic,
-          baseline: 28.0, // Adjust this value as needed
-          child: Text(
-            'PADEL',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.normal,
-              fontFamily: 'Roboto',
-            ),
-          ),
-        ),
-        Baseline(
-          baselineType: TextBaseline.alphabetic,
-          baseline: 28.0, // Same baseline value
-          child: Text(
-            'TID',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.normal,
-              fontFamily: 'Roboto',
-            ),
-          ),
-        ),
-      ],
-    ),
-  ),
-            elevation: 0,
-            backgroundColor: Colors.white,
-// Make the background transparent
-          ),
-          body: Column(
-              children: [
-                
-
-              
-                Text('Recommended Timeslots'),
-                 SizedBox(
-          height: 100, // Set the height of the horizontal ListView
-          child:           documents != null
-              ? RecommendedDocumentsListView(
-                  recommendedDocuments: documents,
-                )
-              : CircularProgressIndicator(
-                  color: sliderColor,
+  return MaterialApp(
+    localizationsDelegates: [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: [
+      Locale('en', 'US'),
+    ],
+    title: 'PADELTID',
+    home: Scaffold(
+      
+      
+      body: CustomScrollView(
+        slivers: [
+          const SliverAppBar(
+            title:  Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Baseline(
+                baselineType: TextBaseline.alphabetic,
+                baseline: 28.0, // Adjust this value as needed
+                child: Text(
+                  'PADEL',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.normal,
+                    fontFamily: 'Roboto',
+                  ),
                 ),
-
-         
-
-          
-          
-        ),IconButton(
-                color: Colors.black,
-                icon: const Icon(Icons.tune),
-                tooltip: 'Show filter',
-                onPressed: showSettingsDialog
               ),
+              Baseline(
+                baselineType: TextBaseline.alphabetic,
+                baseline: 28.0, // Same baseline value
+                child: Text(
+                  'TID',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.normal,
+                    fontFamily: 'Roboto',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.white,
+            ),
 
-                Expanded(
-
-                  child: FutureBuilder<List<Document>>(
-                    future: fetchDocuments(
-                        windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots),
-                    builder: (context, snapshot) {
+          
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                Text('Recommended Timeslots'),
+                SizedBox(
+                  height: 100, // Set the height of the horizontal ListView
+                  child: documents != null
+                      ? RecommendedDocumentsListView(
+                          recommendedDocuments: documents,
+                        )
+                      : CircularProgressIndicator(
+                          color: sliderColor,
+                        ),
+                ),
+                IconButton(
+                  color: Colors.black,
+                  icon: const Icon(Icons.tune),
+                  tooltip: 'Show filter',
+                  onPressed: showSettingsDialog,
+                ),
+              ],
+            ),
+          ),
+          SliverFillRemaining(
+            child: FutureBuilder<List<Document>>(
+              future: fetchDocuments(
+                  windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots),
+              builder: (context, snapshot) {
+                
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(child: CircularProgressIndicator(
                           color: sliderColor,
@@ -397,12 +395,14 @@ return MaterialApp(
                           ),
                         );
                       }
-                    },
-                  ),
-                ),
-
-              ]),
-        )
-    );
-  }
+                    
+                // ...
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 }
