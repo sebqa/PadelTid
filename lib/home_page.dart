@@ -225,7 +225,7 @@ class _HomePageState extends State<HomePage> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: SizedBox(
-                    height: 100, // Set the height of the horizontal ListView
+                    height: 120, // Set the height of the horizontal ListView
                     child: documents != null
                         ? RecommendedDocumentsListView(
                             recommendedDocuments: documents,
@@ -307,17 +307,22 @@ final Map<String, List<Document>> groupedDocuments = {};
                               .weekday - 1]}, '
                               '${parsedDate.day}/${parsedDate
                               .month}/${parsedDate.year}';
-                return ExpansionTile(
-                  subtitle: Text('${documentsForDate.length} timeslots'),
-                                title: Row(
-                                  children: [
-                                    Icon(Icons.calendar_today),
-                                    Text(' $formattedDate'),
-                                  ],
-                                ),
-                  children: documentsForDate
-                      .map((document) => DocumentWidget(document: document))
-                      .toList(),
+                return Column(
+                  children: [
+                    ExpansionTile(
+                      subtitle: Text('${documentsForDate.length} timeslots'),
+                      title: Row(
+                        children: [
+                          Icon(Icons.calendar_today),
+                          Text(' $formattedDate'),
+                        ],
+                      ),
+                      children: documentsForDate
+                          .map((document) => DocumentWidget(document: document))
+                          .toList(),
+                    ),
+                    Divider(),
+                  ],
                 );
               },
             ),

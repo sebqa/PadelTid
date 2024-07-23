@@ -9,24 +9,38 @@ class RecommendedDocumentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          //show the proprties date, windSpeed and airTemperature with some style
-          //check if date is today
-Text('Date: ${_getDisplayDate(document.date)}'),
-          Text('Time: ${document.time}'),
-          Text('Wind speed: ${document.windSpeed} m/s'),
-          Text('Temperature: ${document.airTemperature}°C'), 
-
+      padding: EdgeInsets.all(8),
+      child: Container(
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white,
+          border: Border.all(color: Colors.black, width: 1),
           
-          // Add more properties as needed
-        ],
+          boxShadow: [
+            BoxShadow(
+               color: Colors.black.withOpacity(0.25), // Shadow color with opacity
+                                    spreadRadius: 1, // Spread radius
+                                    blurRadius: 4, // Blur radius
+                                    offset: Offset(0, -1), 
+            ),
+          ]
+        ),
+        child: Column(
+          
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //show the proprties date, windSpeed and airTemperature with some style
+            //check if date is today
+        Text('Date: ${_getDisplayDate(document.date)}'),
+            Text('Time: ${document.time}'),
+            Text('Wind speed: ${document.windSpeed} m/s'),
+            Text('Temperature: ${document.airTemperature}°C'), 
+        
+            
+            // Add more properties as needed
+          ],
+        ),
       ),
     );
   }
