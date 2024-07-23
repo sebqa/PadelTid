@@ -172,7 +172,11 @@ class _HomePageState extends State<HomePage> {
       
       
       body: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+
         slivers: [
+          
+
           const SliverAppBar(
             title:  Center(
           child: Row(
@@ -224,15 +228,23 @@ class _HomePageState extends State<HomePage> {
                           color: sliderColor,
                         ),
                 ),
-                IconButton(
-                  color: Colors.black,
-                  icon: const Icon(Icons.tune),
-                  tooltip: 'Show filter',
-                  onPressed: showSettingsDialog,
-                ),
+
               ],
             ),
+            
           ),
+          SliverPersistentHeader(delegate: _StickyHeaderDelegate(
+            child:  Container(
+              color: Colors.white,
+              child: IconButton(
+                    color: Colors.black,
+                    icon: const Icon(Icons.tune),
+                    tooltip: 'Show filter',
+                    onPressed: showSettingsDialog,
+                  ),
+            ),
+            
+          )),
           SliverFillRemaining(
             child: FutureBuilder<List<Document>>(
               future: fetchDocuments(
@@ -405,4 +417,25 @@ class _HomePageState extends State<HomePage> {
     ),
   );
 }
+}
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  _StickyHeaderDelegate({required this.child});
+
+  final Widget child;
+
+  @override
+  double get minExtent => 0; // Minimum height of the header
+
+  @override
+  double get maxExtent => 50; // Maximum height of the header
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) {
+    return false;
+  }
 }
