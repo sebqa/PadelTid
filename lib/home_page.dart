@@ -175,9 +175,7 @@ class _HomePageState extends State<HomePage> {
         physics: const AlwaysScrollableScrollPhysics(),
 
         slivers: [
-          
-
-          const SliverAppBar(
+                    const SliverAppBar(
             title:  Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -246,6 +244,7 @@ class _HomePageState extends State<HomePage> {
             
           )),
           SliverFillRemaining(
+            hasScrollBody: false,
             child: FutureBuilder<List<Document>>(
               future: fetchDocuments(
                   windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots),
