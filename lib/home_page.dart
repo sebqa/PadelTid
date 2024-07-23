@@ -222,15 +222,18 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               children: [
                 Text('Recommended Timeslots'),
-                SizedBox(
-                  height: 100, // Set the height of the horizontal ListView
-                  child: documents != null
-                      ? RecommendedDocumentsListView(
-                          recommendedDocuments: documents,
-                        )
-                      : CircularProgressIndicator(
-                          color: sliderColor,
-                        ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    height: 100, // Set the height of the horizontal ListView
+                    child: documents != null
+                        ? RecommendedDocumentsListView(
+                            recommendedDocuments: documents,
+                          )
+                        : CircularProgressIndicator(
+                            color: sliderColor,
+                          ),
+                  ),
                 ),
 
               ],
