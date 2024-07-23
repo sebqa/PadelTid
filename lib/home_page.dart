@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'document_widget.dart';
+
 class HomePage extends StatefulWidget {
   final SharedPreferences prefs;
 
@@ -243,39 +245,27 @@ class _HomePageState extends State<HomePage> {
             ),
             
           )),
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: FutureBuilder<List<Document>>(
-              future: fetchDocuments(
-                  windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots),
-              builder: (context, snapshot) {
-                
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator(
-                          color: sliderColor,
-                        ));
-                      } else if (snapshot.hasError) {
-                        return Center(child: Text('Error loading documents'));
-                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Center(child: Text('No documents available'));
-                      } else {
-                        // Group documents by date and sort by date
-
-                        final Map<String, List<Document>> groupedDocuments = {};
+          SliverList(
+  delegate: SliverChildBuilderDelegate(
+    (context, index) {
+      return FutureBuilder<List<Document>>(
+        future: fetchDocuments(windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          } else if (snapshot.hasData) {
+final Map<String, List<Document>> groupedDocuments = {};
                         for (var document in snapshot.data!) {
                           groupedDocuments.putIfAbsent(document.date, () => [])
                               .add(document);
                         }
-                        
-
-    
-                        // Create a list of widgets for each group
-                        final List<Widget> dateWidgets = [];
-                        groupedDocuments.forEach((date, documents) {
-                          final parsedDate = DateTime.parse(date);
-
-                          documents.sort((a, b) => a.time.compareTo(b.time));
-                          final weekdayName = [
+                        final weekdayName = [
                             'Monday',
                             'Tuesday',
                             'Wednesday',
@@ -285,138 +275,53 @@ class _HomePageState extends State<HomePage> {
                             'Sunday'
                           ];
 
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: groupedDocuments.length,
+              itemBuilder: (context, index) {
+                final date = groupedDocuments.keys.toList()[index];
+                final documentsForDate = groupedDocuments[date]!;
+                final parsedDate = DateTime.parse(date);
+
+                          documentsForDate.sort((a, b) => a.time.compareTo(b.time));
+                          
                           final formattedDate = '${weekdayName[parsedDate
                               .weekday - 1]}, '
                               '${parsedDate.day}/${parsedDate
                               .month}/${parsedDate.year}';
-
-                          dateWidgets.add(
-                            Theme(
-                              data: ThemeData().copyWith(dividerColor: Colors.transparent),
-                              child: ExpansionTile(
-                                subtitle: Text('${documents.length} timeslots'),
+                return ExpansionTile(
+                  subtitle: Text('${documentsForDate.length} timeslots'),
                                 title: Row(
                                   children: [
                                     Icon(Icons.calendar_today),
                                     Text(' $formattedDate'),
                                   ],
                                 ),
-                                children: documents.map((document) {
-                                  return Column(
-                                    children: [
-                                      ListTile(
-                                        title: Row(
-                                          children: [
-                                            Icon(Icons.schedule),
-                                            Text(' ${document.time}'),
-                                          ],
-                                        ),
-                                        subtitle: Row(
-                                          mainAxisAlignment: MainAxisAlignment
-                                              .spaceBetween,
-                                          children: [
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.air),
-                                                    Text(' ${document
-                                                        .windSpeed} m/s'),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons
-                                                        .thermostat_outlined),
-                                                    Text(' ${document
-                                                        .airTemperature}°C'),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.umbrella),
-                                                    Text(' ${document
-                                                        .precipitationProbability}%'),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.calendar_today),
-                                                    Text(' ${document
-                                                        .availableSlots ?? "0"}'),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Divider(), // Add a separator
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          );
-                        });
-
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white, // Set your desired background color
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
-                            child: Container(
-                              decoration:  BoxDecoration(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16.0),
-                                  topRight: Radius.circular(16.0),
-                                ),
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.25), // Shadow color with opacity
-                                    spreadRadius: 1, // Spread radius
-                                    blurRadius: 4, // Blur radius
-                                    offset: Offset(0, -1), // Offset (x, y), negative y to have the shadow on top
-                                  ),
-                                ],// Set your desired background color
-                              ),
-                              child: ListView.separated(
-                                itemCount: dateWidgets.length,
-                                separatorBuilder: (BuildContext context, int index) {
-                                  return Divider(
-                                    color: Colors.grey, // Customize the color of the divider
-                                    thickness: 1.0, // Set the thickness of the divider
-                                  );
-                                },
-                                itemBuilder: (BuildContext context, int index) {
-                                  return dateWidgets[index];
-                                },
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                    
-                // ...
+                  children: documentsForDate
+                      .map((document) => DocumentWidget(document: document))
+                      .toList(),
+                );
               },
-            ),
-          ),
+            );
+          } else {
+            return Center(
+              child: Text('No data'),
+            );
+          }
+        },
+      );
+    },
+    childCount: 1, // Change this value if you want to show multiple items in the SliverList
+  ),
+),
         ],
       ),
     ),
   );
 }
 }
+
 class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   _StickyHeaderDelegate({required this.child});
 
