@@ -19,7 +19,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Color sliderColor = Color(0xFFf9aa08);
+ 
 
   double windSpeedThreshold = 4.0;
   double precipitationProbabilityThreshold = 10.0;
@@ -80,6 +80,9 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+          final ThemeData theme = Theme.of(context);
+  final ColorScheme colorScheme = theme.colorScheme;
+  Color sliderColor = colorScheme.secondary;
         return StatefulBuilder(
           builder: (context, state) => AlertDialog(
             title: Text('Adjust Thresholds'),
@@ -170,18 +173,25 @@ class _HomePageState extends State<HomePage> {
       Locale('en', 'US'),
     ],
     title: 'PADELTID',
+    
+    
+       theme: ThemeData.dark(),
     home: Scaffold(
+      
       floatingActionButton: FloatingActionButton(
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                         child: const Icon(Icons.tune),
                         onPressed: showSettingsDialog,
 
   ),
       
       body: CustomScrollView(
+        
         physics: const AlwaysScrollableScrollPhysics(),
 
         slivers: [
-                    const SliverAppBar(
+                    SliverAppBar(
             title:  Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -195,6 +205,7 @@ class _HomePageState extends State<HomePage> {
                     fontSize: 28,
                     fontWeight: FontWeight.normal,
                     fontFamily: 'Roboto',
+                    color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
               ),
@@ -207,6 +218,8 @@ class _HomePageState extends State<HomePage> {
                     fontSize: 28,
                     fontWeight: FontWeight.normal,
                     fontFamily: 'Roboto',
+                    color: Theme.of(context).colorScheme.onPrimary,
+
                   ),
                 ),
               ),
@@ -214,31 +227,33 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
             ),
 
           
           SliverToBoxAdapter(
-            child: Column(
-              children: [
-                Text('Recommended Timeslots'),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SizedBox(
-                    height: 120, // Set the height of the horizontal ListView
-                    child: documents != null
-                        ? RecommendedDocumentsListView(
-                            recommendedDocuments: documents,
-                          )
-                        : CircularProgressIndicator(
-                            color: sliderColor,
-                          ),
-                  ),
-                ),
-
-              ],
-            ),
             
+            child: Container(
+              
+              child: Column(
+                children: [
+                  Text('Recommended Timeslots'),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      height: 120, // Set the height of the horizontal ListView
+                      child: documents != null
+                          ? RecommendedDocumentsListView(
+                              recommendedDocuments: documents,
+                            )
+                          : CircularProgressIndicator(
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                    ),
+                  ),
+
+                ],
+              ),
+            ),
           ),
           SliverList(
   delegate: SliverChildBuilderDelegate(
@@ -272,7 +287,6 @@ final Map<String, List<Document>> groupedDocuments = {};
 
             return Container(
                           decoration: BoxDecoration(
-                            color: Colors.white, // Set your desired background color
                           ),
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
@@ -282,7 +296,7 @@ final Map<String, List<Document>> groupedDocuments = {};
                                   topLeft: Radius.circular(16.0),
                                   topRight: Radius.circular(16.0),
                                 ),
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.primaryContainer,
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.25), // Shadow color with opacity
