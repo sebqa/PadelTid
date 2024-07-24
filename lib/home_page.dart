@@ -324,7 +324,7 @@ final Map<String, List<Document>> groupedDocuments = {};
                                 ],// Set your desired background color
                               ),
                               child: ListView.builder(
-              shrinkWrap: false,
+              shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               itemCount: groupedDocuments.length,
               itemBuilder: (context, index) {
