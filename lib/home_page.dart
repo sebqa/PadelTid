@@ -163,7 +163,25 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+
+ColorScheme darkThemeColors(context) {
+  return const ColorScheme(
+    brightness: Brightness.light,
+    primary: Color(0xFFFFFFFF),
+    onPrimary: Color(0xFF000000),
+    secondary: Color(0xFFBBBBBB),
+    onSecondary: Color(0xFFEAEAEA),
+    error: Color(0xFFF32424),
+    onError: Color(0xFFF32424),
+    background: Color(0xFF202020),
+    onBackground: Color(0xFF505050),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF000000),
+  );
+}
+
   return MaterialApp(
+    
     localizationsDelegates: [
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
@@ -173,9 +191,10 @@ class _HomePageState extends State<HomePage> {
       Locale('en', 'US'),
     ],
     title: 'PADELTID',
-    
-    
-       theme: ThemeData.dark(),
+       theme: ThemeData.light().copyWith(
+        colorScheme: darkThemeColors(context),
+      ),
+      
     home: Scaffold(
       
       floatingActionButton: FloatingActionButton(
@@ -205,7 +224,7 @@ class _HomePageState extends State<HomePage> {
                     fontSize: 28,
                     fontWeight: FontWeight.normal,
                     fontFamily: 'Roboto',
-                    color: Theme.of(context).colorScheme.onPrimary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
@@ -218,7 +237,7 @@ class _HomePageState extends State<HomePage> {
                     fontSize: 28,
                     fontWeight: FontWeight.normal,
                     fontFamily: 'Roboto',
-                    color: Theme.of(context).colorScheme.onPrimary,
+                    color: Theme.of(context).colorScheme.primary,
 
                   ),
                 ),
@@ -324,6 +343,7 @@ final Map<String, List<Document>> groupedDocuments = {};
                 return Column(
                   children: [
                     ExpansionTile(
+                      shape: Border(),
                       subtitle: Text('${documentsForDate.length} timeslots'),
                       title: Row(
                         children: [
@@ -332,7 +352,17 @@ final Map<String, List<Document>> groupedDocuments = {};
                         ],
                       ),
                       children: documentsForDate
-                          .map((document) => DocumentWidget(document: document))
+                          .asMap()
+                          .entries
+                          .map((entry) =>
+                              entry.value == documentsForDate.last
+                                  ? DocumentWidget(document: entry.value)
+                                  : Column(
+                                      children: [
+                                        DocumentWidget(document: entry.value),
+                                        Divider(),
+                                      ],
+                                    ))
                           .toList(),
                     ),
                     Divider(),

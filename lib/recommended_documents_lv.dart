@@ -11,14 +11,17 @@ class RecommendedDocumentsListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(0),
-      child: SizedBox(
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: recommendedDocuments.length,
-          separatorBuilder: (_, __) => SizedBox(width: 0),
-          itemBuilder: (context, index) {
-            return RecommendedDocumentWidget(recommendedDocuments[index]);
-          },
+      child: Container(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        child: SizedBox(
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: recommendedDocuments.length,
+            separatorBuilder: (_, __) => SizedBox(width: 0),
+            itemBuilder: (context, index) {
+              return RecommendedDocumentWidget(recommendedDocuments[index]);
+            },
+          ),
         ),
       ),
     );
