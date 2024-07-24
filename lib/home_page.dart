@@ -256,8 +256,7 @@ ColorScheme darkThemeColors(context) {
               child: Column(
                 children: [
                   Text('Recommended Timeslots'),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  
                     child: SizedBox(
                       height: 120, // Set the height of the horizontal ListView
                       child: documents != null
@@ -268,7 +267,7 @@ ColorScheme darkThemeColors(context) {
                               color: Theme.of(context).colorScheme.secondary,
                             ),
                     ),
-                  ),
+                  
 
                 ],
               ),
