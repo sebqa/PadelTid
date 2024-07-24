@@ -256,8 +256,7 @@ ColorScheme darkThemeColors(context) {
               child: Column(
                 children: [
                   Text('Recommended Timeslots'),
-                  
-                    child: SizedBox(
+                  SizedBox(
                       height: 120, // Set the height of the horizontal ListView
                       child: documents != null
                           ? RecommendedDocumentsListView(
