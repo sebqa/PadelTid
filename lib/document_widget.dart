@@ -11,66 +11,72 @@ class DocumentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-                                  return Column(
-                                    children: [
-                                      ListTile(
-                                        title: Row(
-                                          children: [
-                                            Icon(Icons.schedule),
-                                            Text(' ${document.time}'),
-                                          ],
+                                  return Theme(
+                                    data: ThemeData(
+                                      textTheme: TextTheme(
+                                        titleMedium: TextStyle(fontSize: 18,
+                                            color: Theme.of(context).colorScheme.onPrimaryContainer),
+                                      )
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        ListTile(
+                                          title: Row(
+                                            children: [
+                                              Icon(Icons.schedule),
+                                              Text(' ${document.time}'),
+                                            ],
+                                          ),
+                                          subtitle: Row(
+                                            mainAxisAlignment: MainAxisAlignment
+                                                .spaceBetween,
+                                            children: [
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment
+                                                    .start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Icon(Icons.air),
+                                                      Text(' ${document
+                                                          .windSpeed} m/s'),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      Icon(Icons
+                                                          .thermostat_outlined),
+                                                      Text(' ${document
+                                                          .airTemperature}°C'),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment
+                                                    .start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Icon(Icons.umbrella),
+                                                      Text(' ${document
+                                                          .precipitationProbability}%'),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      Icon(Icons.calendar_today),
+                                                      Text(' ${document
+                                                          .availableSlots ?? "0"}'),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        subtitle: Row(
-                                          mainAxisAlignment: MainAxisAlignment
-                                              .spaceBetween,
-                                          children: [
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.air),
-                                                    Text(' ${document
-                                                        .windSpeed} m/s'),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons
-                                                        .thermostat_outlined),
-                                                    Text(' ${document
-                                                        .airTemperature}°C'),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.umbrella),
-                                                    Text(' ${document
-                                                        .precipitationProbability}%'),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.calendar_today),
-                                                    Text(' ${document
-                                                        .availableSlots ?? "0"}'),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Divider(), // Add a separator
-                                    ],
+                                      ],
+                                    ),
                                   );
                                 }
 
