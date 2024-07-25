@@ -358,7 +358,6 @@ final Map<String, List<Document>> groupedDocuments = {};
                                   : Column(
                                       children: [
                                         DocumentWidget(document: entry.value),
-                                        Divider(),
                                       ],
                                     ))
                           .toList(),

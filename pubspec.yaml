@@ -35,6 +35,7 @@ dependencies:
   intl: any
   http: ^0.13.3
   shared_preferences: ^2.0.10
+  adv_flutter_weather: ^1.0.0
 
 
 
