@@ -154,9 +154,15 @@ class _HomePageState extends State<HomePage> {
             ),
             actions: <Widget>[
               TextButton(
-                child: Text('Close'),
+                child: Text('Apply'),
                 onPressed: () {
                   updateThresholds();
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: Text('Cancel'),
+                onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
