@@ -7,20 +7,13 @@ class DocumentWidget extends StatelessWidget {
     required this.document,
   }) : super(key: key);
 
+  
+
   final Document document;
 
   @override
   Widget build(BuildContext context) {
                                   return Theme(
-                                    data: ThemeData(
-                                      textTheme: TextTheme(
-                                        titleMedium: TextStyle(fontSize: 18,
-                                            color: Theme.of(context).colorScheme.onPrimaryContainer),
-
-                                      )
-                                    ),
-                                    
-                                    child: Theme(
                                             data: Theme.of(context).copyWith(
                                               textTheme: TextTheme(
                                                 titleMedium: TextStyle(fontSize: 18,
@@ -90,7 +83,6 @@ class DocumentWidget extends StatelessWidget {
                                                 ],
                                             ),
                                           ),
-                                        ),
                                   );
                                 }
 

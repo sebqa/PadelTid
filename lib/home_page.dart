@@ -308,28 +308,18 @@ final Map<String, List<Document>> groupedDocuments = {};
                           Text(' $formattedDate'),
                         ],
                       ),
-                      children: documentsForDate
-                          .asMap()
-                          .entries
-                          .map((entry) =>
-                              entry.value == documentsForDate.last
-                                  ? DocumentWidget(document: entry.value)
-                                  : Column(
-                                      children: [
-                                        DocumentWidget(document: entry.value),
-                                        Divider(),
-                                      ],
-                                    ))
-                          .toList(),
+                      children: [
+                        ListViewbuilder(documentsForDate: documentsForDate),
+                      ],
                     ),
-                    Divider(),
                   ],
                 );
               },
+
             ),
                           ),
                         ),
-            );
+                      );
           } else {
             return Center(
               child: Text('No data'),
@@ -346,6 +336,29 @@ final Map<String, List<Document>> groupedDocuments = {};
     ),
   );
 }
+}
+
+class ListViewbuilder extends StatelessWidget {
+  const ListViewbuilder({
+    super.key,
+    required this.documentsForDate,
+  });
+
+  final List<Document> documentsForDate;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      prototypeItem: DocumentWidget(document: documentsForDate[0]),
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: documentsForDate.length,
+      itemBuilder: (context, index) {
+        final document = documentsForDate[index];
+        return DocumentWidget(document: document);
+      },
+    );
+  }
 }
 
 class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
