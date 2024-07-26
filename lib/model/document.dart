@@ -5,6 +5,7 @@ class Document {
   final double precipitationProbability;
   final String time;
   final double windSpeed;
+  final String symbolCode;
 
   Document({
     required this.airTemperature,
@@ -13,6 +14,7 @@ class Document {
     required this.precipitationProbability,
     required this.time,
     required this.windSpeed,
+    required this.symbolCode,
   });
 
   factory Document.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class Document {
       //strip the seconds from the time
       time: json['time'].substring(0, 5),
       windSpeed: json['wind_speed'],
+      symbolCode: json['symbol_code'],
     );
   }
 }

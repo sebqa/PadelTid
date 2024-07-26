@@ -30,28 +30,46 @@ class DocumentWidget extends StatelessWidget {
     sizeCanvas: Size(MediaQuery.of(context).size.width-20, 30),
     isLeftCornerGradient: true,
     colors: [
-      Color(0xffff8a65),
+      Color(0xff283593),
 Color(0xff283593),
 ],
     children: [
-      SunWidget(
-                                          sunConfig: SunConfig(
-                                            width: 150,
-                                            blurSigma: 10.0,
-                                            blurStyle: BlurStyle.solid,
-                                            isLeftLocation: false,
-                                            coreColor: Color(0xffffa726),
-                                            midColor: Color(0xd6ffee58),
-                                            outColor: Color(0xffff9800),
-                                            animMidMill: 2000,
-                                            animOutMill: 1800,
-                                          ),
-                                        ),
-                                      
+      document.symbolCode == 'fair_day'
+        ? SunWidget(
+            sunConfig: SunConfig(
+              width: 150,
+              blurSigma: 10.0,
+              blurStyle: BlurStyle.solid,
+              isLeftLocation: false,
+              coreColor: Color(0xffffa726),
+              midColor: Color(0xd6ffee58),
+              outColor: Color(0xffff9800),
+              animMidMill: 2000,
+              animOutMill: 1800,
+            ),
+          )
+        : document.symbolCode == 'cloudy'
+            ? CloudWidget(
+                cloudConfig: CloudConfig(
+                  size: 100, color: Color(0xaaffffff), icon: IconData(63056, fontFamily: 'MaterialIcons'), widgetCloud: null, x: 70, y: 5, scaleBegin: 1, scaleEnd: 1.1, scaleCurve: Cubic(0.40, 0.00, 0.20, 1.00), slideX: 11, slideY: 5, slideDurMill: 2000, slideCurve: Cubic(0.40, 0.00, 0.20, 1.00)),
+                
+              )
+              : document.symbolCode == 'partlycloudy_day'
+            ? CloudWidget(
+                cloudConfig: CloudConfig(
+                  size: 50, color: Color(0xaaffffff), icon: IconData(63056, fontFamily: 'MaterialIcons'), widgetCloud: null, x: 120, y: 5, scaleBegin: 1, scaleEnd: 1.1, scaleCurve: Cubic(0.40, 0.00, 0.20, 1.00), slideX: 11, slideY: 5, slideDurMill: 2000, slideCurve: Cubic(0.40, 0.00, 0.20, 1.00)),
+                
+              )
+            : Container(),
+
                                       Column(
                                       children: [  
                                            Theme(
                                             data: Theme.of(context).copyWith(
+                                              textTheme: TextTheme(
+                                                titleMedium: TextStyle(fontSize: 18,
+                                                    color: Colors.white),
+                                              ),
                                             iconTheme: IconThemeData(
                                               color: Colors.white,
                                             ),),
