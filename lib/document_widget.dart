@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
-import 'package:adv_flutter_weather/flutter_weather_bg.dart';
-
-
 
 class DocumentWidget extends StatelessWidget {
   const DocumentWidget({
@@ -14,30 +11,14 @@ class DocumentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    WeatherType weatherType;
-    
-    if (document.precipitationProbability == 0) {
-      weatherType = WeatherType.sunny;
-    } else if (document.precipitationProbability >= 1 && document.precipitationProbability <= 10) {
-      weatherType = WeatherType.cloudy;
-    } else if (document.precipitationProbability >= 20 && document.precipitationProbability <= 50) {
-      weatherType = WeatherType.lightRainy;
-       } else if (document.precipitationProbability >= 60 && document.precipitationProbability <= 70) {
-      weatherType = WeatherType.lightRainy;
-    } else {
-      weatherType = WeatherType.heavyRainy;
-    }
-    
-                                  return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: ClipPath(
-        child: Stack(
-          children: [
-            WeatherBg(
-              weatherType: weatherType,
-              width: MediaQuery.of(context).size.width,
-              height: 100,
-            ),Column(
+                                  return Theme(
+                                    data: ThemeData(
+                                      textTheme: TextTheme(
+                                        titleMedium: TextStyle(fontSize: 18,
+                                            color: Theme.of(context).colorScheme.onPrimaryContainer),
+                                      )
+                                    ),
+                                    child: Column(
                                       children: [
                                         ListTile(
                                           title: Row(
@@ -96,9 +77,6 @@ class DocumentWidget extends StatelessWidget {
                                         ),
                                       ],
                                     ),
-          ],
-        ),
-      ),
                                   );
                                 }
 
