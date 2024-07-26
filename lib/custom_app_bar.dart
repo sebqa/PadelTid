@@ -9,9 +9,8 @@ class CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverAppBar(
       backgroundColor: Theme.of(context).colorScheme.tertiary,
-                title:  Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                title: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Baseline(
                     baselineType: TextBaseline.alphabetic,
@@ -41,7 +40,7 @@ class CustomAppBar extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
+              
             ),
             elevation: 0,
                 );
