@@ -180,7 +180,7 @@ ColorScheme darkThemeColors(context) {
   return const ColorScheme(
     brightness: Brightness.light,
     primary: Color(0xFFFFFFFF),
-    onPrimary: Color(0xFF000000),
+    onPrimary: Color.fromARGB(255, 74, 73, 73),
     secondary: Color(0xFFBBBBBB),
     onSecondary: Color(0xFFEAEAEA),
     tertiary: Color(0xFFFF7F07),
@@ -211,8 +211,8 @@ ColorScheme darkThemeColors(context) {
     home: Scaffold(
       
       floatingActionButton: FloatingActionButton(
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                        backgroundColor: Colors.white,
+                        foregroundColor: Color(0xFFFF7F07),
                         child: const Icon(Icons.tune),
                         onPressed: showSettingsDialog,
 
