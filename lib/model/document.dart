@@ -20,8 +20,12 @@ class Document {
       airTemperature: json['air_temperature'],
       availableSlots: json['available_slots'],
       date: json['date'],
+      //if precipitationProbability is 0 then set to 0.0
+      //if not 0 then set to the original value
+      
       precipitationProbability: json['precipitation_probability'],
-      time: json['time'],
+      //strip the seconds from the time
+      time: json['time'].substring(0, 5),
       windSpeed: json['wind_speed'],
     );
   }

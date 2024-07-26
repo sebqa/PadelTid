@@ -12,7 +12,7 @@ class RecommendedDocumentsListView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(0),
       child: Container(
-        color: Theme.of(context).colorScheme.primaryContainer,
+        
         child: SizedBox(
           child: ListView.separated(
             scrollDirection: Axis.horizontal,

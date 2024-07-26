@@ -6,7 +6,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'custom_app_bar.dart';
 import 'document_widget.dart';
+import 'recommended_lv_holder.dart';
 
 class HomePage extends StatefulWidget {
   final SharedPreferences prefs;
@@ -23,7 +25,7 @@ class _HomePageState extends State<HomePage> {
 
   double windSpeedThreshold = 4.0;
   double precipitationProbabilityThreshold = 10.0;
-  bool showUnavailableSlots = false;
+  bool showUnavailableSlots = true;
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
   late SharedPreferences prefs; // Declare prefs as late
@@ -171,6 +173,7 @@ ColorScheme darkThemeColors(context) {
     onPrimary: Color(0xFF000000),
     secondary: Color(0xFFBBBBBB),
     onSecondary: Color(0xFFEAEAEA),
+    tertiary: Color.fromARGB(255, 255, 127, 7),
     error: Color(0xFFF32424),
     onError: Color(0xFFF32424),
     background: Color(0xFF202020),
@@ -210,67 +213,11 @@ ColorScheme darkThemeColors(context) {
         physics: const AlwaysScrollableScrollPhysics(),
 
         slivers: [
-                    SliverAppBar(
-            title:  Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Baseline(
-                baselineType: TextBaseline.alphabetic,
-                baseline: 28.0, // Adjust this value as needed
-                child: Text(
-                  'PADEL',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.normal,
-                    fontFamily: 'Roboto',
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-              Baseline(
-                baselineType: TextBaseline.alphabetic,
-                baseline: 28.0, // Same baseline value
-                child: Text(
-                  'TID',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.normal,
-                    fontFamily: 'Roboto',
-                    color: Theme.of(context).colorScheme.primary,
-
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        elevation: 0,
-            ),
-
-          
+          CustomAppBar(),
           SliverToBoxAdapter(
             
-            child: Container(
-              
-              child: Column(
-                children: [
-                  Text('Recommended Timeslots'),
-                  SizedBox(
-                      height: 120, // Set the height of the horizontal ListView
-                      child: documents != null
-                          ? RecommendedDocumentsListView(
-                              recommendedDocuments: documents,
-                            )
-                          : CircularProgressIndicator(
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                    ),
-                  
-
-                ],
-              ),
-            ),
+            child: recommended_lv_holder(documents: documents),
+            
           ),
           SliverList(
   delegate: SliverChildBuilderDelegate(
@@ -345,7 +292,9 @@ final Map<String, List<Document>> groupedDocuments = {};
                       subtitle: Text('${documentsForDate.length} timeslots'),
                       title: Row(
                         children: [
-                          Icon(Icons.calendar_today),
+                          Icon(
+                            color: Theme.of(context).colorScheme.tertiary,
+                            Icons.calendar_today),
                           Text(' $formattedDate'),
                         ],
                       ),
