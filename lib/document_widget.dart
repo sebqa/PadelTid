@@ -13,31 +13,14 @@ class DocumentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-                                  return Theme(
-                                            data: Theme.of(context).copyWith(
-                                              textTheme: TextTheme(
-                                                titleMedium: TextStyle(fontSize: 18,
-                                                    color: Colors.white),
-                                              ),
-                                            iconTheme: IconThemeData(
-                                              color: Colors.white,
-                                            ),),
-                                            
-                                          
-                                          child: ListTile(
-                                            
+                                  return ListTile(
                                             leading: Text(
                                               '${document.time}',
                                               //make text black with a white stroke
                                               style: TextStyle(
                                                 fontSize: 26.0,
-                                          
-                                              
-                                              ),
-                                          
-                                             
-                                          
-                                                                                     
+                                                color: Theme.of(context).colorScheme.onPrimary,
+                                              ),                           
                                             ),
                                             title: Row(
                                               mainAxisAlignment: MainAxisAlignment.end,
@@ -82,7 +65,7 @@ class DocumentWidget extends StatelessWidget {
                                                   ),
                                                 ],
                                             ),
-                                          ),
+                                          
                                   );
                                 }
 
