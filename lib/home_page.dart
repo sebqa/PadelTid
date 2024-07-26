@@ -80,13 +80,18 @@ class _HomePageState extends State<HomePage> {
   }
   void showSettingsDialog() {
     showDialog(
+      //call updateThresholds() when dialog is closed
+      barrierDismissible: false,
+
       context: context,
       builder: (BuildContext context) {
+        
           final ThemeData theme = Theme.of(context);
   final ColorScheme colorScheme = theme.colorScheme;
   Color sliderColor = colorScheme.secondary;
         return StatefulBuilder(
           builder: (context, state) => AlertDialog(
+
             title: Text('Adjust Thresholds'),
             content: SingleChildScrollView(
               child: ListBody(
@@ -104,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                           state(() {
                             windSpeedThreshold = value;
                           });
-                          updateThresholds();
+                          
                         },
                       ),
                     ],
@@ -122,7 +127,6 @@ class _HomePageState extends State<HomePage> {
                           state(() {
                             precipitationProbabilityThreshold = value;
                           });
-                          updateThresholds();
                         },
                       ),
 
@@ -137,7 +141,6 @@ class _HomePageState extends State<HomePage> {
                           if (newValue != null) {
                             state(() {
                               showUnavailableSlots = newValue;
-                              updateThresholds();
                             });
                           }
                         },
@@ -153,6 +156,7 @@ class _HomePageState extends State<HomePage> {
               TextButton(
                 child: Text('Close'),
                 onPressed: () {
+                  updateThresholds();
                   Navigator.of(context).pop();
                 },
               ),
