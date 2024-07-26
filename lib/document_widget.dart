@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
+import 'package:weather_animation/weather_animation.dart';
 
 class DocumentWidget extends StatelessWidget {
   const DocumentWidget({
@@ -19,63 +20,64 @@ class DocumentWidget extends StatelessWidget {
 
                                       )
                                     ),
+                                    
                                     child: Column(
-                                      children: [
+                                      children: [  
                                         ListTile(
-                                          title: Row(
-                                            children: [
-                                              Icon(Icons.schedule),
-                                              Text(' ${document.time}'),
-                                            ],
+                                          
+                                          leading: Text(
+                                            '${document.time}',
+                                            style: TextStyle(fontSize: 24),
                                           ),
-                                          subtitle: Row(
-                                            mainAxisAlignment: MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment
-                                                    .start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.air),
-                                                      Text(' ${document
-                                                          .windSpeed} m/s'),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons
-                                                          .thermostat_outlined),
-                                                      Text(' ${document
-                                                          .airTemperature}°C'),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment
-                                                    .start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.umbrella),
-                                                      Text(' ${document
-                                                          .precipitationProbability}%'),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.calendar_today),
-                                                      Text(' ${document
-                                                          .availableSlots ?? "0"}'),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                                          title: SizedBox(
+                                            width: 200,
+                                            child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                              children: [
+                                                Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                            
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Text(' ${document.windSpeed} m/s '),
+                                                        Icon(Icons.air),
+
+                                                      ],
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        Text(' ${document.airTemperature}°C '),
+                                                        Icon(Icons.thermostat_outlined),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                                Padding(padding: EdgeInsets.only(left: 24.0)),
+                                                Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                            
+                                                  children: [
+                                                    
+                                                    Row(
+                                                      children: [
+                                                        Text(' ${document.precipitationProbability}%'),
+                                                        Icon(Icons.umbrella),
+                                                      ],
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        Text(' ${document.availableSlots} '),
+                                                        Icon(Icons.sports_baseball),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
+                                        
                                       ],
                                     ),
                                   );
