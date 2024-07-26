@@ -16,6 +16,7 @@ class DocumentWidget extends StatelessWidget {
                                       textTheme: TextTheme(
                                         titleMedium: TextStyle(fontSize: 18,
                                             color: Theme.of(context).colorScheme.onPrimaryContainer),
+
                                       )
                                     ),
                                     child: Column(
