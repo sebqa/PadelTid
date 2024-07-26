@@ -21,64 +21,113 @@ class DocumentWidget extends StatelessWidget {
                                       )
                                     ),
                                     
-                                    child: Column(
-                                      children: [  
-                                        ListTile(
-                                          
-                                          leading: Text(
-                                            '${document.time}',
-                                            style: TextStyle(fontSize: 24),
+                                    child: Stack(
+                                      children:[ SizedBox(
+                                        width: MediaQuery.of(context).size.width,
+                                        height: 70.0,
+                                        child: 
+                                        WrapperScene(
+    sizeCanvas: Size(MediaQuery.of(context).size.width-20, 30),
+    isLeftCornerGradient: true,
+    colors: [
+      Color(0xffff8a65),
+Color(0xff283593),
+],
+    children: [
+      SunWidget(
+                                          sunConfig: SunConfig(
+                                            width: 150,
+                                            blurSigma: 10.0,
+                                            blurStyle: BlurStyle.solid,
+                                            isLeftLocation: false,
+                                            coreColor: Color(0xffffa726),
+                                            midColor: Color(0xd6ffee58),
+                                            outColor: Color(0xffff9800),
+                                            animMidMill: 2000,
+                                            animOutMill: 1800,
                                           ),
-                                          title: SizedBox(
-                                            width: 200,
-                                            child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                        ),
+                                      
+                                      Column(
+                                      children: [  
+                                           Theme(
+                                            data: Theme.of(context).copyWith(
+                                            iconTheme: IconThemeData(
+                                              color: Colors.white,
+                                            ),),
                                             
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Text(' ${document.windSpeed} m/s '),
-                                                        Icon(Icons.air),
-
-                                                      ],
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        Text(' ${document.airTemperature}°C '),
-                                                        Icon(Icons.thermostat_outlined),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                                Padding(padding: EdgeInsets.only(left: 24.0)),
-                                                Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                          
+                                          child: ListTile(
                                             
-                                                  children: [
-                                                    
-                                                    Row(
-                                                      children: [
-                                                        Text(' ${document.precipitationProbability}%'),
-                                                        Icon(Icons.umbrella),
-                                                      ],
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        Text(' ${document.availableSlots} '),
-                                                        Icon(Icons.sports_baseball),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                            leading: Text(
+                                              '${document.time}',
+                                              //make text black with a white stroke
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.primary,
+                                                fontSize: 26.0,
+                                          
+                                              
+                                              ),
+                                          
+                                             
+                                          
+                                                                                     
+                                            ),
+                                            title: Row(
+                                              mainAxisAlignment: MainAxisAlignment.end,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                              
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          Text(' ${document.windSpeed} m/s '),
+                                                          Icon(Icons.air),
+                                          
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          Text(' ${document.airTemperature}°C '),
+                                                          Icon(Icons.thermostat_outlined),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Padding(padding: EdgeInsets.only(left: 24.0)),
+                                                  Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                                    children: [
+                                                      
+                                                      Row(
+                                                        children: [
+                                                          Text(' ${document.precipitationProbability}%'),
+                                                          Icon(Icons.umbrella),
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          Text(' ${document.availableSlots} '),
+                                                          Icon(Icons.sports_baseball),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
                                             ),
                                           ),
                                         ),
                                         
                                       ],
+                                    ),
+
+                                        
+                                        
+                                      ],
+                                    ),
+                                  ),
+                                    ],
                                     ),
                                   );
                                 }

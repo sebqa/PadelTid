@@ -27,12 +27,8 @@ class recommended_lv_holder extends StatelessWidget {
       
       child: Column(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
               Padding(padding: EdgeInsets.only(left: 8.0)),
               Container(
-                
                 child: Text(
                   'Recommended',
                   style: TextStyle(
@@ -41,8 +37,7 @@ class recommended_lv_holder extends StatelessWidget {
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-              ),
-            ],
+              
           ),
     
           SizedBox(
