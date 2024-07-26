@@ -183,7 +183,7 @@ ColorScheme darkThemeColors(context) {
     onPrimary: Color(0xFF000000),
     secondary: Color(0xFFBBBBBB),
     onSecondary: Color(0xFFEAEAEA),
-    tertiary: Color.fromARGB(255, 255, 127, 7),
+    tertiary: Color(0xFFFF7F07),
     error: Color(0xFFF32424),
     onError: Color(0xFFF32424),
     background: Color(0xFF202020),
@@ -349,7 +349,8 @@ class ListViewbuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      prototypeItem: DocumentWidget(document: documentsForDate[0]),
+      prototypeItem:  DocumentWidget(document:Document(airTemperature: 10.0,date: "", time: "", windSpeed: 10.0, precipitationProbability: 10.0,availableSlots: 10, symbolCode: "", )),
+
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       itemCount: documentsForDate.length,
