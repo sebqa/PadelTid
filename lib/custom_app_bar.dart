@@ -44,6 +44,13 @@ class CustomAppBar extends StatelessWidget {
               
             ),
             elevation: 0,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.settings),
+                onPressed: () {},
+              ),
+             
+            ],
                 );
   }
 }
