@@ -33,9 +33,9 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: any
-  http: ^0.13.3
+  http: 1.2.2
   shared_preferences: ^2.0.10
-  weather_animation: ^1.0.1
+  flutter_svg: ^2.0.10+1
 
 
 

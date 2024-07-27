@@ -14,15 +14,7 @@ class recommended_lv_holder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration:  BoxDecoration(
-        color: Theme.of(context).colorScheme.tertiary,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25), // Shadow color with opacity
-            spreadRadius: 1, // Spread radius
-            blurRadius: 4, // Blur radius
-            offset: Offset(0, -1), // Offset (x, y), negative y to have the shadow on top
-          ),
-        ],// Set your desired background color
+       
       ),
       
       child: Column(

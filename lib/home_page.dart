@@ -321,6 +321,7 @@ final Map<String, List<Document>> groupedDocuments = {};
                         ListViewbuilder(documentsForDate: documentsForDate),
                       ],
                     ),
+                    Divider(thickness: 0.5,)
                   ],
                 );
               },
@@ -357,9 +358,8 @@ class ListViewbuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      prototypeItem:  DocumentWidget(document:Document(airTemperature: 10.0,date: "", time: "", windSpeed: 10.0, precipitationProbability: 10.0,availableSlots: 10, symbolCode: "", )),
-
+    return ListView.separated(
+separatorBuilder: (context, index) => Divider(thickness: 0.5),
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       itemCount: documentsForDate.length,
@@ -392,3 +392,5 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     return false;
   }
 }
+
+
