@@ -8,6 +8,7 @@ class CustomAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
+      
       backgroundColor: Theme.of(context).colorScheme.tertiary,
                 title: Row(
                 mainAxisAlignment: MainAxisAlignment.start,

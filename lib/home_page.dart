@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'package:flutter/services.dart';
 import 'custom_app_bar.dart';
 import 'document_widget.dart';
 import 'recommended_lv_holder.dart';
@@ -191,6 +191,7 @@ ColorScheme darkThemeColors(context) {
     surface: Color(0xFFFFFFFF),
     onSurface: Color(0xFF000000),
   );
+  
 }
 
   return MaterialApp(
@@ -206,6 +207,14 @@ ColorScheme darkThemeColors(context) {
     title: 'PADELTID',
        theme: ThemeData.light().copyWith(
         colorScheme: darkThemeColors(context),
+        appBarTheme: AppBarTheme(
+          systemOverlayStyle: SystemUiOverlayStyle( //<-- SEE HERE
+        // Status bar color
+        statusBarColor: Theme.of(context).colorScheme.tertiary,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+        )
       ),
       
     home: Scaffold(
