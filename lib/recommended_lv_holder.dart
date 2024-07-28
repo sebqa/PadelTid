@@ -14,6 +14,7 @@ class recommended_lv_holder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration:  BoxDecoration(
+        color: Theme.of(context).colorScheme.primary,
        
       ),
       
@@ -26,7 +27,7 @@ class recommended_lv_holder extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: 'Roboto',
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
               

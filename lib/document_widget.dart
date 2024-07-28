@@ -100,7 +100,7 @@ class DocumentWidget extends StatelessWidget {
 
 
   static String getWeatherSymbolFromKey(String key) {
-    return weatherSymbolKeys[key] ?? '01d';
+    return weatherSymbolKeys[key] ?? 'null';
   }
 
   @override
