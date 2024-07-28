@@ -26,20 +26,24 @@ class _LocationSelectState extends State<LocationSelect> {
     return Row(
       children: [                    Icon(Icons.location_pin, color: Theme.of(context).colorScheme.onPrimary),
 
-        DropdownButton<String>(
-          hint: Text('Please choose a location'),
-          value: _selectedLocation,
-          onChanged: (newValue) {
-            setState(() {
-              _selectedLocation = newValue;
-            });
-          },
-          items: _locations.map((location) {
-            return DropdownMenuItem<String>(
-              child: Text(location),
-              value: location,
-            );
-          }).toList(),
+        ButtonTheme(
+          alignedDropdown: true,
+          child: DropdownButton<String>(
+                    underline: Text(''),
+          
+            value: _selectedLocation,
+            onChanged: (newValue) {
+              setState(() {
+                _selectedLocation = newValue;
+              });
+            },
+            items: _locations.map((location) {
+              return DropdownMenuItem<String>(
+                child: Text(location, style: TextStyle(fontSize: 12.0),),
+                value: location,
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
