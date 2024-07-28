@@ -114,7 +114,7 @@ class DocumentWidget extends StatelessWidget {
                                                   SizedBox(
                                                     width: 60,
                                                    child: SvgPicture.asset(
-                                                      'weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
+                                                      'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
                                                     ),
                                                   ),
                                                   Text(
