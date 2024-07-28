@@ -9,7 +9,7 @@ class CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverAppBar(
       
-      backgroundColor: Theme.of(context).colorScheme.tertiary,
+      backgroundColor: Theme.of(context).colorScheme.primary,
                 title: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -22,7 +22,7 @@ class CustomAppBar extends StatelessWidget {
     fontSize: 28,
     fontWeight: FontWeight.normal,
     fontFamily: 'Roboto',
-    color: Theme.of(context).colorScheme.primary,
+    color: Theme.of(context).colorScheme.onPrimary,
                       ),
                     ),
                   ),
@@ -35,22 +35,40 @@ class CustomAppBar extends StatelessWidget {
     fontSize: 28,
     fontWeight: FontWeight.normal,
     fontFamily: 'Roboto',
-    color: Theme.of(context).colorScheme.primary,
+    color: Theme.of(context).colorScheme.onPrimary,
     
                       ),
                     ),
                   ),
+                 
                 ],
               
             ),
             elevation: 0,
             actions: [
+              GestureDetector(
+                onTap: () {},
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Icon(Icons.location_pin, color: Theme.of(context).colorScheme.onPrimary),
+                    Text(
+                      ' Holbæk Pad..(+2)',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Roboto',
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                    Icon(Icons.arrow_drop_down, color: Theme.of(context).colorScheme.onPrimary),
+                  ],
+                ),
+              ),
               IconButton(
                 icon: Icon(Icons.settings),
                 onPressed: () {},
               ),
-             
             ],
-                );
+          );
   }
 }
