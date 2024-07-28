@@ -23,29 +23,32 @@ class _LocationSelectState extends State<LocationSelect> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [                    Icon(Icons.location_pin, color: Theme.of(context).colorScheme.onPrimary),
-
-        ButtonTheme(
-          alignedDropdown: true,
-          child: DropdownButton<String>(
-                    underline: Text(''),
-          
-            value: _selectedLocation,
-            onChanged: (newValue) {
-              setState(() {
-                _selectedLocation = newValue;
-              });
-            },
-            items: _locations.map((location) {
-              return DropdownMenuItem<String>(
-                child: Text(location, style: TextStyle(fontSize: 12.0),),
-                value: location,
-              );
-            }).toList(),
+    return SizedBox(
+      width: MediaQuery.of(context).size.width/2,
+      child: Row(
+        children: [                    Icon(Icons.location_pin, color: Theme.of(context).colorScheme.onPrimary),
+      
+          ButtonTheme(
+            alignedDropdown: true,
+            child: DropdownButton<String>(
+                      underline: Text(''),
+            isDense: true,
+              value: _selectedLocation,
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedLocation = newValue;
+                });
+              },
+              items: _locations.map((location) {
+                return DropdownMenuItem<String>(
+                  child: SizedBox(child: Text(location, style: TextStyle(fontSize: 12.0),overflow: TextOverflow.ellipsis,)),
+                  value: location,
+                );
+              }).toList(),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
 
     
