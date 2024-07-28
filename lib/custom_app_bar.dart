@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'location_select.dart';
+
 class CustomAppBar extends StatelessWidget {
   const CustomAppBar({
     super.key,
@@ -46,24 +48,8 @@ class CustomAppBar extends StatelessWidget {
             ),
             elevation: 0,
             actions: [
-              GestureDetector(
-                onTap: () {},
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Icon(Icons.location_pin, color: Theme.of(context).colorScheme.onPrimary),
-                    Text(
-                      ' Holbæk Pad..(+2)',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Roboto',
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                    Icon(Icons.arrow_drop_down, color: Theme.of(context).colorScheme.onPrimary),
-                  ],
-                ),
-              ),
+              LocationSelect(),
+              
               IconButton(
                 icon: Icon(Icons.settings),
                 onPressed: () {},
