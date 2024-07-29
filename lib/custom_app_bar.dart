@@ -49,8 +49,8 @@ class CustomAppBar extends StatelessWidget {
             elevation: 0,
             actions: [
               //Make LocationSelect adjust to the size of the screen
-              LocationSelect(),
-              
+              //LocationSelect(),
+              MultiSelectSearchRequestDropdown(),
               IconButton(
                 icon: Icon(Icons.settings),
                 onPressed: () {},
