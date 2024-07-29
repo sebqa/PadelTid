@@ -23,8 +23,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
  
 
-  double windSpeedThreshold = 4.0;
-  double precipitationProbabilityThreshold = 10.0;
+  double windSpeedThreshold = 50.0;
+  double precipitationProbabilityThreshold = 100.0;
   bool showUnavailableSlots = true;
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
@@ -34,22 +34,17 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     prefs = widget.prefs;
-    fetchDocuments(windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots).then((value) {
-      setState(() {
-        documents = value;
-      });
-    });
+    
+     windSpeedThreshold = widget.prefs.getDouble('windSpeedThreshold') ?? 50.0;
+     precipitationProbabilityThreshold =
+        widget.prefs.getDouble('precipitationProbabilityThreshold') ?? 100.0;
+     showUnavailableSlots =
+        widget.prefs.getBool('showUnavailableSlots') ?? true;
+    
   }
 
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
-    final windSpeedThreshold = widget.prefs.getDouble('windSpeedThreshold') ?? 4.0;
-    final precipitationProbabilityThreshold =
-        widget.prefs.getDouble('precipitationProbabilityThreshold') ?? 10.0;
-    final showUnavailableSlots =
-        widget.prefs.getBool('showUnavailableSlots') ?? false;
-
-
     final url = Uri.parse(
         'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=$windSpeedThreshold&precipitation_probability_threshold=$precipitationProbabilityThreshold&showUnavailableSlots=$showUnavailableSlots');
     final response = await http.get(url);
@@ -64,12 +59,13 @@ class _HomePageState extends State<HomePage> {
   void updateThresholds() async {
 
     try {
-      prefs.setDouble('windSpeedThreshold', windSpeedThreshold);
-      prefs.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
-      prefs.setBool('showUnavailableSlots', showUnavailableSlots);
+     
 
       final fetchedDocuments = await fetchDocuments(
           windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots);
+           prefs.setDouble('windSpeedThreshold', windSpeedThreshold);
+      prefs.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
+      prefs.setBool('showUnavailableSlots', showUnavailableSlots);
       setState(() {
         documents = fetchedDocuments;
       });
@@ -235,7 +231,19 @@ ColorScheme darkThemeColors(context) {
           CustomAppBar(),
           SliverToBoxAdapter(
             
-            child: recommended_lv_holder(documents: documents),
+            child: 
+            FutureBuilder<List<Document>>(
+              future: fetchDocuments(4.0, 10.0, false),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  return recommended_lv_holder(documents: snapshot.data!);
+                }
+              },
+            ),
             
           ),
           SliverList(
