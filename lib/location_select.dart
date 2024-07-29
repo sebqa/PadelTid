@@ -1,57 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:animated_custom_dropdown/custom_dropdown.dart';
+import 'package:flutter_application_1/model/location.dart';
 
-class LocationSelect extends StatefulWidget {
-  const LocationSelect({super.key});
+  final List<Location> _list = [
+    Location(name: 'Holbæk Padel Klub', latitude: 52.370216, longitude: 12.739917),
+    Location(name: 'Racket Club Roskilde', latitude: 52.370216, longitude: 12.739917),
+    Location(name: 'Mørkøv Padel Klub', latitude: 52.370216, longitude: 12.739917),
+  ];
 
-  @override
-  State<LocationSelect> createState() => _LocationSelectState();
+
+Future<List<Location>> _getFakeRequestData(String query) async {
+  return await Future.delayed(const Duration(seconds: 1), () {
+    return _list.where((e) {
+      return e.name.toLowerCase().contains(query.toLowerCase());
+    }).toList();
+  });
 }
 
-class _LocationSelectState extends State<LocationSelect> {
-  String? _selectedLocation;
-  final List<String> _locations = ['Holbæk Padel Klub', 'Racket Club Roskilde', 'Mørkøv Padel Klub'];
+class SearchRequestDropdown extends StatelessWidget {
+  const SearchRequestDropdown({Key? key}) : super(key: key);
 
   @override
-  State<LocationSelect> createState() => _LocationSelectState();
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedLocation = _locations[0];
+  Widget build(BuildContext context) {
+    return CustomDropdown<Location>.searchRequest(
+      futureRequest: _getFakeRequestData,
+      hintText: 'Search job role',
+      onChanged: (value) {
+        print('SearchRequestDropdown onChanged value: $value');
+      },
+      searchRequestLoadingIndicator: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(12.0),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+    );
   }
+}
 
+class MultiSelectSearchRequestDropdown extends StatelessWidget {
+  const MultiSelectSearchRequestDropdown({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width/2,
-      child: Row(
-        children: [                    Icon(Icons.location_pin, color: Theme.of(context).colorScheme.onPrimary),
-      
-          ButtonTheme(
-            alignedDropdown: true,
-            child: DropdownButton<String>(
-                      underline: Text(''),
-            isDense: true,
-              value: _selectedLocation,
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedLocation = newValue;
-                });
-              },
-              items: _locations.map((location) {
-                return DropdownMenuItem<String>(
-                  child: SizedBox(child: Text(location, style: TextStyle(fontSize: 12.0),overflow: TextOverflow.ellipsis,)),
-                  value: location,
-                );
-              }).toList(),
-            ),
-          ),
+      width: 200,
+      height: 50,
+      child: CustomDropdown<Location>.multiSelectSearchRequest(
+        futureRequest: _getFakeRequestData,
+        initialItems: const [
+          Location(name: 'Racket Club Roskilde', latitude: 52.370216, longitude: 12.739917),
         ],
+        onListChanged: (value) {
+          print('MultiSelectSearchDropdown onChanged value: $value');
+        },
       ),
     );
-
-    
   }
-
 }
