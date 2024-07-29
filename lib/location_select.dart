@@ -23,6 +23,16 @@ class SearchRequestDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomDropdown<Location>.searchRequest(
+      excludeSelected: false,
+       headerBuilder: (context, selectedItem, enabled) {
+        return Text(
+          selectedItem.toString(),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        );
+      },
       futureRequest: _getFakeRequestData,
       hintText: 'Search job role',
       onChanged: (value) {
@@ -44,15 +54,22 @@ class MultiSelectSearchRequestDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 200,
+      width: 150,
       height: 50,
       child: CustomDropdown<Location>.multiSelectSearchRequest(
         futureRequest: _getFakeRequestData,
-        initialItems: const [
-          Location(name: 'Racket Club Roskilde', latitude: 52.370216, longitude: 12.739917),
-        ],
+        listItemBuilder: (context, item, isSelected, onItemSelect) {
+        return Text(
+          item.toString(),
+          style: const TextStyle(fontSize: 10),
+        );
+      },
+        
         onListChanged: (value) {
-          print('MultiSelectSearchDropdown onChanged value: $value');
+          //do something with the value
+          print('MultiSelectSearchRequestDropdown onListChanged value: $value');
+
+          
         },
       ),
     );
