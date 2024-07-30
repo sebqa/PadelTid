@@ -212,7 +212,7 @@ ColorScheme darkThemeColors(context) {
       ),
         ),
         textTheme: TextTheme(
-          bodySmall: TextStyle(color: darkThemeColors(context).onPrimary, fontSize: 11, fontFamily: 'Roboto', fontWeight: FontWeight.w300),
+          bodySmall: TextStyle(color: darkThemeColors(context).onPrimary, fontSize: 12, fontFamily: 'Roboto', fontWeight: FontWeight.w300),
         )
       ),
       
