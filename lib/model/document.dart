@@ -20,7 +20,7 @@ class Document {
   factory Document.fromJson(Map<String, dynamic> json) {
     return Document(
       airTemperature: json['air_temperature'],
-      availableSlots: json['available_slots'],
+      availableSlots: json.containsKey('available_slots') ? json['available_slots'] : 0,
       date: json['date'],
       //if precipitationProbability is 0 then set to 0.0
       //if not 0 then set to the original value
