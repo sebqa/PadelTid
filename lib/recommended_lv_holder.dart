@@ -20,7 +20,8 @@ class recommended_lv_holder extends StatelessWidget {
       
       child: Column(
         children: [
-              Padding(padding: EdgeInsets.only(left: 8.0)),
+                    Padding(padding: EdgeInsets.all(10.0),),
+
               Container(
                 child: Text(
                   'Recommended',
@@ -34,7 +35,7 @@ class recommended_lv_holder extends StatelessWidget {
           ),
     
           SizedBox(
-              height: 120, // Set the height of the horizontal ListView
+              height: 100, // Set the height of the horizontal ListView
               child: documents != null
                   ? RecommendedDocumentsListView(
                       recommendedDocuments: documents,

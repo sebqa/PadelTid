@@ -17,61 +17,38 @@ Future<List<Location>> _getFakeRequestData(String query) async {
   });
 }
 
-class SearchRequestDropdown extends StatelessWidget {
-  const SearchRequestDropdown({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomDropdown<Location>.searchRequest(
-      excludeSelected: false,
-       headerBuilder: (context, selectedItem, enabled) {
-        return Text(
-          selectedItem.toString(),
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-        );
-      },
-      futureRequest: _getFakeRequestData,
-      hintText: 'Search job role',
-      onChanged: (value) {
-        print('SearchRequestDropdown onChanged value: $value');
-      },
-      searchRequestLoadingIndicator: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(12.0),
-          child: CircularProgressIndicator(),
-        ),
-      ),
-    );
-  }
-}
 
 class MultiSelectSearchRequestDropdown extends StatelessWidget {
   const MultiSelectSearchRequestDropdown({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 150,
-      height: 50,
-      child: CustomDropdown<Location>.multiSelectSearchRequest(
-        futureRequest: _getFakeRequestData,
-        listItemBuilder: (context, item, isSelected, onItemSelect) {
-        return Text(
-          item.toString(),
-          style: const TextStyle(fontSize: 10),
-        );
-      },
+    return  SizedBox(
+        width:250,
+        height: 50,
         
-        onListChanged: (value) {
-          //do something with the value
-          print('MultiSelectSearchRequestDropdown onListChanged value: $value');
-
-          
+        child: CustomDropdown<Location>.multiSelectSearchRequest(
+          initialItems: [_list[0]],
+          futureRequest: _getFakeRequestData,
+          listItemBuilder: (context, item, isSelected, onItemSelect) {
+          return Row(
+            children: [
+              Checkbox(value: isSelected, onChanged:  null),
+              Text(
+                item.toString(),
+                style: const TextStyle(fontSize: 10),
+              ),
+            ],
+          );
         },
-      ),
-    );
+          
+          onListChanged: (value) {
+            //do something with the value
+            print('MultiSelectSearchRequestDropdown onListChanged value: $value');
+      
+            
+          },
+        ),
+      );
   }
 }

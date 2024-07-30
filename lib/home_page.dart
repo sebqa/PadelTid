@@ -206,10 +206,13 @@ ColorScheme darkThemeColors(context) {
         appBarTheme: AppBarTheme(
           systemOverlayStyle: SystemUiOverlayStyle( //<-- SEE HERE
         // Status bar color
-        statusBarColor: Theme.of(context).colorScheme.tertiary,
+        statusBarColor: darkThemeColors(context).tertiary,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
+        ),
+        textTheme: TextTheme(
+          bodySmall: TextStyle(color: darkThemeColors(context).onPrimary, fontSize: 11, fontFamily: 'Roboto', fontWeight: FontWeight.w300),
         )
       ),
       
@@ -236,7 +239,10 @@ ColorScheme darkThemeColors(context) {
               future: fetchDocuments(4.0, 10.0, false),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return SizedBox(
+                      height: 50,
+                      width: 50,
+                      child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 } else {
@@ -278,6 +284,7 @@ final Map<String, List<Document>> groupedDocuments = {};
 
             return Container(
                           decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
@@ -287,7 +294,7 @@ final Map<String, List<Document>> groupedDocuments = {};
                                   topLeft: Radius.circular(16.0),
                                   topRight: Radius.circular(16.0),
                                 ),
-                                color: Theme.of(context).colorScheme.primaryContainer,
+                                color: Theme.of(context).colorScheme.primary,
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.25), // Shadow color with opacity
