@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
     final url = Uri.parse(
-        'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=$windSpeedThreshold&precipitation_probability_threshold=$precipitationProbabilityThreshold&showUnavailableSlots=$showUnavailableSlots');
+        'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=$windSpeed&precipitation_probability_threshold=$precipitationProbability&showUnavailableSlots=$showUnavailableSlots');
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
