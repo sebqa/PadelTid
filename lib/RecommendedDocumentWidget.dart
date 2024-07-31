@@ -184,6 +184,6 @@ String _getDisplayDate(String dateStr) {
   } else if (date.year == now.year && date.month == now.month && date.day == now.day + 1) {
     return 'Tomorrow';
   } else {
-    return '${date.day}/${date.month}/${date.year}';
+    return '${date.day}/${date.month}';
   }
 }
