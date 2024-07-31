@@ -1,5 +1,7 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
+import 'package:flutter_application_1/model/location.dart';
 import 'package:flutter_application_1/recommended_documents_lv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -26,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   double windSpeedThreshold = 50.0;
   double precipitationProbabilityThreshold = 100.0;
   bool showUnavailableSlots = true;
+  List<Location> locations = [];
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
   late SharedPreferences prefs; // Declare prefs as late
@@ -76,18 +79,11 @@ class _HomePageState extends State<HomePage> {
   }
   void showSettingsDialog() {
     showDialog(
-      //call updateThresholds() when dialog is closed
       barrierDismissible: false,
-
       context: context,
-      builder: (BuildContext context) {
-        
-          final ThemeData theme = Theme.of(context);
-  final ColorScheme colorScheme = theme.colorScheme;
-  Color sliderColor = colorScheme.secondary;
+      builder: (BuildContext buildcontext) {
         return StatefulBuilder(
-          builder: (context, state) => AlertDialog(
-
+          builder: (buildcontext, state) => AlertDialog(
             title: Text('Adjust Thresholds'),
             content: SingleChildScrollView(
               child: ListBody(
@@ -100,7 +96,6 @@ class _HomePageState extends State<HomePage> {
                         min: 0,
                         max: 50,
                         divisions: 50,
-                        activeColor: sliderColor,
                         onChanged: (double value) {
                           state(() {
                             windSpeedThreshold = value;
@@ -118,7 +113,6 @@ class _HomePageState extends State<HomePage> {
                         min: 0,
                         max: 100,
                         divisions: 100,
-                        activeColor: sliderColor,
                         onChanged: (double value) {
                           state(() {
                             precipitationProbabilityThreshold = value;
@@ -191,6 +185,8 @@ ColorScheme darkThemeColors(context) {
 }
 
   return MaterialApp(
+      scrollBehavior: MyCustomScrollBehavior(),
+
     
     localizationsDelegates: [
       GlobalMaterialLocalizations.delegate,
@@ -204,12 +200,21 @@ ColorScheme darkThemeColors(context) {
        theme: ThemeData.light().copyWith(
         colorScheme: darkThemeColors(context),
         appBarTheme: AppBarTheme(
-          systemOverlayStyle: SystemUiOverlayStyle( //<-- SEE HERE
+          systemOverlayStyle: SystemUiOverlayStyle( 
         // Status bar color
         statusBarColor: darkThemeColors(context).tertiary,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
+        ),
+        sliderTheme: SliderThemeData(
+          activeTrackColor: darkThemeColors(context).tertiary,
+          inactiveTrackColor: darkThemeColors(context).onPrimary,
+          thumbColor: darkThemeColors(context).tertiary,
+          thumbShape: RoundSliderThumbShape(enabledThumbRadius: 10.0),
+          overlayShape: RoundSliderOverlayShape(overlayRadius: 20.0),
+          overlayColor: darkThemeColors(context).onPrimary,
+          
         ),
         textTheme: TextTheme(
           bodySmall: TextStyle(color: darkThemeColors(context).onPrimary, fontSize: 12, fontFamily: 'Roboto', fontWeight: FontWeight.w300),
@@ -219,8 +224,8 @@ ColorScheme darkThemeColors(context) {
     home: Scaffold(
       
       floatingActionButton: FloatingActionButton(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Color(0xFFFF7F07),
+                        backgroundColor: darkThemeColors(context).primary,
+                        foregroundColor: darkThemeColors(context).tertiary,
                         child: const Icon(Icons.tune),
                         onPressed: showSettingsDialog,
 
@@ -239,10 +244,12 @@ ColorScheme darkThemeColors(context) {
               future: fetchDocuments(4.0, 10.0, false),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SizedBox(
-                      height: 50,
-                      width: 50,
-                      child: CircularProgressIndicator());
+                  return Center(
+                    child: SizedBox(
+                        height: 50,
+                        width: 50,
+                        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary,)),
+                  );
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 } else {
@@ -260,7 +267,7 @@ ColorScheme darkThemeColors(context) {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.tertiary,),
             );
           } else if (snapshot.hasError) {
             return Center(
@@ -409,3 +416,11 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 
+class MyCustomScrollBehavior extends MaterialScrollBehavior {
+  // Override behavior methods and getters like dragDevices
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      };
+}

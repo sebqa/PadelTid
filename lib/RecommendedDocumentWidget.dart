@@ -102,7 +102,7 @@ static final weatherSymbolKeys = {
   Widget build(BuildContext context) {
     return Container(
 
-      width: 175  ,
+      width: MediaQuery.of(context).size.width/2.3,
       padding: EdgeInsets.all(8),
       child: Container(
         padding: EdgeInsets.all(8),
