@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/home_page.dart';
 import 'package:flutter_application_1/model/document.dart';
 
-class MainListView extends StatefulWidget {
-
+class MainListView extends StatelessWidget {
   const MainListView({
     super.key,
     required this.groupedDocuments,
@@ -13,13 +12,6 @@ class MainListView extends StatefulWidget {
 
   final Map<String, List<Document>> groupedDocuments;
   final List<String> weekdayName;
-
-  @override
-  State<MainListView> createState() => _MainListViewState();
-}
-
-class _MainListViewState extends State<MainListView> {
-  int selectedIndexExpansionTile = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -48,35 +40,23 @@ class _MainListViewState extends State<MainListView> {
                       child: ListView.builder(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      itemCount: widget.groupedDocuments.length,
+      itemCount: groupedDocuments.length,
       itemBuilder: (context, index) {
-        final date = widget.groupedDocuments.keys.toList()[index];
-        final documentsForDate = widget.groupedDocuments[date]!;
+        final date = groupedDocuments.keys.toList()[index];
+        final documentsForDate = groupedDocuments[date]!;
         final parsedDate = DateTime.parse(date);
     
                   documentsForDate.sort((a, b) => a.time.compareTo(b.time));
                   
-                  final formattedDate = '${widget.weekdayName[parsedDate
+                  final formattedDate = '${weekdayName[parsedDate
                       .weekday - 1]}, '
                       '${parsedDate.day}/${parsedDate
                       .month}/${parsedDate.year}';
         return Column(
           children: [
             ExpansionTile(
-                    initiallyExpanded: index == selectedIndexExpansionTile,
-                    key: Key(selectedIndexExpansionTile.toString()),
-                    onExpansionChanged: (newState) {
-                 
-                      if (newState) {
-                        selectedIndexExpansionTile = index;
-                      } else {
-                        selectedIndexExpansionTile = -1;
-                      }
-                      setState(() {});
-                    },
               shape: Border(),
               subtitle: Text('${documentsForDate.length} timeslots'),
-
               title: Row(
                 children: [
                   Icon(

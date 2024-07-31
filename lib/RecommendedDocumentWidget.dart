@@ -159,8 +159,8 @@ static final weatherSymbolKeys = {
               ],
             ),
             SizedBox(
-              width: 40,
-              height: 40,
+              width: 45,
+              height: 45,
               child: SvgPicture.asset(
                                                       'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
                                                     ),),
