@@ -51,7 +51,7 @@ class MainListView extends StatelessWidget {
                   final formattedDate = '${weekdayName[parsedDate
                       .weekday - 1]}, '
                       '${parsedDate.day}/${parsedDate
-                      .month}/${parsedDate.year}';
+                      .month}';
         return Column(
           children: [
             ExpansionTile(
