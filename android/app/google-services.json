@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1569540045",
+    "project_id": "padeltid-85e2b",
+    "storage_bucket": "padeltid-85e2b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1569540045:android:c63ec2db84205be38ca684",
+        "android_client_info": {
+          "package_name": "com.example.flutter_android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDatfswF6FpDuRo5_hA3_IjKxzz2NOlZKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
