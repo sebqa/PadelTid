@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/material.dart';
@@ -18,9 +19,6 @@ class _AuthGateState extends State<AuthGate> {
     bool _notificationsFollowing = true;
   @override
   Widget build(BuildContext context) {
-    //read the current user from firestore
-
-
 
     return Scaffold(
       appBar: AppBar(
@@ -70,7 +68,10 @@ class _AuthGateState extends State<AuthGate> {
             );
           }
       print(FirebaseAuth.instance.currentUser!.uid);
+
       final userId = FirebaseAuth.instance.currentUser!.uid;
+            setFCMToken(userId);
+
           return ProfileScreen(
             actions: [
               SignedOutAction(
@@ -141,9 +142,18 @@ class _AuthGateState extends State<AuthGate> {
       
     );
   }
+  
+  Future<void> setFCMToken(userId) async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    final fcmToken = await messaging.getToken(
+      vapidKey:
+          "BIrzD_lqpWDvg6nMYArPnCbQeg1nqkRT-K4LyCBHahJws-7xceAPI2dDegDA-09TfRt1pIgbtGGETxLas3rAJpw");
+  print(fcmToken);
+    updateUserSettings(userId, "device_token", fcmToken);
+  }
 }
 
-Future<void> updateUserSettings(String userId,String s, bool value) {
+Future<void> updateUserSettings(String userId,String s, dynamic value) {
 
     //firebasefirestore update or add if not existing
     return FirebaseFirestore.instance.collection('users')
