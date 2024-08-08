@@ -46,10 +46,16 @@ class _HomePageState extends State<HomePage> {
         sharedPreferences.getBool('showUnavailableSlots') ?? true;
   });
     
-
+changeStatusBarColor();
     
   }
-
+Future<void> changeStatusBarColor() async {
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      statusBarColor: Colors.white, // Change the color whatever you want
+    ),
+  );
+}
 
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
