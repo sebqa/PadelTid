@@ -207,14 +207,7 @@ ColorScheme darkThemeColors(context) {
     title: 'PADELTID',
        theme: ThemeData.light().copyWith(
         colorScheme: darkThemeColors(context),
-        appBarTheme: AppBarTheme(
-          systemOverlayStyle: SystemUiOverlayStyle( 
-        // Status bar color
-        statusBarColor: darkThemeColors(context).primaryContainer,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-      ),
-        ),
+       
         sliderTheme: SliderThemeData(
           activeTrackColor: darkThemeColors(context).tertiary,
           inactiveTrackColor: darkThemeColors(context).onPrimary,

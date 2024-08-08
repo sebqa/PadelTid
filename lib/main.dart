@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_application_1/services/notifications_services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'firebase_options.dart';
@@ -42,9 +43,16 @@ NotificationSettings settings = await messaging.requestPermission(
   }
 });
   //NotificationService().listenNotifications();
-
+changeStatusBarColor();
   runApp(MaterialApp(
     home: HomePage(),
     debugShowCheckedModeBanner: false,
   ));
+}
+Future<void> changeStatusBarColor() async {
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      statusBarColor: Colors.white, // Change the color whatever you want
+    ),
+  );
 }
