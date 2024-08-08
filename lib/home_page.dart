@@ -2,7 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/model/location.dart';
-import 'package:flutter_application_1/recommended_documents_lv.dart';
+import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
+import 'package:flutter_application_1/services/notifications_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -14,9 +15,8 @@ import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
 
 class HomePage extends StatefulWidget {
-  final SharedPreferences prefs;
 
-  HomePage({required this.prefs});
+  HomePage();
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -24,7 +24,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
- 
+
 
   double windSpeedThreshold = 50.0;
   double precipitationProbabilityThreshold = 100.0;
@@ -32,20 +32,24 @@ class _HomePageState extends State<HomePage> {
   List<Location> locations = [];
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
-  late SharedPreferences prefs; // Declare prefs as late
+  late SharedPreferences sharedPreferences; // Declare prefs as late
 
   @override
   void initState() {
     super.initState();
-    prefs = widget.prefs;
-    
-     windSpeedThreshold = widget.prefs.getDouble('windSpeedThreshold') ?? 50.0;
+     SharedPreferences.getInstance().then((prefs) {
+    setState(() => sharedPreferences = prefs);
+      windSpeedThreshold = sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
      precipitationProbabilityThreshold =
-        widget.prefs.getDouble('precipitationProbabilityThreshold') ?? 100.0;
+        sharedPreferences.getDouble('precipitationProbabilityThreshold') ?? 100.0;
      showUnavailableSlots =
-        widget.prefs.getBool('showUnavailableSlots') ?? true;
+        sharedPreferences.getBool('showUnavailableSlots') ?? true;
+  });
+    
+
     
   }
+
 
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
@@ -67,9 +71,9 @@ class _HomePageState extends State<HomePage> {
 
       final fetchedDocuments = await fetchDocuments(
           windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots);
-           prefs.setDouble('windSpeedThreshold', windSpeedThreshold);
-      prefs.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
-      prefs.setBool('showUnavailableSlots', showUnavailableSlots);
+           sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
+      sharedPreferences.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
+      sharedPreferences.setBool('showUnavailableSlots', showUnavailableSlots);
       setState(() {
         documents = fetchedDocuments;
       });
@@ -170,14 +174,15 @@ class _HomePageState extends State<HomePage> {
 ColorScheme darkThemeColors(context) {
   return const ColorScheme(
     brightness: Brightness.light,
-    primary: Color(0xFFFFFFFF),
-    onPrimary: Color.fromARGB(255, 74, 73, 73),
+    primary: Color(0xFFFF7F07),
+    primaryContainer: Color(0xFFFFFFFF),
+    onPrimary: Color(0xFFFFFFFF),
     secondary: Color(0xFFBBBBBB),
     onSecondary: Color(0xFFEAEAEA),
     tertiary: Color(0xFFFF7F07),
     error: Color(0xFFF32424),
-    onError: Color(0xFFF32424),
-    background: Color(0xFF202020),
+    onError: Color.fromARGB(255, 255, 255, 255),
+    background: Color(0xFFFFFFFF),
     onBackground: Color(0xFF505050),
     surface: Color(0xFFFFFFFF),
     onSurface: Color(0xFF000000),
@@ -193,6 +198,8 @@ ColorScheme darkThemeColors(context) {
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
+      FirebaseUILocalizations.delegate,
+
     ],
     supportedLocales: [
       Locale('en', 'US'),
@@ -203,7 +210,7 @@ ColorScheme darkThemeColors(context) {
         appBarTheme: AppBarTheme(
           systemOverlayStyle: SystemUiOverlayStyle( 
         // Status bar color
-        statusBarColor: darkThemeColors(context).tertiary,
+        statusBarColor: darkThemeColors(context).primaryContainer,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
@@ -218,15 +225,15 @@ ColorScheme darkThemeColors(context) {
           
         ),
         textTheme: TextTheme(
-          bodySmall: TextStyle(color: darkThemeColors(context).onPrimary, fontSize: 12, fontFamily: 'Roboto', fontWeight: FontWeight.w600),
+          bodySmall: TextStyle(color: darkThemeColors(context).onSurface, fontSize: 12, fontFamily: 'Roboto', fontWeight: FontWeight.w600),
         )
       ),
       
     home: Scaffold(
       
       floatingActionButton: FloatingActionButton(
-                        backgroundColor: darkThemeColors(context).primary,
-                        foregroundColor: darkThemeColors(context).tertiary,
+                        backgroundColor: darkThemeColors(context).onPrimary,
+                        foregroundColor: darkThemeColors(context).primary,
                         child: const Icon(Icons.tune),
                         onPressed: showSettingsDialog,
 
@@ -249,7 +256,7 @@ ColorScheme darkThemeColors(context) {
                     child: SizedBox(
                         height: 50,
                         width: 50,
-                        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary,)),
+                        child: CircularProgressIndicator(color: Colors.transparent,),),
                   );
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
@@ -268,7 +275,7 @@ ColorScheme darkThemeColors(context) {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.tertiary,),
+              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary,),
             );
           } else if (snapshot.hasError) {
             return Center(
@@ -329,28 +336,6 @@ separatorBuilder: (context, index) => Divider(thickness: 0.5),
         return DocumentWidget(document: document);
       },
     );
-  }
-}
-
-class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
-  _StickyHeaderDelegate({required this.child});
-
-  final Widget child;
-
-  @override
-  double get minExtent => 0; // Minimum height of the header
-
-  @override
-  double get maxExtent => 50; // Maximum height of the header
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return child;
-  }
-
-  @override
-  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) {
-    return false;
   }
 }
 

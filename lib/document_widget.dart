@@ -122,7 +122,7 @@ class DocumentWidget extends StatelessWidget {
                                                     //make text black with a white stroke
                                                     style: TextStyle(
                                                       fontSize: 20.0,
-                                                      color: Theme.of(context).colorScheme.onPrimary,
+                                                      color: Theme.of(context).colorScheme.onSurface,
                                                     ),                           
                                                   ),
                                                 ],

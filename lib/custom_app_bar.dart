@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/login_page.dart';
 
 import 'location_select.dart';
 
@@ -11,7 +12,7 @@ class CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverAppBar(
       
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       title: SizedBox(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,7 +62,17 @@ class CustomAppBar extends StatelessWidget {
               //LocationSelect(),
               IconButton(
                 icon: Icon(Icons.settings),
-                onPressed: () {},
+                onPressed: () {
+
+                  //open LoginPage in a dialog
+                  
+                  //open login page
+                 Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (context) => const AuthGate(),
+    ),
+  );
+                },
               ),
             ],
           );
