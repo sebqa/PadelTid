@@ -14,7 +14,7 @@ class recommended_lv_holder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration:  BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
+        color: Theme.of(context).colorScheme.primaryContainer,
        
       ),
       
@@ -28,7 +28,7 @@ class recommended_lv_holder extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: 'Roboto',
-                    color: Theme.of(context).colorScheme.onPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               
@@ -36,13 +36,9 @@ class recommended_lv_holder extends StatelessWidget {
     
           SizedBox(
               height: 100, // Set the height of the horizontal ListView
-              child: documents != null
-                  ? RecommendedDocumentsListView(
+              child:RecommendedDocumentsListView(
                       recommendedDocuments: documents,
                     )
-                  : CircularProgressIndicator(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
             ),
           
     

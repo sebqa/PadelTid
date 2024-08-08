@@ -101,14 +101,13 @@ static final weatherSymbolKeys = {
   @override
   Widget build(BuildContext context) {
     return Container(
-
       width: MediaQuery.of(context).size.width/2.3,
       padding: EdgeInsets.all(8),
       child: Container(
         padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: Theme.of(context).colorScheme.primary,
+          color: Theme.of(context).colorScheme.primaryContainer,
           border: Border.all(color: Theme.of(context).colorScheme.tertiary, width: 2),
           
           boxShadow: [

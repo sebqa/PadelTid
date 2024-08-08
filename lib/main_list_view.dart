@@ -17,7 +17,7 @@ class MainListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).colorScheme.primaryContainer,
                   ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
@@ -27,7 +27,7 @@ class MainListView extends StatelessWidget {
                           topLeft: Radius.circular(16.0),
                           topRight: Radius.circular(16.0),
                         ),
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primaryContainer,
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.25), // Shadow color with opacity
