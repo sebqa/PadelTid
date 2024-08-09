@@ -1,15 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_application_1/login_page.dart';
 
 import 'location_select.dart';
 
-class CustomAppBar extends StatelessWidget {
+class CustomAppBar extends StatefulWidget {
   const CustomAppBar({
     super.key,
   });
 
   @override
+  State<CustomAppBar> createState() => _CustomAppBarState();
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+
+@override
+  void initState() {
+    super.initState();
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.white, // Transparent status bar
+      statusBarBrightness: Brightness.dark, // Dark text for status bar
+    ));  }
+
+  @override
   Widget build(BuildContext context) {
+        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.white, // Transparent status bar
+      statusBarBrightness: Brightness.dark, // Dark text for status bar
+    ));
     return SliverAppBar(
       
       backgroundColor: Theme.of(context).colorScheme.primaryContainer,
@@ -22,51 +41,11 @@ class CustomAppBar extends StatelessWidget {
           ],
         ),
       ),
-    //             title: Row(
-    //             mainAxisAlignment: MainAxisAlignment.start,
-    //             children: [
-    //               Baseline(
-    //                 baselineType: TextBaseline.alphabetic,
-    //                 baseline: 28.0, // Adjust this value as needed
-    //                 child: Text(
-    //                   'PADEL',
-    //                   style: TextStyle(
-    // fontSize: 28,
-    // fontWeight: FontWeight.normal,
-    // fontFamily: 'Roboto',
-    // color: Theme.of(context).colorScheme.onPrimary,
-    //                   ),
-    //                 ),
-    //               ),
-    //               Baseline(
-    //                 baselineType: TextBaseline.alphabetic,
-    //                 baseline: 28.0, // Same baseline value
-    //                 child: Text(
-    //                   'TID',
-    //                   style: TextStyle(
-    // fontSize: 28,
-    // fontWeight: FontWeight.normal,
-    // fontFamily: 'Roboto',
-    // color: Theme.of(context).colorScheme.onPrimary,
-    
-    //                   ),
-    //                 ),
-    //               ),
-                 
-    //             ],
-              
-    //         ),
             elevation: 0,
             actions: [
-              //Make LocationSelect adjust to the size of the screen
-              //LocationSelect(),
               IconButton(
                 icon: Icon(Icons.settings),
                 onPressed: () {
-
-                  //open LoginPage in a dialog
-                  
-                  //open login page
                  Navigator.of(context).push(
     MaterialPageRoute(
       builder: (context) => const AuthGate(),
