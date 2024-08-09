@@ -243,7 +243,7 @@ ColorScheme darkThemeColors(context) {
         physics: const AlwaysScrollableScrollPhysics(),
 
         slivers: [
-          CustomAppBar(),
+          //CustomAppBar(),
           SliverToBoxAdapter(
             
             child: 
