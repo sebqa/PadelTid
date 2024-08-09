@@ -70,8 +70,6 @@ class _AuthGateState extends State<AuthGate> {
       print(FirebaseAuth.instance.currentUser!.uid);
 
       final userId = FirebaseAuth.instance.currentUser!.uid;
-            setFCMToken(userId);
-            //getUserData(userId);
 
           return AccountScreen(userId);
         },
@@ -81,23 +79,8 @@ class _AuthGateState extends State<AuthGate> {
     );
   }
     
-  Future<void> setFCMToken(userId) async {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-    NotificationSettings settings = await messaging.requestPermission(
-  alert: true,
-  announcement: false,
-  badge: true,
-  carPlay: false,
-  criticalAlert: false,
-  provisional: false,
-  sound: true,
-);
-    final fcmToken = await messaging.getToken(
-      vapidKey:
-          "BIrzD_lqpWDvg6nMYArPnCbQeg1nqkRT-K4LyCBHahJws-7xceAPI2dDegDA-09TfRt1pIgbtGGETxLas3rAJpw");
-  print(fcmToken);
-    updateUserSettings(userId, "device_token", fcmToken);
-  }
+ 
+    
 }
 
 class AccountScreen extends StatefulWidget {
@@ -111,32 +94,76 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  
+
+  @override
+  void initState() {
+    super.initState();
+    getUserData(widget.userId);
+  }
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+
     bool _notificationsRecommended = false;
     bool _notificationsFollowing = false;
-    late DocumentSnapshot documentSnapshot;
+ Future<String> setFCMToken(userId) async {
+    messaging = FirebaseMessaging.instance;
+   
+    final fcmToken = await messaging.getToken(
+      vapidKey:
+          "BIrzD_lqpWDvg6nMYArPnCbQeg1nqkRT-K4LyCBHahJws-7xceAPI2dDegDA-09TfRt1pIgbtGGETxLas3rAJpw");
+  return fcmToken!;
 
-void getUserData(userId) async { //use a Async-await function to get the data
-    final data =  await FirebaseFirestore.instance.collection('users').doc(userId).get();
-    documentSnapshot = data;
-    //check if documentSnapshot.data() object has key following
-    if(documentSnapshot.data().toString().contains("following")){
-      setState(() {
-        _notificationsFollowing = documentSnapshot.get("following") ?? false;
-      });
     }
-    if(documentSnapshot.data().toString().contains("recommended")){
+void getUserData(userId) async { 
+  //use a Async-await function to get the data
+    final data =  await FirebaseFirestore.instance.collection('users').doc(userId).get();
+   
+    final docData = data.data() as Map<String, dynamic>;
+
+print("Reading user data "+docData.toString());
+bool notifications_enabled = false;
+
+String currentFCMToken = await setFCMToken(userId);
+    if(docData.containsKey("following")){
+      if (docData["following"] == true) {
+        notifications_enabled = true;
+      }
       setState(() {
-        _notificationsRecommended = documentSnapshot.get("recommended") ?? false;
+        _notificationsFollowing = docData["following"] ?? false;
       });
     }
     
+    if(docData.containsKey("recommended")){
+      if (docData["recommended"] == true) {
+        notifications_enabled = true;
+      }
+      setState(() {
+        _notificationsRecommended = docData["recommended"] ?? false;
+      });
+    }
+
+     if(docData.containsKey("device_token")){
+      if (docData["device_token"] != currentFCMToken) {
+          updateUserSettings(userId, "device_token", currentFCMToken);
+      }
+    }
+    if(!notifications_enabled){
+       NotificationSettings settings = await messaging.requestPermission(
+  alert: true,
+  announcement: false,
+  badge: true,
+  carPlay: false,
+  criticalAlert: false,
+  provisional: false,
+  sound: true,
+);
+    }
+
    
   }
 
   @override
   Widget build(BuildContext context) {
-    getUserData(widget.userId);
+    
     return ProfileScreen(
       actions: [
         SignedOutAction(
@@ -188,8 +215,16 @@ void getUserData(userId) async { //use a Async-await function to get the data
 
 }
 
-Future<void> updateUserSettings(String userId,String s, dynamic value) {
+Future<void> setFCMFB(String userId,String s, dynamic value) {
+  print("Writing "+s+":"+value.toString());
+    //firebasefirestore update or add if not existing
+    return FirebaseFirestore.instance.collection('users')
+    .doc(userId).set({s: value}, SetOptions(merge: true));
 
+  }
+
+Future<void> updateUserSettings(String userId,String s, dynamic value) {
+  print("Writing "+s+":"+value.toString());
     //firebasefirestore update or add if not existing
     return FirebaseFirestore.instance.collection('users')
     .doc(userId).set({s: value}, SetOptions(merge: true));
