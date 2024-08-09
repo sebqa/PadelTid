@@ -15,15 +15,7 @@ void main() async {
 //Ask permission for notifications
 FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-NotificationSettings settings = await messaging.requestPermission(
-  alert: true,
-  announcement: false,
-  badge: true,
-  carPlay: false,
-  criticalAlert: false,
-  provisional: false,
-  sound: true,
-);
+
 
   messaging.onTokenRefresh.listen((fcmToken) {
     // TODO: If necessary send token to application server.
