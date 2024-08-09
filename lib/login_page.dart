@@ -15,7 +15,6 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-    late DocumentSnapshot documentSnapshot; //Define snapshot
 
   @override
   Widget build(BuildContext context) {
