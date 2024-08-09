@@ -44,18 +44,9 @@ class _HomePageState extends State<HomePage> {
         sharedPreferences.getDouble('precipitationProbabilityThreshold') ?? 100.0;
      showUnavailableSlots =
         sharedPreferences.getBool('showUnavailableSlots') ?? true;
-  });
-    
-changeStatusBarColor();
-    
+  });    
   }
-Future<void> changeStatusBarColor() async {
-  SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
-      statusBarColor: Colors.white, // Change the color whatever you want
-    ),
-  );
-}
+
 
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
@@ -195,8 +186,6 @@ ColorScheme darkThemeColors(context) {
   );
   
 }
-changeStatusBarColor();
-
   return MaterialApp(
       scrollBehavior: MyCustomScrollBehavior(),
 

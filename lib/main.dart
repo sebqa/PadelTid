@@ -42,17 +42,8 @@ NotificationSettings settings = await messaging.requestPermission(
     print('Message also contained a notification: ${message.notification?.body}');
   }
 });
-  //NotificationService().listenNotifications();
-changeStatusBarColor();
   runApp(MaterialApp(
     home: HomePage(),
     debugShowCheckedModeBanner: false,
   ));
-}
-Future<void> changeStatusBarColor() async {
-  SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
-      statusBarColor: Colors.white, // Change the color whatever you want
-    ),
-  );
 }
