@@ -138,7 +138,7 @@ class DocumentWidget extends StatelessWidget {
                                                 )
                                               ),
                                               child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                   children: [
                                                     Column(
                                                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -159,7 +159,6 @@ class DocumentWidget extends StatelessWidget {
                                                         ),
                                                       ],
                                                     ),
-                                                    Padding(padding: EdgeInsets.only(left: 24.0)),
                                                     Column(
                                                       crossAxisAlignment: CrossAxisAlignment.end,
                                                       children: [
