@@ -195,6 +195,7 @@ ColorScheme darkThemeColors(context) {
   );
   
 }
+changeStatusBarColor();
 
   return MaterialApp(
       scrollBehavior: MyCustomScrollBehavior(),
@@ -243,7 +244,7 @@ ColorScheme darkThemeColors(context) {
         physics: const AlwaysScrollableScrollPhysics(),
 
         slivers: [
-          //CustomAppBar(),
+          CustomAppBar(),
           SliverToBoxAdapter(
             
             child: 
