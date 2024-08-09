@@ -15,8 +15,8 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-    bool _notificationsRecommended = true;
-    bool _notificationsFollowing = true;
+    late DocumentSnapshot documentSnapshot; //Define snapshot
+
   @override
   Widget build(BuildContext context) {
 
@@ -33,6 +33,7 @@ class _AuthGateState extends State<AuthGate> {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
+            
             return SignInScreen(
               
               providers: [
@@ -71,86 +72,121 @@ class _AuthGateState extends State<AuthGate> {
 
       final userId = FirebaseAuth.instance.currentUser!.uid;
             setFCMToken(userId);
+            //getUserData(userId);
 
-          return ProfileScreen(
-            actions: [
-              SignedOutAction(
-                (context) => Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const AuthGate()),
-                ),
-              ),
-            ],
-            providers: const [],
-            
-            children: [
-              FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
-      builder:
-          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-            print(snapshot.connectionState);
-
-        if (snapshot.hasError) {
-          return Text("Something went wrong");
-        }
-
-
-        if (snapshot.connectionState == ConnectionState.done && snapshot.data!.exists) {
-          //get data from snapshot
-          Map<dynamic, dynamic> map = snapshot.data!.data() as Map<dynamic, dynamic>;
-          print(map["following"]);
-          _notificationsFollowing = map["following"] ?? false;
-          _notificationsRecommended = map["recommended"] ?? false;
-          return ToggleSettingsList(
-      settings: [
-        ToggleSettingWidget(
-          enabled: _notificationsFollowing,
-          onChanged: (bool value) {
-            //set enabled on click
-            setState(() {
-              _notificationsFollowing = value;
-            });
-            updateUserSettings(userId,"following",value);
-
-          },
-          title: 'Notify on following',
-        ),
-        ToggleSettingWidget(
-          enabled: _notificationsRecommended,
-          onChanged: (bool value) {
-            setState(() {
-              _notificationsRecommended = value;
-            });
-                        updateUserSettings(userId,"recommended",value);
-
-          },
-          title: 'Notify on recommended',
-        ),
-        
-      ],
-        );
-        }
-
-        return Text("loading");
-      },
-    ),
-        
-      ],  
-          );
+          return AccountScreen(userId);
         },
       ),
       )
       
     );
   }
-  
+    
   Future<void> setFCMToken(userId) async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
+    NotificationSettings settings = await messaging.requestPermission(
+  alert: true,
+  announcement: false,
+  badge: true,
+  carPlay: false,
+  criticalAlert: false,
+  provisional: false,
+  sound: true,
+);
     final fcmToken = await messaging.getToken(
       vapidKey:
           "BIrzD_lqpWDvg6nMYArPnCbQeg1nqkRT-K4LyCBHahJws-7xceAPI2dDegDA-09TfRt1pIgbtGGETxLas3rAJpw");
   print(fcmToken);
     updateUserSettings(userId, "device_token", fcmToken);
   }
+}
+
+class AccountScreen extends StatefulWidget {
+  final String userId;
+  AccountScreen(this.userId, {super.key});
+
+
+
+  @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  
+    bool _notificationsRecommended = false;
+    bool _notificationsFollowing = false;
+    late DocumentSnapshot documentSnapshot;
+
+void getUserData(userId) async { //use a Async-await function to get the data
+    final data =  await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    documentSnapshot = data;
+    //check if documentSnapshot.data() object has key following
+    if(documentSnapshot.data().toString().contains("following")){
+      setState(() {
+        _notificationsFollowing = documentSnapshot.get("following") ?? false;
+      });
+    }
+    if(documentSnapshot.data().toString().contains("recommended")){
+      setState(() {
+        _notificationsRecommended = documentSnapshot.get("recommended") ?? false;
+      });
+    }
+    
+   
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    getUserData(widget.userId);
+    return ProfileScreen(
+      actions: [
+        SignedOutAction(
+          
+          (context) => Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const AuthGate()),
+          ),
+        ),
+        
+      ],
+      providers: const [],
+      
+      children: [
+     ToggleSettingsList(
+          settings: [
+            ToggleSettingWidget(
+    enabled: _notificationsFollowing,
+    onChanged: (bool value) {
+      //set enabled on click
+      setState(() {
+        _notificationsFollowing = value;
+      });
+      updateUserSettings(widget.userId, "following", value);
+    },
+    title: 'Notify on following',
+            ),
+            ToggleSettingWidget(
+    enabled: _notificationsRecommended,
+    onChanged: (bool value) {
+      setState(() {
+        _notificationsRecommended = value;
+      });
+    updateUserSettings(widget.userId, "recommended", value);
+    },
+    title: 'Notify on recommended',
+            ),
+            
+          ],
+            )
+            
+          ],  
+    );
+  }
+  
+  Future<void> removeFCMToken(userId) async {
+    print(userId);
+    updateUserSettings(userId, "device_token", "x");
+  }
+
 }
 
 Future<void> updateUserSettings(String userId,String s, dynamic value) {
