@@ -145,6 +145,9 @@ String currentFCMToken = await setFCMToken(userId);
       if (docData["device_token"] != currentFCMToken) {
           updateUserSettings(userId, "device_token", currentFCMToken);
       }
+    } else{
+      updateUserSettings(userId, "device_token", currentFCMToken);
+
     }
     if(!notifications_enabled){
        NotificationSettings settings = await messaging.requestPermission(
