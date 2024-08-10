@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'document_page.dart';
+
 class DocumentWidget extends StatelessWidget {
   const DocumentWidget({
     Key? key,
@@ -106,6 +108,14 @@ class DocumentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
                                   return ListTile(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => DocumentPage(document: document),
+                                        ),
+                                      );
+                                    },
                                             leading: SizedBox(
                                               width: 120,
                                               child: Row(
