@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'dart:js' as js;
 
 
