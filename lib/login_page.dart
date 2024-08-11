@@ -100,12 +100,11 @@ class _AccountScreenState extends State<AccountScreen> {
     super.initState();
     getUserData(widget.userId);
   }
-      FirebaseMessaging messaging = FirebaseMessaging.instance;
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
 
     bool _notificationsRecommended = false;
     bool _notificationsFollowing = false;
  Future<String> setFCMToken(userId) async {
-    messaging = FirebaseMessaging.instance;
    
     final fcmToken = await messaging.getToken(
       vapidKey:

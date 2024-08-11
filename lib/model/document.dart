@@ -6,6 +6,7 @@ class Document {
   final String time;
   final double windSpeed;
   final String symbolCode;
+  final bool? following;
 
   Document({
     required this.airTemperature,
@@ -15,12 +16,14 @@ class Document {
     required this.time,
     required this.windSpeed,
     required this.symbolCode,
+    this.following,
   });
 
   factory Document.fromJson(Map<String, dynamic> json) {
     return Document(
       airTemperature: json['air_temperature'],
       availableSlots: json.containsKey('available_slots') ? json['available_slots'] : 0,
+      following: json.containsKey('following') ? json['following'] : false,
       date: json['date'],
       //if precipitationProbability is 0 then set to 0.0
       //if not 0 then set to the original value
@@ -30,6 +33,7 @@ class Document {
       time: json['time'].substring(0, 5),
       windSpeed: json['wind_speed'],
       symbolCode: json['symbol_code'],
+
     );
   }
 }
