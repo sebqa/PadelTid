@@ -124,7 +124,7 @@ Future<String> getFCMToken(userId) async {
     //make a get request to url
     String token = await fcmToken;
     print(token);
-    String url = "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic?date=${document.date}&time=${document.time}&subscribe=$subscribe&device_token=${token}";
+    String url = "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic?date=${document.date}&time=${document.time}&subscribe=$subscribe&device_token=${token}&userId=${widget.userId}";
 
     final response = await http.get(Uri.parse(url));
 
