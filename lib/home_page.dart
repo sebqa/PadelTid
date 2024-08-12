@@ -33,6 +33,10 @@ class _HomePageState extends State<HomePage> {
   late SharedPreferences sharedPreferences; // Declare prefs as late
 
   @override
+void initState() {
+  super.initState();
+}
+  @override
   void initState() {
     super.initState();
      SharedPreferences.getInstance().then((prefs) {
