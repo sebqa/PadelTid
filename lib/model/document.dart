@@ -6,7 +6,7 @@ class Document {
   final String time;
   final double windSpeed;
   final String symbolCode;
-  final bool? following;
+  final bool? subscribed;
 
   Document({
     required this.airTemperature,
@@ -16,14 +16,14 @@ class Document {
     required this.time,
     required this.windSpeed,
     required this.symbolCode,
-    this.following,
+    this.subscribed,
   });
 
   factory Document.fromJson(Map<String, dynamic> json) {
     return Document(
       airTemperature: json['air_temperature'],
       availableSlots: json.containsKey('available_slots') ? json['available_slots'] : 0,
-      following: json.containsKey('following') ? json['following'] : false,
+      //subscribed: json.containsKey('subscribed') ? json['subscribed'] : false,
       date: json['date'],
       //if precipitationProbability is 0 then set to 0.0
       //if not 0 then set to the original value
@@ -35,5 +35,8 @@ class Document {
       symbolCode: json['symbol_code'],
 
     );
+  }
+  set subscribed(bool? value) {
+    subscribed = value;
   }
 }

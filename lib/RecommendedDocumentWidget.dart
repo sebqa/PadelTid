@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/document_page.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -100,76 +101,86 @@ static final weatherSymbolKeys = {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width/2.3,
-      padding: EdgeInsets.all(8),
+    return InkWell(
+      onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => DocumentPage(document: document),
+                                        ),
+                                      );
+                                    },
       child: Container(
+        width: MediaQuery.of(context).size.width/2.3,
         padding: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Theme.of(context).colorScheme.primaryContainer,
-          border: Border.all(color: Theme.of(context).colorScheme.tertiary, width: 2),
-          
-          boxShadow: [
-            BoxShadow(
-               color: Colors.black.withOpacity(0.25), // Shadow color with opacity
-                                    spreadRadius: 1, // Spread radius
-                                    blurRadius: 4, // Blur radius
-                                    offset: Offset(0, -1), 
-            ),
-          ]
-        ),
-        child: Column(
-          
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-        Row(
-          children: [
-            Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.tertiary, size: 12),
-            Text(' ${_getDisplayDate(document.date)} ${document.time}', style: Theme.of(context).textTheme.bodySmall,),
-
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-
-              children: [
-                Row(
-                      children: [
-                      Icon(Icons.thermostat, size: 12),
-                        Text('${document.airTemperature}°C', style: Theme.of(context).textTheme.bodySmall),
-                      ],
-                    ),
-                              Row(
-                  children: [
-                  Icon(Icons.air, color: Colors.grey, size: 12),
-                    Text('${document.windSpeed} m/s', style: Theme.of(context).textTheme.bodySmall),
-                  ],
-                ),
-                Row(
-                  children: [
-                  Icon(Icons.umbrella, color: Colors.indigo, size: 12),
-                    Text('${document.precipitationProbability}%', style: Theme.of(context).textTheme.bodySmall),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(
-              width: 45,
-              height: 45,
-              child: SvgPicture.asset(
-                                                      'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
-                                                    ),),
-          ],
-        ),
-  
-        
+        child: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: Theme.of(context).colorScheme.primaryContainer,
+            border: Border.all(color: Theme.of(context).colorScheme.tertiary, width: 2),
             
-            // Add more properties as needed
-          ],
+            boxShadow: [
+              BoxShadow(
+                 color: Colors.black.withOpacity(0.25), // Shadow color with opacity
+                                      spreadRadius: 1, // Spread radius
+                                      blurRadius: 4, // Blur radius
+                                      offset: Offset(0, -1), 
+              ),
+            ]
+          ),
+          child: Column(
+            
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+          Row(
+            children: [
+              Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.tertiary, size: 12),
+              Text(' ${_getDisplayDate(document.date)} ${document.time}', style: Theme.of(context).textTheme.bodySmall,),
+      
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+      
+                children: [
+                  Row(
+                        children: [
+                        Icon(Icons.thermostat, size: 12),
+                          Text('${document.airTemperature}°C', style: Theme.of(context).textTheme.bodySmall),
+                        ],
+                      ),
+                                Row(
+                    children: [
+                    Icon(Icons.air, color: Colors.grey, size: 12),
+                      Text('${document.windSpeed} m/s', style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                    Icon(Icons.umbrella, color: Colors.indigo, size: 12),
+                      Text('${document.precipitationProbability}%', style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(
+                width: 45,
+                height: 45,
+                child: SvgPicture.asset(
+                                                        'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
+                                                      ),),
+            ],
+          ),
+        
+          
+              
+              // Add more properties as needed
+            ],
+          ),
         ),
       ),
     );
