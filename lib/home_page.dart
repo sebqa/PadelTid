@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
@@ -31,6 +32,8 @@ class _HomePageState extends State<HomePage> {
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
   late SharedPreferences sharedPreferences; // Declare prefs as late
+  late String userId;
+
 @override
 void didChangeDependencies() {
   super.didChangeDependencies();
@@ -39,6 +42,8 @@ void didChangeDependencies() {
   @override
   void initState() {
     super.initState();
+        userId = FirebaseAuth.instance.currentUser?.uid ?? "no-user";
+    print(userId);
      SharedPreferences.getInstance().then((prefs) {
     setState(() => sharedPreferences = prefs);
       windSpeedThreshold = sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
@@ -169,6 +174,11 @@ void didChangeDependencies() {
 
   @override
   Widget build(BuildContext context) {
+
+    //check if user is authenticated with firebase auth and set userId else dont
+
+    
+
 
 ColorScheme darkThemeColors(context) {
   return const ColorScheme(
