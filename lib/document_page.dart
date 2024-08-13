@@ -114,6 +114,9 @@ class _subscribingIconState extends State<subscribingIcon> {
       sound: true,
     );
 
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+    } 
     final fcmToken = await messaging.getToken(
         vapidKey:
             "BIrzD_lqpWDvg6nMYArPnCbQeg1nqkRT-K4LyCBHahJws-7xceAPI2dDegDA-09TfRt1pIgbtGGETxLas3rAJpw");
