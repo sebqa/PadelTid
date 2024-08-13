@@ -31,7 +31,11 @@ class _HomePageState extends State<HomePage> {
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
   late SharedPreferences sharedPreferences; // Declare prefs as late
-
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+}
+  
   @override
   void initState() {
     super.initState();
