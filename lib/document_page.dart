@@ -19,13 +19,16 @@ class DocumentPage extends StatefulWidget {
 }
 
 class _DocumentPageState extends State<DocumentPage> {
-  bool subscribing = false;
   final Uri _url = Uri.parse('https://holbaekpadel.dk/da/new/booking');
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
           title: 
           Text(widget.document.date),
         ),
@@ -52,8 +55,7 @@ class _DocumentPageState extends State<DocumentPage> {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return IconButton(
-                      icon: Icon(
-                        subscribing ? Icons.star : Icons.star_border,
+                      icon: Icon(Icons.star_border,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                       onPressed: () {
@@ -113,10 +115,6 @@ class _subscribingIconState extends State<subscribingIcon> {
       provisional: false,
       sound: true,
     );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
-    } 
     final fcmToken = await messaging.getToken(
         vapidKey:
             "BIrzD_lqpWDvg6nMYArPnCbQeg1nqkRT-K4LyCBHahJws-7xceAPI2dDegDA-09TfRt1pIgbtGGETxLas3rAJpw");
