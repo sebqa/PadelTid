@@ -108,13 +108,15 @@ class DocumentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
                                   return ListTile(
-                                    onTap: () {
-                                      Navigator.push(
+                                    onTap: () async {
+                                      final result = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => DocumentPage(document: document),
                                         ),
                                       );
+
+                                      print(result);
                                     },
                                             leading: SizedBox(
                                               width: 120,

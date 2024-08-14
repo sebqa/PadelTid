@@ -23,7 +23,7 @@ class Document {
     return Document(
       airTemperature: json['air_temperature'],
       availableSlots: json.containsKey('available_slots') ? json['available_slots'] : 0,
-      //subscribed: json.containsKey('subscribed') ? json['subscribed'] : false,
+      subscribed: json.containsKey('subscribed') ? json['subscribed'] : false,
       date: json['date'],
       //if precipitationProbability is 0 then set to 0.0
       //if not 0 then set to the original value
