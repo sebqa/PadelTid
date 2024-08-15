@@ -231,8 +231,11 @@ class _HomePageState extends State<HomePage> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(
-                          child: CircularProgressIndicator(
-                            color: Theme.of(context).colorScheme.primary,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: CircularProgressIndicator(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                           ),
                         );
                       } else if (snapshot.hasError) {
