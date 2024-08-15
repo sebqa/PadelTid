@@ -34,6 +34,8 @@ class _HomePageState extends State<HomePage> {
   late SharedPreferences sharedPreferences; // Declare prefs as late
   late String userId;
 
+  List<String> subscribedDocs = [];
+
 @override
 void didChangeDependencies() {
   super.didChangeDependencies();
@@ -42,8 +44,7 @@ void didChangeDependencies() {
   @override
   void initState() {
     super.initState();
-        userId = FirebaseAuth.instance.currentUser?.uid ?? "no-user";
-    print(userId);
+
      SharedPreferences.getInstance().then((prefs) {
     setState(() => sharedPreferences = prefs);
       windSpeedThreshold = sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
@@ -57,12 +58,19 @@ void didChangeDependencies() {
 
   Future<List<Document>> fetchDocuments(double windSpeed,
       double precipitationProbability, bool showUnavailableSlots) async {
+        List<dynamic> subscribedDocs = [];
+
+                userId = FirebaseAuth.instance.currentUser?.uid ?? "no-user";
+    print(userId);
+    if (userId != "no-user") {
+      subscribedDocs = await getSubscribedDocs();
+    }
     final url = Uri.parse(
         'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=$windSpeed&precipitation_probability_threshold=$precipitationProbability&showUnavailableSlots=$showUnavailableSlots');
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
-      return jsonList.map((json) => Document.fromJson(json)).toList();
+      return jsonList.map((json) => Document.fromJson(json,subscribedDocs)).toList();
     } else {
       throw Exception('Failed to load documents');
     }
@@ -315,6 +323,21 @@ final Map<String, List<Document>> groupedDocuments = {};
     ),
   );
 }
+
+  Future<List<dynamic>> getSubscribedDocs() async {
+    //http request to get all subscribed docs
+    Uri url = Uri.parse('https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getSubscribed?userId=${userId}');
+
+    final response = await http.get(url);
+      print(response.body);
+      if (response.statusCode == 200) {
+        //parse json
+        List<dynamic> subscribedDocs = json.decode(response.body);
+        return subscribedDocs;
+      } else {
+        throw Exception('Failed to load documents');
+      }
+  }
 }
 
 class ListViewbuilder extends StatelessWidget {

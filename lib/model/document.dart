@@ -1,3 +1,4 @@
+
 class Document {
   final double airTemperature;
   final int? availableSlots;
@@ -19,11 +20,12 @@ class Document {
     this.subscribed,
   });
 
-  factory Document.fromJson(Map<String, dynamic> json) {
+  factory Document.fromJson(Map<String, dynamic> json, List<dynamic> subscribedDocs) {
     return Document(
       airTemperature: json['air_temperature'],
       availableSlots: json.containsKey('available_slots') ? json['available_slots'] : 0,
-      subscribed: json.containsKey('subscribed') ? json['subscribed'] : false,
+      //if date+time is in subscribedDocs then set subscribed to true
+      subscribed: subscribedDocs.contains(json['date'].replaceAll('-', '') + json['time'].replaceAll(':', '')) ? true : false,
       date: json['date'],
       //if precipitationProbability is 0 then set to 0.0
       //if not 0 then set to the original value

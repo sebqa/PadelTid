@@ -102,9 +102,14 @@ class subscribingIcon extends StatefulWidget {
 
 class _subscribingIconState extends State<subscribingIcon> {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-
   bool subscribing = false;
+
+@override
+  void initState() {
+    super.initState();
+subscribing = widget.document.subscribed ?? false;
+}
+
   Future<String> getFCMToken(userId) async {
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
