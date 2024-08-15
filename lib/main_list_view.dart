@@ -21,7 +21,7 @@ class MainListView extends StatelessWidget {
                     color: Theme.of(context).colorScheme.primaryContainer,
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
+                    padding: const EdgeInsets.fromLTRB(8.0,8.0,0.0,0),
                     child: Container(
                       decoration:  BoxDecoration(
                         borderRadius: BorderRadius.only(

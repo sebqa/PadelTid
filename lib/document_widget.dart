@@ -137,7 +137,7 @@ class DocumentWidget extends StatelessWidget {
         ),
       ),
       title: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
