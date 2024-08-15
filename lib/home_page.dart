@@ -246,19 +246,9 @@ class _HomePageState extends State<HomePage> {
                               .putIfAbsent(document.date, () => [])
                               .add(document);
                         }
-                        final weekdayName = [
-                          'Monday',
-                          'Tuesday',
-                          'Wednesday',
-                          'Thursday',
-                          'Friday',
-                          'Saturday',
-                          'Sunday'
-                        ];
 
                         return MainListView(
-                            groupedDocuments: groupedDocuments,
-                            weekdayName: weekdayName);
+                            groupedDocuments: groupedDocuments);
                       } else {
                         return Center(
                           child: Text('No data'),

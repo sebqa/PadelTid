@@ -8,14 +8,23 @@ class MainListView extends StatelessWidget {
   const MainListView({
     super.key,
     required this.groupedDocuments,
-    required this.weekdayName,
   });
 
   final Map<String, List<Document>> groupedDocuments;
-  final List<String> weekdayName;
+  
 
   @override
   Widget build(BuildContext context) {
+    
+                        final weekdayName = [
+                          'Monday',
+                          'Tuesday',
+                          'Wednesday',
+                          'Thursday',
+                          'Friday',
+                          'Saturday',
+                          'Sunday'
+                        ];
     return Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primaryContainer,
