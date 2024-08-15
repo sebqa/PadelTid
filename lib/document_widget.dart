@@ -120,17 +120,18 @@ class DocumentWidget extends StatelessWidget {
         width: MediaQuery.of(context).size.width / 4.0,
         child: Row(
           children: [
-            SizedBox(
-              width: MediaQuery.of(context).size.width / 8.0,
-              child: SvgPicture.asset(
-                'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
-              ),
-            ),
+           
             Text(
-              '${document.time}',
+              '${document.time} ',
               style: TextStyle(
                 fontSize: 16.0,
                 color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+             SizedBox(
+              width: MediaQuery.of(context).size.width / 8.0,
+              child: SvgPicture.asset(
+                'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
               ),
             ),
           ],
