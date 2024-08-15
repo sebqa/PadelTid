@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/home_page.dart';
 import 'package:flutter_application_1/secrets/secrets.dart';
 
 
@@ -23,7 +24,15 @@ class _AuthGateState extends State<AuthGate> {
       appBar: AppBar(
         leading: IconButton(
       icon: Icon(Icons.arrow_back, color: Colors.black),
-      onPressed: () => Navigator.of(context).pop(),
+      onPressed: () => Navigator.of(context).maybePop(context).then((value) {
+                  if (value == false) {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HomePage(),
+                        ));
+                  }
+                }),
         ), 
         title: Text("Account"),
       ),

@@ -26,11 +26,10 @@ class _HomePageState extends State<HomePage> {
   List<Document> documents = [];
   bool showSliders = false; // Set this based on your logic
   late SharedPreferences sharedPreferences; // Declare prefs as late
-  late String userId;
 
-late Future<List<Document>> futureDocuments;
+  late Future<List<Document>> futureDocuments;
 
-late Future<List<Document>> recommendedDocuments;
+  late Future<List<Document>>? recommendedDocuments;
   late List<String> subscribedDocs = [];
   DocumentService documentService = DocumentService();
 
@@ -43,6 +42,8 @@ late Future<List<Document>> recommendedDocuments;
   void initState() {
     super.initState();
 
+          recommendedDocuments =
+          documentService.fetchDocuments(4.0, 10.0, false, true);
     SharedPreferences.getInstance().then((prefs) {
       setState(() => sharedPreferences = prefs);
       windSpeedThreshold =
@@ -52,28 +53,26 @@ late Future<List<Document>> recommendedDocuments;
               100.0;
       showUnavailableSlots =
           sharedPreferences.getBool('showUnavailableSlots') ?? true;
-          futureDocuments = documentService.fetchDocuments(
-        windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots, false);
-  
-    recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, true);
+
+
+          
+      futureDocuments = documentService.fetchDocuments(windSpeedThreshold,
+          precipitationProbabilityThreshold, showUnavailableSlots, false);
+
+      
     });
-    
-    
   }
 
   void updateThresholds() async {
     print("Called updateThresholds");
     try {
-      futureDocuments = documentService.fetchDocuments(
-          windSpeedThreshold,
-          precipitationProbabilityThreshold,
-          showUnavailableSlots,false);
+      futureDocuments = documentService.fetchDocuments(windSpeedThreshold,
+          precipitationProbabilityThreshold, showUnavailableSlots, false);
       sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
       sharedPreferences.setDouble('precipitationProbabilityThreshold',
           precipitationProbabilityThreshold);
       sharedPreferences.setBool('showUnavailableSlots', showUnavailableSlots);
-      setState(() {
-      });
+      setState(() {});
     } catch (e) {
       // Handle the exception
       print('Failed to fetch documents: $e');
@@ -165,8 +164,6 @@ late Future<List<Document>> recommendedDocuments;
 
   @override
   Widget build(BuildContext context) {
-    //check if user is authenticated with firebase auth and set userId else dont
-
     ColorScheme darkThemeColors(context) {
       return const ColorScheme(
         brightness: Brightness.light,
@@ -279,17 +276,12 @@ late Future<List<Document>> recommendedDocuments;
       ),
     );
   }
-
- 
 }
 
 class SliverRecommendedLV extends StatelessWidget {
-  const SliverRecommendedLV({
-    super.key,
-    required this.recommendedDocuments
-  });
+  const SliverRecommendedLV({super.key, required this.recommendedDocuments});
 
-  final Future<List<Document>> recommendedDocuments;
+  final Future<List<Document>>? recommendedDocuments;
 
   @override
   Widget build(BuildContext context) {
