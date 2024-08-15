@@ -52,11 +52,12 @@ late Future<List<Document>> recommendedDocuments;
               100.0;
       showUnavailableSlots =
           sharedPreferences.getBool('showUnavailableSlots') ?? true;
-    });
-    futureDocuments = documentService.fetchDocuments(
+          futureDocuments = documentService.fetchDocuments(
         windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots, false);
   
     recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, true);
+    });
+    
     
   }
 
