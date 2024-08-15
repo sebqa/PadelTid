@@ -108,6 +108,18 @@ class DocumentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
                                   return ListTile(
+                                    //if document is subscribed then add border
+                                    //add a starry night background if subscribed
+                                    shape: RoundedRectangleBorder(
+                                      side: BorderSide(
+                                        color: document.subscribed!
+                                            ? Theme.of(context).colorScheme.primary
+                                            : Colors.transparent,
+                                        width: 2.0,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+
                                     onTap: () async {
                                       final result = await Navigator.push(
                                         context,
@@ -119,6 +131,7 @@ class DocumentWidget extends StatelessWidget {
                                       print(result);
                                     },
                                             leading: SizedBox(
+                                              
                                               width: 120,
                                               child: Row(
                                                 children: [

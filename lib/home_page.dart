@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/document_service.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/model/location.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
@@ -14,17 +15,13 @@ import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
 
 class HomePage extends StatefulWidget {
-
   HomePage();
 
   @override
   _HomePageState createState() => _HomePageState();
-
 }
 
 class _HomePageState extends State<HomePage> {
-
-
   double windSpeedThreshold = 50.0;
   double precipitationProbabilityThreshold = 100.0;
   bool showUnavailableSlots = true;
@@ -34,66 +31,57 @@ class _HomePageState extends State<HomePage> {
   late SharedPreferences sharedPreferences; // Declare prefs as late
   late String userId;
 
-  List<String> subscribedDocs = [];
+late Future<List<Document>> futureDocuments;
 
-@override
-void didChangeDependencies() {
-  super.didChangeDependencies();
-}
-  
+late Future<List<Document>> recommendedDocuments;
+  late List<String> subscribedDocs = [];
+  DocumentService documentService = DocumentService();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
   @override
   void initState() {
     super.initState();
 
-     SharedPreferences.getInstance().then((prefs) {
-    setState(() => sharedPreferences = prefs);
-      windSpeedThreshold = sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
-     precipitationProbabilityThreshold =
-        sharedPreferences.getDouble('precipitationProbabilityThreshold') ?? 100.0;
-     showUnavailableSlots =
-        sharedPreferences.getBool('showUnavailableSlots') ?? true;
-  });    
-  }
-
-
-  Future<List<Document>> fetchDocuments(double windSpeed,
-      double precipitationProbability, bool showUnavailableSlots) async {
-        List<dynamic> subscribedDocs = [];
-
-                userId = FirebaseAuth.instance.currentUser?.uid ?? "no-user";
-    print(userId);
-    if (userId != "no-user") {
-      subscribedDocs = await getSubscribedDocs();
-    }
-    final url = Uri.parse(
-        'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=$windSpeed&precipitation_probability_threshold=$precipitationProbability&showUnavailableSlots=$showUnavailableSlots');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = json.decode(response.body);
-      return jsonList.map((json) => Document.fromJson(json,subscribedDocs)).toList();
-    } else {
-      throw Exception('Failed to load documents');
-    }
+    SharedPreferences.getInstance().then((prefs) {
+      setState(() => sharedPreferences = prefs);
+      windSpeedThreshold =
+          sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
+      precipitationProbabilityThreshold =
+          sharedPreferences.getDouble('precipitationProbabilityThreshold') ??
+              100.0;
+      showUnavailableSlots =
+          sharedPreferences.getBool('showUnavailableSlots') ?? true;
+    });
+    futureDocuments = documentService.fetchDocuments(
+        windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots, subscribedDocs);
+  
+    recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, subscribedDocs);
   }
 
   void updateThresholds() async {
-
+    print("Called updateThresholds");
     try {
-     
-
-      final fetchedDocuments = await fetchDocuments(
-          windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots);
-           sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
-      sharedPreferences.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
+      futureDocuments = documentService.fetchDocuments(
+          windSpeedThreshold,
+          precipitationProbabilityThreshold,
+          showUnavailableSlots,
+          subscribedDocs);
+      sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
+      sharedPreferences.setDouble('precipitationProbabilityThreshold',
+          precipitationProbabilityThreshold);
       sharedPreferences.setBool('showUnavailableSlots', showUnavailableSlots);
       setState(() {
-        documents = fetchedDocuments;
       });
     } catch (e) {
       // Handle the exception
       print('Failed to fetch documents: $e');
     }
   }
+
   void showSettingsDialog() {
     showDialog(
       barrierDismissible: false,
@@ -117,14 +105,14 @@ void didChangeDependencies() {
                           state(() {
                             windSpeedThreshold = value;
                           });
-                          
                         },
                       ),
                     ],
                   ),
                   Column(
                     children: [
-                      Text('Precipitation Probability: ${precipitationProbabilityThreshold.round()}%'),
+                      Text(
+                          'Precipitation Probability: ${precipitationProbabilityThreshold.round()}%'),
                       Slider(
                         value: precipitationProbabilityThreshold,
                         min: 0,
@@ -136,10 +124,8 @@ void didChangeDependencies() {
                           });
                         },
                       ),
-
                     ],
                   ),
-
                   Row(
                     children: [
                       Checkbox(
@@ -155,7 +141,6 @@ void didChangeDependencies() {
                       Text('Show unavailable timeslots'),
                     ],
                   )
-
                 ],
               ),
             ),
@@ -182,161 +167,170 @@ void didChangeDependencies() {
 
   @override
   Widget build(BuildContext context) {
-
     //check if user is authenticated with firebase auth and set userId else dont
 
-    
+    ColorScheme darkThemeColors(context) {
+      return const ColorScheme(
+        brightness: Brightness.light,
+        primary: Color(0xFFFF7F07),
+        primaryContainer: Color(0xFFFFFFFF),
+        onPrimary: Color(0xFFFFFFFF),
+        secondary: Color(0xFFBBBBBB),
+        onSecondary: Color(0xFFEAEAEA),
+        tertiary: Color(0xFFFF7F07),
+        error: Color(0xFFF32424),
+        onError: Color.fromARGB(255, 255, 255, 255),
+        background: Color(0xFFFFFFFF),
+        onBackground: Color(0xFF505050),
+        surface: Color(0xFFFFFFFF),
+        onSurface: Color(0xFF000000),
+      );
+    }
 
-
-ColorScheme darkThemeColors(context) {
-  return const ColorScheme(
-    brightness: Brightness.light,
-    primary: Color(0xFFFF7F07),
-    primaryContainer: Color(0xFFFFFFFF),
-    onPrimary: Color(0xFFFFFFFF),
-    secondary: Color(0xFFBBBBBB),
-    onSecondary: Color(0xFFEAEAEA),
-    tertiary: Color(0xFFFF7F07),
-    error: Color(0xFFF32424),
-    onError: Color.fromARGB(255, 255, 255, 255),
-    background: Color(0xFFFFFFFF),
-    onBackground: Color(0xFF505050),
-    surface: Color(0xFFFFFFFF),
-    onSurface: Color(0xFF000000),
-  );
-  
-}
-  return MaterialApp(
+    return MaterialApp(
       scrollBehavior: MyCustomScrollBehavior(),
-
-    
-    localizationsDelegates: [
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-      FirebaseUILocalizations.delegate,
-
-    ],
-    supportedLocales: [
-      Locale('en', 'US'),
-    ],
-    title: 'PADELTID',
-       theme: ThemeData.light().copyWith(
-        colorScheme: darkThemeColors(context),
-       
-        sliderTheme: SliderThemeData(
-          activeTrackColor: darkThemeColors(context).tertiary,
-          inactiveTrackColor: darkThemeColors(context).onPrimary,
-          thumbColor: darkThemeColors(context).tertiary,
-          thumbShape: RoundSliderThumbShape(enabledThumbRadius: 10.0),
-          overlayShape: RoundSliderOverlayShape(overlayRadius: 20.0),
-          overlayColor: darkThemeColors(context).onPrimary,
-          
-        ),
-        textTheme: TextTheme(
-          bodySmall: TextStyle(color: darkThemeColors(context).onSurface, fontSize: 12, fontFamily: 'Roboto', fontWeight: FontWeight.w600),
-        )
-      ),
-      
-    home: Scaffold(
-      
-      floatingActionButton: FloatingActionButton(
-                        backgroundColor: darkThemeColors(context).onPrimary,
-                        foregroundColor: darkThemeColors(context).primary,
-                        child: const Icon(Icons.tune),
-                        onPressed: showSettingsDialog,
-
-  ),
-      
-      body: CustomScrollView(
-        
-        physics: const AlwaysScrollableScrollPhysics(),
-
-        slivers: [
-          CustomAppBar(),
-          SliverToBoxAdapter(
-            
-            child: 
-            FutureBuilder<List<Document>>(
-              future: fetchDocuments(4.0, 10.0, false),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: SizedBox(
-                        height: 50,
-                        width: 50,
-                        child: CircularProgressIndicator(color: Colors.transparent,),),
-                  );
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else {
-                  return recommended_lv_holder(documents: snapshot.data!);
-                }
-              },
-            ),
-            
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FirebaseUILocalizations.delegate,
+      ],
+      supportedLocales: [
+        Locale('en', 'US'),
+      ],
+      title: 'PADELTID',
+      theme: ThemeData.light().copyWith(
+          colorScheme: darkThemeColors(context),
+          sliderTheme: SliderThemeData(
+            activeTrackColor: darkThemeColors(context).tertiary,
+            inactiveTrackColor: darkThemeColors(context).onPrimary,
+            thumbColor: darkThemeColors(context).tertiary,
+            thumbShape: RoundSliderThumbShape(enabledThumbRadius: 10.0),
+            overlayShape: RoundSliderOverlayShape(overlayRadius: 20.0),
+            overlayColor: darkThemeColors(context).onPrimary,
           ),
-          SliverList(
-  delegate: SliverChildBuilderDelegate(
-    (context, index) {
-      return FutureBuilder<List<Document>>(
-        future: fetchDocuments(windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary,),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
-          } else if (snapshot.hasData) {
-final Map<String, List<Document>> groupedDocuments = {};
+          textTheme: TextTheme(
+            bodySmall: TextStyle(
+                color: darkThemeColors(context).onSurface,
+                fontSize: 12,
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w600),
+          )),
+      home: Scaffold(
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: darkThemeColors(context).onPrimary,
+          foregroundColor: darkThemeColors(context).primary,
+          child: const Icon(Icons.tune),
+          onPressed: showSettingsDialog,
+        ),
+        body: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            CustomAppBar(),
+            SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return FutureBuilder<List<Document>>(
+                    future: futureDocuments,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Error: ${snapshot.error}'),
+                        );
+                      } else if (snapshot.hasData) {
+                        final Map<String, List<Document>> groupedDocuments = {};
                         for (var document in snapshot.data!) {
-                          groupedDocuments.putIfAbsent(document.date, () => [])
+                          groupedDocuments
+                              .putIfAbsent(document.date, () => [])
                               .add(document);
                         }
                         final weekdayName = [
-                            'Monday',
-                            'Tuesday',
-                            'Wednesday',
-                            'Thursday',
-                            'Friday',
-                            'Saturday',
-                            'Sunday'
-                          ];
+                          'Monday',
+                          'Tuesday',
+                          'Wednesday',
+                          'Thursday',
+                          'Friday',
+                          'Saturday',
+                          'Sunday'
+                        ];
 
-            return MainListView(groupedDocuments: groupedDocuments, weekdayName: weekdayName);
-          } else {
-            return Center(
-              child: Text('No data'),
-            );
-          }
-        },
-      );
-    },
-    childCount: 1, // Change this value if you want to show multiple items in the SliverList
-  ),
-),
-        ],
+                        return MainListView(
+                            groupedDocuments: groupedDocuments,
+                            weekdayName: weekdayName);
+                      } else {
+                        return Center(
+                          child: Text('No data'),
+                        );
+                      }
+                    },
+                  );
+                },
+                childCount:
+                    1, // Change this value if you want to show multiple items in the SliverList
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-  Future<List<dynamic>> getSubscribedDocs() async {
+  Future<List> getSubscribedDocs() async {
     //http request to get all subscribed docs
-    Uri url = Uri.parse('https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getSubscribed?userId=${userId}');
+    Uri url = Uri.parse(
+        'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getSubscribed?userId=${userId}');
 
     final response = await http.get(url);
-      print(response.body);
-      if (response.statusCode == 200) {
-        //parse json
-        List<dynamic> subscribedDocs = json.decode(response.body);
-        return subscribedDocs;
-      } else {
-        throw Exception('Failed to load documents');
-      }
+    print(response.body);
+    if (response.statusCode == 200) {
+      //parse json
+      List<dynamic> subscribedDocs = json.decode(response.body);
+      return subscribedDocs;
+    } else {
+      throw Exception('Failed to load documents');
+    }
+  }
+}
+
+class SliverRecommendedLV extends StatelessWidget {
+  const SliverRecommendedLV({
+    super.key,
+    required this.recommendedDocuments
+  });
+
+  final Future<List<Document>> recommendedDocuments;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: FutureBuilder<List<Document>>(
+        future: recommendedDocuments,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: SizedBox(
+                height: 50,
+                width: 50,
+                child: CircularProgressIndicator(
+                  color: Colors.transparent,
+                ),
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else {
+            return recommended_lv_holder(documents: snapshot.data!);
+          }
+        },
+      ),
+    );
   }
 }
 
@@ -351,7 +345,7 @@ class ListViewbuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-separatorBuilder: (context, index) => Divider(thickness: 0.5),
+      separatorBuilder: (context, index) => Divider(thickness: 0.5),
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       itemCount: documentsForDate.length,
@@ -362,7 +356,6 @@ separatorBuilder: (context, index) => Divider(thickness: 0.5),
     );
   }
 }
-
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   // Override behavior methods and getters like dragDevices
