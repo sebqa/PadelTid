@@ -117,7 +117,7 @@ class DocumentWidget extends StatelessWidget {
         print(result);
       },
       leading: SizedBox(
-        width: 120,
+        width: 100,
         child: Row(
           children: [
             SizedBox(
@@ -136,55 +136,63 @@ class DocumentWidget extends StatelessWidget {
           ],
         ),
       ),
-      title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.thermostat_outlined,size: 12.0,),
-                    Text(' ${document.airTemperature}°C ',
-                        style: TextStyle(fontSize: 12.0)),
+                    Row(
+                      children: [
+                        Icon(Icons.thermostat_outlined,size: 12.0,),
+                        Text(' ${document.airTemperature}°C ',
+                            style: TextStyle(fontSize: 12.0)),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.air, color: Colors.grey, size: 12.0),
+                        Text(' ${document.windSpeed} m/s ',
+                            style: TextStyle(fontSize: 12.0)),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.umbrella, color: Colors.indigo,size: 12.0,),
+                        Text(' ${document.precipitationProbability}%',
+                            style: TextStyle(fontSize: 12.0)),
+                      ],
+                    ),
                   ],
                 ),
                 Row(
                   children: [
-                    Icon(Icons.air, color: Colors.grey, size: 12.0),
-                    Text(' ${document.windSpeed} m/s ',
-                        style: TextStyle(fontSize: 12.0)),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.umbrella, color: Colors.indigo,size: 12.0,),
-                    Text(' ${document.precipitationProbability}%',
-                        style: TextStyle(fontSize: 12.0)),
+                    Row(
+                      children: [
+                                            Icon(Icons.sports_baseball, color: Colors.lime, size: 12.0),
+                                            //if number is one then its available court otherwise its available courts
+                        Text(' ${document.availableSlots == 1 ? document.availableSlots.toString() + " available court" : document.availableSlots.toString() + " available courts"}',style: TextStyle(fontSize: 12.0),),                  ],
+                    ),
                   ],
                 ),
               ],
             ),
-            Row(
-              children: [
-                Row(
-                  children: [
-                                        Icon(Icons.sports_baseball, color: Colors.lime, size: 12.0),
-                                        //if number is one then its available court otherwise its available courts
-                    Text(' ${document.availableSlots == 1 ? document.availableSlots.toString() + " available court" : document.availableSlots.toString() + " available courts"}',style: TextStyle(fontSize: 12.0),),                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-              trailing: FirebaseAuth.instance.currentUser == null ? IconButton(
+            FirebaseAuth.instance.currentUser == null ? IconButton(
                 icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
                 onPressed: () {
                   //goto login page
 Navigator.push(context, MaterialPageRoute(builder: (context) => const AuthGate(),),);                },
               
               ) : subscribingIcon(document: document,user: FirebaseAuth.instance.currentUser!)
+        ],
+      ),
+
+        
+
 
     );
   }
