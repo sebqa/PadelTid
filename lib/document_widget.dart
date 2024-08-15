@@ -117,11 +117,11 @@ class DocumentWidget extends StatelessWidget {
         print(result);
       },
       leading: SizedBox(
-        width: 100,
+        width: MediaQuery.of(context).size.width / 4.0,
         child: Row(
           children: [
             SizedBox(
-              width: 50,
+              width: MediaQuery.of(context).size.width / 8.0,
               child: SvgPicture.asset(
                 'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
               ),
@@ -136,60 +136,68 @@ class DocumentWidget extends StatelessWidget {
           ],
         ),
       ),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.thermostat_outlined,size: 12.0,),
-                        Text(' ${document.airTemperature}°C ',
-                            style: TextStyle(fontSize: 12.0)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Icon(Icons.air, color: Colors.grey, size: 12.0),
-                        Text(' ${document.windSpeed} m/s ',
-                            style: TextStyle(fontSize: 12.0)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Icon(Icons.umbrella, color: Colors.indigo,size: 12.0,),
-                        Text(' ${document.precipitationProbability}%',
-                            style: TextStyle(fontSize: 12.0)),
-                      ],
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Row(
-                      children: [
-                                            Icon(Icons.sports_baseball, color: Colors.lime, size: 12.0),
-                                            //if number is one then its available court otherwise its available courts
-                        Text(' ${document.availableSlots == 1 ? document.availableSlots.toString() + " available court" : document.availableSlots.toString() + " available courts"}',style: TextStyle(fontSize: 12.0),),                  ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            FirebaseAuth.instance.currentUser == null ? IconButton(
-                icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
-                onPressed: () {
-                  //goto login page
-Navigator.push(context, MaterialPageRoute(builder: (context) => const AuthGate(),),);                },
-              
-              ) : subscribingIcon(document: document,user: FirebaseAuth.instance.currentUser!)
-        ],
+      title: SizedBox(
+        width: MediaQuery.of(context).size.width / 2.0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          
+          children: [
+            Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.thermostat_outlined,size: 12.0,),
+                          Text(' ${document.airTemperature}°C ',
+                              style: TextStyle(fontSize: 12.0)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.air, color: Colors.grey, size: 12.0),
+                          Text(' ${document.windSpeed} m/s ',
+                              style: TextStyle(fontSize: 12.0)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.umbrella, color: Colors.indigo,size: 12.0,),
+                          Text(' ${document.precipitationProbability}%',
+                              style: TextStyle(fontSize: 12.0)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Row(
+                        children: [
+                                              Icon(Icons.sports_baseball, color: Colors.lime, size: 12.0),
+                                              //if number is one then its available court otherwise its available courts
+                          Text(' ${document.availableSlots == 1 ? document.availableSlots.toString() + " available court" : document.availableSlots.toString() + " available courts"}',style: TextStyle(fontSize: 12.0),),                  ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              SizedBox(
+                width: MediaQuery.of(context).size.width / 7.0,
+                child: FirebaseAuth.instance.currentUser == null ? IconButton(
+                    icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
+                    onPressed: () {
+                      //goto login page
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const AuthGate(),),);                },
+                  
+                  ) : subscribingIcon(document: document,user: FirebaseAuth.instance.currentUser!),
+              )
+          ],
+        ),
       ),
 
         
