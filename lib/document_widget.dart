@@ -139,7 +139,7 @@ class DocumentWidget extends StatelessWidget {
       title: Row(
         children: [
           SizedBox(
-            width: MediaQuery.of(context).size.width / 2,
+            width: MediaQuery.of(context).size.width / 2.1,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
