@@ -30,7 +30,10 @@ class DocumentService {
 
  Future<List<dynamic>> getSubscribedDocs() async {
     //http request to get all subscribed docs
-    final userId = FirebaseAuth.instance.currentUser!.uid;
+
+    //if user is signed in
+    if (FirebaseAuth.instance.currentUser != null) {
+      final userId = FirebaseAuth.instance.currentUser!.uid;
     Uri url = Uri.parse(
         'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getSubscribed?userId=${userId}');
 
@@ -43,5 +46,9 @@ class DocumentService {
     } else {
       throw Exception('Failed to load documents');
     }
+  } else {
+    return [];
   }
+    }
+    
 }
