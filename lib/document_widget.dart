@@ -137,7 +137,7 @@ class DocumentWidget extends StatelessWidget {
         ),
       ),
       title: SizedBox(
-        width: MediaQuery.of(context).size.width / 2.0,
+        width: MediaQuery.of(context).size.width / 3,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -187,7 +187,7 @@ class DocumentWidget extends StatelessWidget {
               ),
 
               SizedBox(
-                width: MediaQuery.of(context).size.width / 7.0,
+                width: MediaQuery.of(context).size.width / 12.0,
                 child: FirebaseAuth.instance.currentUser == null ? IconButton(
                     icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
                     onPressed: () {
