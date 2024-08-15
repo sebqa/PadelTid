@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/document_service.dart';
@@ -6,8 +5,6 @@ import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/model/location.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'custom_app_bar.dart';
 import 'document_widget.dart';
@@ -57,9 +54,10 @@ late Future<List<Document>> recommendedDocuments;
           sharedPreferences.getBool('showUnavailableSlots') ?? true;
     });
     futureDocuments = documentService.fetchDocuments(
-        windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots, subscribedDocs);
+        windSpeedThreshold, precipitationProbabilityThreshold, showUnavailableSlots, false);
   
-    recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, subscribedDocs);
+    recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, true);
+    
   }
 
   void updateThresholds() async {
@@ -68,8 +66,7 @@ late Future<List<Document>> recommendedDocuments;
       futureDocuments = documentService.fetchDocuments(
           windSpeedThreshold,
           precipitationProbabilityThreshold,
-          showUnavailableSlots,
-          subscribedDocs);
+          showUnavailableSlots,false);
       sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
       sharedPreferences.setDouble('precipitationProbabilityThreshold',
           precipitationProbabilityThreshold);
@@ -282,21 +279,7 @@ late Future<List<Document>> recommendedDocuments;
     );
   }
 
-  Future<List> getSubscribedDocs() async {
-    //http request to get all subscribed docs
-    Uri url = Uri.parse(
-        'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getSubscribed?userId=${userId}');
-
-    final response = await http.get(url);
-    print(response.body);
-    if (response.statusCode == 200) {
-      //parse json
-      List<dynamic> subscribedDocs = json.decode(response.body);
-      return subscribedDocs;
-    } else {
-      throw Exception('Failed to load documents');
-    }
-  }
+ 
 }
 
 class SliverRecommendedLV extends StatelessWidget {
