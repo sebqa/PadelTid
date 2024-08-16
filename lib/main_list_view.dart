@@ -58,6 +58,7 @@ class MainListView extends StatelessWidget {
     
                   documentsForDate.sort((a, b) => a.time.compareTo(b.time));
                   
+                  //
                   final formattedDate = '${weekdayName[parsedDate
                       .weekday - 1]}, '
                       '${parsedDate.day}/${parsedDate
