@@ -41,10 +41,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
-          recommendedDocuments =
-          documentService.fetchDocuments(4.0, 10.0, false, true);
-    SharedPreferences.getInstance().then((prefs) {
+SharedPreferences.getInstance().then((prefs) {
       setState(() => sharedPreferences = prefs);
       windSpeedThreshold =
           sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
@@ -61,6 +58,9 @@ class _HomePageState extends State<HomePage> {
 
       
     });
+          recommendedDocuments =
+          documentService.fetchDocuments(4.0, 10.0, false, true);
+    
   }
 
   void updateThresholds() async {
