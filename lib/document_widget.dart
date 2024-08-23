@@ -103,6 +103,7 @@ class DocumentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      contentPadding: EdgeInsets.only(left: 16, right: 8),
       onTap: () async {
         final result = await Navigator.push(
           context,
@@ -189,14 +190,16 @@ class DocumentWidget extends StatelessWidget {
 
   Widget _buildSubscriptionIcon(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return IconButton(
-        icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthGate())),
-      );
-    } else {
-      return subscribingIcon(document: document, user: user);
-    }
+    return SizedBox(
+      width: 40, // Fixed width for the icon
+      child: user == null
+          ? IconButton(
+              icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthGate())),
+              padding: EdgeInsets.zero, // Remove padding from IconButton
+            )
+          : subscribingIcon(document: document, user: user),
+    );
   }
 }
 
