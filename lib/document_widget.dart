@@ -153,6 +153,7 @@ class DocumentWidget extends StatelessWidget {
             ],
           ),
         ),
+        SizedBox(width: 12),
         _buildSubscriptionIcon(context),
       ],
     );
