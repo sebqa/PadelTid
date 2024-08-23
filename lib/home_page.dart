@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/document_service.dart';
 import 'package:flutter_application_1/model/document.dart';
-import 'package:flutter_application_1/model/location.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -12,7 +11,7 @@ import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage();
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -22,246 +21,145 @@ class _HomePageState extends State<HomePage> {
   double windSpeedThreshold = 50.0;
   double precipitationProbabilityThreshold = 100.0;
   bool showUnavailableSlots = true;
-  List<Location> locations = [];
-  List<Document> documents = [];
-  bool showSliders = false; // Set this based on your logic
-  late SharedPreferences sharedPreferences; // Declare prefs as late
-
+  late SharedPreferences sharedPreferences;
   late Future<List<Document>> futureDocuments;
-
   late Future<List<Document>>? recommendedDocuments;
-  late List<String> subscribedDocs = [];
-  DocumentService documentService = DocumentService();
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
+  final DocumentService documentService = DocumentService();
 
   @override
   void initState() {
     super.initState();
-SharedPreferences.getInstance().then((prefs) {
-      setState(() => sharedPreferences = prefs);
-      windSpeedThreshold =
-          sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
-      precipitationProbabilityThreshold =
-          sharedPreferences.getDouble('precipitationProbabilityThreshold') ??
-              100.0;
-      showUnavailableSlots =
-          sharedPreferences.getBool('showUnavailableSlots') ?? true;
-
-
-          
-      futureDocuments = documentService.fetchDocuments(windSpeedThreshold,
-          precipitationProbabilityThreshold, showUnavailableSlots, false);
-
-      
-    });
-          recommendedDocuments =
-          documentService.fetchDocuments(4.0, 10.0, false, true);
-    
+    _initializePreferences();
   }
 
-  void updateThresholds() async {
-    print("Called updateThresholds");
+  Future<void> _initializePreferences() async {
+    sharedPreferences = await SharedPreferences.getInstance();
+    setState(() {
+      windSpeedThreshold = sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
+      precipitationProbabilityThreshold = sharedPreferences.getDouble('precipitationProbabilityThreshold') ?? 100.0;
+      showUnavailableSlots = sharedPreferences.getBool('showUnavailableSlots') ?? true;
+    });
+    _fetchDocuments();
+  }
+
+  void _fetchDocuments() {
+    futureDocuments = documentService.fetchDocuments(
+      windSpeedThreshold,
+      precipitationProbabilityThreshold,
+      showUnavailableSlots,
+      false
+    );
+    recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, true);
+  }
+
+  Future<void> updateThresholds() async {
     try {
-      futureDocuments = documentService.fetchDocuments(windSpeedThreshold,
-          precipitationProbabilityThreshold, showUnavailableSlots, false);
-      sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
-      sharedPreferences.setDouble('precipitationProbabilityThreshold',
-          precipitationProbabilityThreshold);
-      sharedPreferences.setBool('showUnavailableSlots', showUnavailableSlots);
+      await sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
+      await sharedPreferences.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
+      await sharedPreferences.setBool('showUnavailableSlots', showUnavailableSlots);
+      _fetchDocuments();
       setState(() {});
     } catch (e) {
-      // Handle the exception
-      print('Failed to fetch documents: $e');
+      print('Failed to update thresholds: $e');
     }
   }
 
   void showSettingsDialog() {
     showDialog(
-      barrierDismissible: false,
       context: context,
-      builder: (BuildContext buildcontext) {
-        return StatefulBuilder(
-          builder: (buildcontext, state) => AlertDialog(
-            title: Text('Adjust Thresholds'),
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  Column(
-                    children: [
-                      Text('Wind Speed: ${windSpeedThreshold.round()} m/s'),
-                      Slider(
-                        value: windSpeedThreshold,
-                        min: 0,
-                        max: 50,
-                        divisions: 50,
-                        onChanged: (double value) {
-                          state(() {
-                            windSpeedThreshold = value;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                          'Precipitation Probability: ${precipitationProbabilityThreshold.round()}%'),
-                      Slider(
-                        value: precipitationProbabilityThreshold,
-                        min: 0,
-                        max: 100,
-                        divisions: 100,
-                        onChanged: (double value) {
-                          state(() {
-                            precipitationProbabilityThreshold = value;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: showUnavailableSlots,
-                        onChanged: (bool? newValue) {
-                          if (newValue != null) {
-                            state(() {
-                              showUnavailableSlots = newValue;
-                            });
-                          }
-                        },
-                      ),
-                      Text('Show unavailable timeslots'),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: Text('Apply'),
-                onPressed: () {
-                  updateThresholds();
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: Text('Cancel'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
+      builder: (BuildContext context) => _buildSettingsDialog(),
+    );
+  }
+
+  Widget _buildSettingsDialog() {
+    return StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Adjust Thresholds'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: [
+              _buildSlider('Wind Speed', windSpeedThreshold, 0, 50, (value) {
+                setState(() => windSpeedThreshold = value);
+              }),
+              _buildSlider('Precipitation Probability', precipitationProbabilityThreshold, 0, 100, (value) {
+                setState(() => precipitationProbabilityThreshold = value);
+              }),
+              _buildCheckbox('Show unavailable timeslots', showUnavailableSlots, (value) {
+                setState(() => showUnavailableSlots = value ?? false);
+              }),
             ],
           ),
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Apply'),
+            onPressed: () {
+              updateThresholds();
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSlider(String label, double value, double min, double max, ValueChanged<double> onChanged) {
+    return Column(
+      children: [
+        Text('$label: ${value.round()}${label == 'Wind Speed' ? ' m/s' : '%'}'),
+        Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: max.toInt(),
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckbox(String label, bool value, ValueChanged<bool?> onChanged) {
+    return Row(
+      children: [
+        Checkbox(value: value, onChanged: onChanged),
+        Text(label),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme darkThemeColors(context) {
-      return const ColorScheme(
-        brightness: Brightness.light,
-        primary: Color(0xFFFF7F07),
-        primaryContainer: Color(0xFFFFFFFF),
-        onPrimary: Color(0xFFFFFFFF),
-        secondary: Color(0xFFBBBBBB),
-        onSecondary: Color(0xFFEAEAEA),
-        tertiary: Color(0xFFFF7F07),
-        error: Color(0xFFF32424),
-        onError: Color.fromARGB(255, 255, 255, 255),
-        background: Color(0xFFFFFFFF),
-        onBackground: Color(0xFF505050),
-        surface: Color(0xFFFFFFFF),
-        onSurface: Color(0xFF000000),
-      );
-    }
-
     return MaterialApp(
       scrollBehavior: MyCustomScrollBehavior(),
-      localizationsDelegates: [
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
         FirebaseUILocalizations.delegate,
       ],
-      supportedLocales: [
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('en', 'US')],
       title: 'PADELTID',
-      theme: ThemeData.light().copyWith(
-          colorScheme: darkThemeColors(context),
-          sliderTheme: SliderThemeData(
-            activeTrackColor: darkThemeColors(context).tertiary,
-            inactiveTrackColor: darkThemeColors(context).onPrimary,
-            thumbColor: darkThemeColors(context).tertiary,
-            thumbShape: RoundSliderThumbShape(enabledThumbRadius: 10.0),
-            overlayShape: RoundSliderOverlayShape(overlayRadius: 20.0),
-            overlayColor: darkThemeColors(context).onPrimary,
-          ),
-          textTheme: TextTheme(
-            bodySmall: TextStyle(
-                color: darkThemeColors(context).onSurface,
-                fontSize: 12,
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w600),
-          )),
+      theme: _buildTheme(context),
       home: Scaffold(
         floatingActionButton: FloatingActionButton(
-          backgroundColor: darkThemeColors(context).onPrimary,
-          foregroundColor: darkThemeColors(context).primary,
+          backgroundColor: Theme.of(context).colorScheme.onPrimary,
+          foregroundColor: Theme.of(context).colorScheme.primary,
           child: const Icon(Icons.tune),
           onPressed: showSettingsDialog,
         ),
         body: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            CustomAppBar(),
+            const CustomAppBar(),
             SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
             SliverList(
               delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  return FutureBuilder<List<Document>>(
-                    future: futureDocuments,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: CircularProgressIndicator(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        );
-                      } else if (snapshot.hasError) {
-                        return Center(
-                          child: Text('Error: ${snapshot.error}'),
-                        );
-                      } else if (snapshot.hasData) {
-                        final Map<String, List<Document>> groupedDocuments = {};
-                        for (var document in snapshot.data!) {
-                          groupedDocuments
-                              .putIfAbsent(document.date, () => [])
-                              .add(document);
-                        }
-
-                        return MainListView(
-                            groupedDocuments: groupedDocuments);
-                      } else {
-                        return Center(
-                          child: Text('No data'),
-                        );
-                      }
-                    },
-                  );
-                },
-                childCount:
-                    1, // Change this value if you want to show multiple items in the SliverList
+                (context, index) => _buildFutureBuilder(),
+                childCount: 1,
               ),
             ),
           ],
@@ -269,10 +167,74 @@ SharedPreferences.getInstance().then((prefs) {
       ),
     );
   }
+
+  Widget _buildFutureBuilder() {
+    return FutureBuilder<List<Document>>(
+      future: futureDocuments,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.hasData) {
+          final groupedDocuments = _groupDocuments(snapshot.data!);
+          return MainListView(groupedDocuments: groupedDocuments);
+        } else {
+          return const Center(child: Text('No data'));
+        }
+      },
+    );
+  }
+
+  Map<String, List<Document>> _groupDocuments(List<Document> documents) {
+    final groupedDocuments = <String, List<Document>>{};
+    for (var document in documents) {
+      groupedDocuments.putIfAbsent(document.date, () => []).add(document);
+    }
+    return groupedDocuments;
+  }
+
+  ThemeData _buildTheme(BuildContext context) {
+    final colorScheme = ColorScheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFFFF7F07),
+      primaryContainer: Colors.white,
+      onPrimary: Colors.white,
+      secondary: const Color(0xFFBBBBBB),
+      onSecondary: const Color(0xFFEAEAEA),
+      tertiary: const Color(0xFFFF7F07),
+      error: const Color(0xFFF32424),
+      onError: Colors.white,
+      background: Colors.white,
+      onBackground: const Color(0xFF505050),
+      surface: Colors.white,
+      onSurface: Colors.black,
+    );
+
+    return ThemeData.light().copyWith(
+      colorScheme: colorScheme,
+      sliderTheme: SliderThemeData(
+        activeTrackColor: colorScheme.tertiary,
+        inactiveTrackColor: colorScheme.onPrimary,
+        thumbColor: colorScheme.tertiary,
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10.0),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 20.0),
+        overlayColor: colorScheme.onPrimary,
+      ),
+      textTheme: TextTheme(
+        bodySmall: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 12,
+          fontFamily: 'Roboto',
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }
 
 class SliverRecommendedLV extends StatelessWidget {
-  const SliverRecommendedLV({super.key, required this.recommendedDocuments});
+  const SliverRecommendedLV({Key? key, required this.recommendedDocuments}) : super(key: key);
 
   final Future<List<Document>>? recommendedDocuments;
 
@@ -283,13 +245,11 @@ class SliverRecommendedLV extends StatelessWidget {
         future: recommendedDocuments,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+            return const Center(
               child: SizedBox(
                 height: 50,
                 width: 50,
-                child: CircularProgressIndicator(
-                  color: Colors.transparent,
-                ),
+                child: CircularProgressIndicator(color: Colors.transparent),
               ),
             );
           } else if (snapshot.hasError) {
@@ -304,33 +264,26 @@ class SliverRecommendedLV extends StatelessWidget {
 }
 
 class ListViewbuilder extends StatelessWidget {
-  const ListViewbuilder({
-    super.key,
-    required this.documentsForDate,
-  });
+  const ListViewbuilder({Key? key, required this.documentsForDate}) : super(key: key);
 
   final List<Document> documentsForDate;
 
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      separatorBuilder: (context, index) => Divider(thickness: 0.5),
+      separatorBuilder: (_, __) => const Divider(thickness: 0.5),
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: documentsForDate.length,
-      itemBuilder: (context, index) {
-        final document = documentsForDate[index];
-        return DocumentWidget(document: document);
-      },
+      itemBuilder: (_, index) => DocumentWidget(document: documentsForDate[index]),
     );
   }
 }
 
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
-  // Override behavior methods and getters like dragDevices
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+  };
 }
