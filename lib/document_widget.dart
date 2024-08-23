@@ -182,12 +182,17 @@ class DocumentWidget extends StatelessWidget {
   }
 
   Widget _buildAvailableCourts() {
-    return _buildInfoRow(
-      Icons.sports_baseball,
-      '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
-      color: Colors.lime,
-    );
-  }
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+      _buildInfoRow(
+        Icons.sports_baseball,
+        '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
+        color: Colors.lime,
+      ),
+    ],
+  );
+}
 
   Widget _buildSubscriptionIcon(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
