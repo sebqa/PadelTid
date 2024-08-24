@@ -29,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, true);
     _initializePreferences();
   }
 
@@ -49,7 +50,7 @@ class _HomePageState extends State<HomePage> {
       showUnavailableSlots,
       false
     );
-    recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, true);
+    
   }
 
   Future<void> updateThresholds() async {
