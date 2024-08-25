@@ -149,6 +149,8 @@ class DocumentWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        _buildAvailableCourts(context),
+        SizedBox(height: 4),
         Row(
           children: [
             _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C'),
@@ -158,8 +160,8 @@ class DocumentWidget extends StatelessWidget {
             _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%'),
           ],
         ),
-        SizedBox(height: 4),
-        _buildAvailableCourts(context),
+        
+        
       ],
     );
   }
