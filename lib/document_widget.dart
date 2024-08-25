@@ -187,7 +187,7 @@ class DocumentWidget extends StatelessWidget {
       ),
       child: Row(
       children: [
-        Icon(Icons.sports_baseball, size: 14, color: Colors.green),
+        Icon(Icons.sports_baseball, size: 14, color: Colors.white),
         SizedBox(width: 2),
         Text(
           '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
