@@ -179,7 +179,13 @@ class DocumentWidget extends StatelessWidget {
   }
 
   Widget _buildAvailableCourts(BuildContext context) {
-    return Row(
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
       children: [
         Icon(Icons.sports_baseball, size: 14, color: Colors.green),
         SizedBox(width: 2),
@@ -188,6 +194,7 @@ class DocumentWidget extends StatelessWidget {
           style: TextStyle(fontSize: 12, color: Colors.green),
         ),
       ],
+        )
     );
   }
 
