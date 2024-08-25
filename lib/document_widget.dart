@@ -130,10 +130,7 @@ class DocumentWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          document.time,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          document.time
         ),
         SizedBox(height: 4),
         SizedBox(
