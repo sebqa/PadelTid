@@ -182,7 +182,7 @@ class DocumentWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondaryContainer,
+        color: Theme.of(context).colorScheme.primary,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
