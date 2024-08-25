@@ -57,9 +57,11 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> updateThresholds() async {
     try {
+      if( sharedPreferences.getString("user_consent") == "all"){
       await sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
       await sharedPreferences.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
       await sharedPreferences.setBool('showUnavailableSlots', showUnavailableSlots);
+      }
       _fetchDocuments();
       setState(() {});
     } catch (e) {
@@ -182,7 +184,7 @@ class _HomePageState extends State<HomePage> {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (snapshot.hasData) {
           final groupedDocuments = _groupDocuments(snapshot.data!);
-              showConsentSnackbar(context, onlyShowIfNotSet: false);
+    showConsentSnackbar(context, onlyShowIfNotSet: true);
 
           return MainListView(groupedDocuments: groupedDocuments);
         } else {
@@ -292,4 +294,5 @@ class MyCustomScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.touch,
     PointerDeviceKind.mouse,
   };
+  
 }
