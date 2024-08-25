@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/consent_snackbar.dart';
 import 'package:flutter_application_1/document_service.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
@@ -29,6 +30,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    //call showConsentSnackbar from consent_snackbar.dart
     recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, true);
     _initializePreferences();
   }
@@ -134,6 +136,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    
     return MaterialApp(
       scrollBehavior: MyCustomScrollBehavior(),
       localizationsDelegates: [
@@ -179,6 +182,8 @@ class _HomePageState extends State<HomePage> {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (snapshot.hasData) {
           final groupedDocuments = _groupDocuments(snapshot.data!);
+              showConsentSnackbar(context, onlyShowIfNotSet: false);
+
           return MainListView(groupedDocuments: groupedDocuments);
         } else {
           return const Center(child: Text('No data'));
