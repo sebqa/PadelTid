@@ -1,9 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_application_1/login_page.dart';
 import 'package:flutter_application_1/model/document.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 import 'document_page.dart';
 
 class DocumentWidget extends StatelessWidget {
@@ -102,110 +101,112 @@ class DocumentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.only(left: 16, right: 8),
-      onTap: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DocumentPage(document: document),
-          ),
-        );
-        print(result);
-      },
-      leading: _buildLeading(context),
-      title: _buildTitle(context),
-    );
-  }
-
-  Widget _buildLeading(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '${document.time} ',
-          style: TextStyle(
-            fontSize: 14.0,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        SizedBox(
-          width: 30,
-          height: 30,
-          child: SvgPicture.asset(
-            'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTitle(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: InkWell(
+        onTap: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DocumentPage(document: document),
+            ),
+          );
+          print(result);
+        },
+        child: Padding(
+          padding: EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildWeatherInfo(),
-              _buildAvailableCourts(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    document.time,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  _buildSubscriptionIcon(context),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildWeatherIcon(),
+                  SizedBox(width: 12),
+                  Expanded(child: _buildWeatherInfo(context)),
+                ],
+              ),
+              SizedBox(height: 8),
+              _buildAvailableCourts(context),
             ],
           ),
         ),
-        SizedBox(width: 12),
-        _buildSubscriptionIcon(context),
-      ],
+      ),
     );
   }
 
-  Widget _buildWeatherInfo() {
+  Widget _buildWeatherIcon() {
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: SvgPicture.asset(
+        'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
+      ),
+    );
+  }
+
+  Widget _buildWeatherInfo(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildInfoRow(Icons.thermostat_outlined, '${document.airTemperature}°C'),
-        _buildInfoRow(Icons.air, '${document.windSpeed}m/s', color: Colors.grey),
-        _buildInfoRow(Icons.umbrella, '${document.precipitationProbability}%', color: Colors.indigo),
+        _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C'),
+        _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s'),
+        _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%'),
       ],
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text, {Color? color}) {
+  Widget _buildInfoItem(BuildContext context, IconData icon, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14.0, color: color),
-        SizedBox(width: 2),
-        Text(text, style: const TextStyle(fontSize: 12.0)),
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.secondary),
+        SizedBox(width: 4),
+        Text(text, style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
 
-  Widget _buildAvailableCourts() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.end,
-    children: [
-      _buildInfoRow(
-        Icons.sports_baseball,
-        '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
-        color: Colors.lime,
+  Widget _buildAvailableCourts(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(16),
       ),
-    ],
-  );
-}
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.sports_baseball, size: 16, color: Theme.of(context).colorScheme.onSecondaryContainer),
+          SizedBox(width: 4),
+          Text(
+            '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSecondaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSubscriptionIcon(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    return SizedBox(
-      width: 40, // Fixed width for the icon
-      child: user == null
-          ? IconButton(
-              icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthGate())),
-              padding: EdgeInsets.zero, // Remove padding from IconButton
-            )
-          : subscribingIcon(document: document, user: user),
-    );
+    return user == null
+        ? IconButton(
+            icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthGate())),
+          )
+        : subscribingIcon(document: document, user: user);
   }
 }
-
