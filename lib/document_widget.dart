@@ -101,67 +101,68 @@ class DocumentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: InkWell(
-        onTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DocumentPage(document: document),
-            ),
-          );
-          print(result);
-        },
-        child: Padding(
-          padding: EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    document.time,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  _buildSubscriptionIcon(context),
-                ],
-              ),
-              SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildWeatherIcon(),
-                  SizedBox(width: 12),
-                  Expanded(child: _buildWeatherInfo(context)),
-                ],
-              ),
-              SizedBox(height: 8),
-              _buildAvailableCourts(context),
-            ],
+    return InkWell(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DocumentPage(document: document),
           ),
+        );
+        print(result);
+      },
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            _buildTimeAndWeatherIcon(context),
+            SizedBox(width: 12),
+            Expanded(child: _buildWeatherInfo(context)),
+            _buildSubscriptionIcon(context),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildWeatherIcon() {
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: SvgPicture.asset(
-        'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
-      ),
+  Widget _buildTimeAndWeatherIcon(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          document.time,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 4),
+        SizedBox(
+          width: 30,
+          height: 30,
+          child: SvgPicture.asset(
+            'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildWeatherInfo(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C'),
-        _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s'),
-        _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%'),
+        Row(
+          children: [
+            _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C'),
+            SizedBox(width: 8),
+            _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s'),
+            SizedBox(width: 8),
+            _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%'),
+          ],
+        ),
+        SizedBox(height: 4),
+        _buildAvailableCourts(context),
       ],
     );
   }
@@ -170,43 +171,37 @@ class DocumentWidget extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Theme.of(context).colorScheme.secondary),
-        SizedBox(width: 4),
-        Text(text, style: Theme.of(context).textTheme.bodyMedium),
+        Icon(icon, size: 14, color: Theme.of(context).colorScheme.secondary),
+        SizedBox(width: 2),
+        Text(text, style: TextStyle(fontSize: 12)),
       ],
     );
   }
 
   Widget _buildAvailableCourts(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.sports_baseball, size: 16, color: Theme.of(context).colorScheme.onSecondaryContainer),
-          SizedBox(width: 4),
-          Text(
-            '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
-            ),
-          ),
-        ],
-      ),
+    return Row(
+      children: [
+        Icon(Icons.sports_baseball, size: 14, color: Colors.green),
+        SizedBox(width: 2),
+        Text(
+          '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
+          style: TextStyle(fontSize: 12, color: Colors.green),
+        ),
+      ],
     );
   }
 
   Widget _buildSubscriptionIcon(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    return user == null
-        ? IconButton(
-            icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthGate())),
-          )
-        : subscribingIcon(document: document, user: user);
+    return SizedBox(
+      width: 40,
+      child: user == null
+          ? IconButton(
+              icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthGate())),
+              padding: EdgeInsets.zero,
+            )
+          : subscribingIcon(document: document, user: user),
+    );
   }
 }
