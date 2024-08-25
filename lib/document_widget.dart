@@ -152,6 +152,7 @@ class DocumentWidget extends StatelessWidget {
         _buildAvailableCourts(context),
         SizedBox(height: 4),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C'),
             SizedBox(width: 8),
