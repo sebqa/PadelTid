@@ -191,7 +191,7 @@ class DocumentWidget extends StatelessWidget {
         SizedBox(width: 2),
         Text(
           '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
-          style: TextStyle(fontSize: 12, color: Colors.green),
+          style: TextStyle(fontSize: 12, color: Colors.white),
         ),
       ],
         )
