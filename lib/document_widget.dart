@@ -201,7 +201,8 @@ class DocumentWidget extends StatelessWidget {
   Widget _buildSubscriptionIcon(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     return SizedBox(
-      width: 40,
+      width: 48,
+      height: 48,
       child: user == null
           ? IconButton(
               icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
