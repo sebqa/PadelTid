@@ -10,7 +10,7 @@ class DocumentWidget extends StatelessWidget {
 
   final Document document;
 
-  static final weatherSymbolKeys = {
+    static final weatherSymbolKeys = {
     'clearsky_day': '01d',
     'clearsky_night': '01n',
     'clearsky_polartwilight': '01m',
@@ -113,26 +113,45 @@ class DocumentWidget extends StatelessWidget {
       },
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTimeAndWeatherIcon(context),
-            SizedBox(width: 12),
-            Expanded(child: _buildWeatherInfo(context)),
-            _buildSubscriptionIcon(context),
+            _buildTimeAndWeatherInfo(context),
+            SizedBox(height: 4),
+            _buildWeatherIconAndCourts(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTimeAndWeatherIcon(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+  Widget _buildTimeAndWeatherInfo(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Text(
+            document.time,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          Spacer(),
+          _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C', Colors.white),
+          SizedBox(width: 8),
+          _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s', Colors.white),
+          SizedBox(width: 8),
+          _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%', Colors.white),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeatherIconAndCourts(BuildContext context) {
+    return Row(
       children: [
-        Text(
-          document.time
-        ),
-        SizedBox(height: 4),
         SizedBox(
           width: 30,
           height: 30,
@@ -140,61 +159,34 @@ class DocumentWidget extends StatelessWidget {
             'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
           ),
         ),
+        SizedBox(width: 12),
+        Expanded(child: _buildAvailableCourts(context)),
+        _buildSubscriptionIcon(context),
       ],
     );
   }
 
-  Widget _buildWeatherInfo(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildAvailableCourts(context),
-        SizedBox(height: 4),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C'),
-            SizedBox(width: 8),
-            _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s'),
-            SizedBox(width: 8),
-            _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%'),
-          ],
-        ),
-        
-        
-      ],
-    );
-  }
-
-  Widget _buildInfoItem(BuildContext context, IconData icon, String text) {
+  Widget _buildInfoItem(BuildContext context, IconData icon, String text, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: Theme.of(context).colorScheme.secondary),
+        Icon(icon, size: 14, color: color),
         SizedBox(width: 2),
-        Text(text, style: TextStyle(fontSize: 12)),
+        Text(text, style: TextStyle(fontSize: 12, color: color)),
       ],
     );
   }
 
   Widget _buildAvailableCourts(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
+    return Row(
       children: [
-        Icon(Icons.sports_baseball, size: 14, color: Colors.white),
+        Icon(Icons.sports_baseball, size: 14, color: Theme.of(context).colorScheme.primary),
         SizedBox(width: 2),
         Text(
           '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
-          style: TextStyle(fontSize: 12, color: Colors.white),
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary),
         ),
       ],
-        )
     );
   }
 
