@@ -79,7 +79,8 @@ class MainListView extends StatelessWidget {
               children: [
                 ListViewbuilder(documentsForDate: documentsForDate),
               ],
-            )
+            ),
+            Divider(thickness: 0.5)
           ],
         );
       },
