@@ -17,7 +17,7 @@ class CustomAppBar extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-                Icon(Icons.location_pin, color: Theme.of(context).colorScheme.primaryContainer),
+                Icon(Icons.location_pin),
                 MultiSelectSearchRequestDropdown(),
           ],
         ),
@@ -25,7 +25,7 @@ class CustomAppBar extends StatelessWidget {
             elevation: 0,
             actions: [
               IconButton(
-                icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primaryContainer),
+                icon: Icon(Icons.settings),
                 onPressed: () {
                  Navigator.of(context).push(
     MaterialPageRoute(
