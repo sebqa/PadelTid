@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'custom_app_bar.dart';
 import 'document_widget.dart';
+import 'introduction_widget.dart';
 import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
 
@@ -178,28 +179,34 @@ class _HomePageState extends State<HomePage> {
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 const CustomAppBar(),
+
+                introduction_widget(),
                 SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
                 
-                //insert row
+                
                 SliverToBoxAdapter(
-                  child:  Padding(
-                    padding: const EdgeInsets.only(left: 8.0,top: 16.0),
-                    child: Row(
-                                  children: [
-                                    Icon(Icons.calendar_month, color: Colors.white),
-                                    SizedBox(width: 8),
-                                    Text(
-                    'All timeslots',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_month, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text(
+                            'All timeslots',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                                    ),
-                                  ],
-                                ),
                   ),
                 ),
+                
 
 
 
@@ -283,6 +290,24 @@ class _HomePageState extends State<HomePage> {
           fontSize: 12,
           fontFamily: 'Roboto',
           fontWeight: FontWeight.w600,
+        ),
+        headlineSmall: TextStyle(
+          color: colorScheme.primary,
+          fontSize: 24,
+          fontFamily: 'Roboto',
+          fontWeight: FontWeight.bold,
+        ),
+        titleMedium: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 16,
+          fontFamily: 'Roboto',
+          fontWeight: FontWeight.normal,
+        ),
+        bodyMedium: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 14,
+          fontFamily: 'Roboto',
+          fontWeight: FontWeight.normal,
         ),
       ),
     );
