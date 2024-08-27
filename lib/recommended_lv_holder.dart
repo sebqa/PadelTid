@@ -13,11 +13,6 @@ class recommended_lv_holder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration:  BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
-       
-      ),
-      
       child: Column(
         children: [
                     Padding(padding: EdgeInsets.all(10.0),),

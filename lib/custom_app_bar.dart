@@ -11,9 +11,9 @@ class CustomAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      
-      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      backgroundColor: Colors.transparent,
       title: SizedBox(
+        
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [

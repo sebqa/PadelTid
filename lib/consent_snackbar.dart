@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:js' as js;
 
-showConsentSnackbar(BuildContext context,
+showConsentSnackbar(BuildContext context, 
     {bool onlyShowIfNotSet = true}) async {
   final prefs = await SharedPreferences.getInstance();
   // await prefs.remove('user_consent'); // uncomment to reset for debug purposes
