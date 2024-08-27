@@ -26,9 +26,7 @@ class MainListView extends StatelessWidget {
                           'Sunday'
                         ];
     return Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                  ),
+                  
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(8.0,8.0,8.0,0),
                     child: Container(

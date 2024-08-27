@@ -99,6 +99,7 @@ flutter:
   assets:
     - assets/
     - assets/weather_symbols/darkmode/
+    - assets/images/
 
   fonts:
   - family: SocialIcons
