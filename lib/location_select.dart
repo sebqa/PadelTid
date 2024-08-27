@@ -31,12 +31,12 @@ class MultiSelectSearchRequestDropdown extends StatelessWidget {
         child: Stack(
           children: [
             CustomPaint(
-              size: Size(400, 70),
+              size: Size(300, 70),
               painter: CloudPainter(),
             ),
             Positioned.fill(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 75, vertical: 10),
+                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                 child: SizedBox(
                   width: 350,
                   height: 50,
