@@ -28,7 +28,7 @@ class CustomAppBar extends StatelessWidget {
       elevation: 0,
       actions: [
         IconButton(
-          icon: Icon(Icons.settings),
+          icon: Icon(Icons.settings, color: Colors.white, size: 30),
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
