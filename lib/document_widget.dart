@@ -10,7 +10,7 @@ class DocumentWidget extends StatelessWidget {
 
   final Document document;
 
-    static final weatherSymbolKeys = {
+  static final weatherSymbolKeys = {
     'clearsky_day': '01d',
     'clearsky_night': '01n',
     'clearsky_polartwilight': '01m',
@@ -100,108 +100,151 @@ class DocumentWidget extends StatelessWidget {
       weatherSymbolKeys[key] ?? 'null';
 
   @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DocumentPage(document: document),
-          ),
-        );
-        print(result);
-      },
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTimeAndWeatherInfo(context),
-            SizedBox(height: 4),
-            _buildWeatherIconAndCourts(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeAndWeatherInfo(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
+Widget build(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: InkWell(
+     onTap: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DocumentPage(document: document),
+            ),
+          );
+          print(result);
+        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            document.time,
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              _buildTimeAndWeatherIcon(context),
+              SizedBox(width: 16),
+              Expanded(child: _buildWeatherInfo(context)),
+            ],
           ),
-          Spacer(),
-          _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C', Colors.white),
-          SizedBox(width: 8),
-          _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s', Colors.white),
-          SizedBox(width: 8),
-          _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%', Colors.white),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildWeatherIconAndCourts(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 30,
-          height: 30,
-          child: SvgPicture.asset(
-            'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
-          ),
+Widget _buildTimeAndWeatherIcon(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        document.time,
+        style: TextStyle(
+          fontSize: 18,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
-        SizedBox(width: 12),
-        Expanded(child: _buildAvailableCourts(context)),
-        _buildSubscriptionIcon(context),
-      ],
-    );
-  }
+      ),
+      SizedBox(height: 4),
+      SizedBox(
+        width: 28,
+        height: 28,
+        child: SvgPicture.asset(
+          'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg'        ),
+      ),
+    ],
+  );
+}
 
-  Widget _buildInfoItem(BuildContext context, IconData icon, String text, Color color) {
-    return Row(
+Widget _buildWeatherInfo(BuildContext context) {
+  return Column(
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildInfoItem(context, Icons.thermostat_outlined, '${document.airTemperature}°C'),
+          _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s'),
+          _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%'),
+                      _buildSubscriptionIcon(context),
+
+        ],
+      ),
+      Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _buildAvailableLocations(context),
+            SizedBox(width: 8),
+            _buildAvailableCourts(context),
+          ],
+        ),
+    ],
+  );
+}
+
+Widget _buildInfoItem(BuildContext context, IconData icon, String text) {
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 16, color: Theme.of(context).colorScheme.secondary),
+      SizedBox(width: 4),
+      Text(text, style: TextStyle(fontSize: 14)),
+    ],
+  );
+}
+
+Widget _buildAvailableCourts(BuildContext context) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color),
-        SizedBox(width: 2),
-        Text(text, style: TextStyle(fontSize: 12, color: color)),
-      ],
-    );
-  }
-
-  Widget _buildAvailableCourts(BuildContext context) {
-    return Row(
-      children: [
-        Icon(Icons.sports_baseball, size: 14, color: Theme.of(context).colorScheme.primary),
-        SizedBox(width: 2),
+        Icon(Icons.sports_baseball, size: 16, color: Theme.of(context).colorScheme.primary),
+        SizedBox(width: 6),
         Text(
-          '${document.availableSlots} available ${document.availableSlots == 1 ? 'court' : 'courts'}',
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary),
+          '${document.availableSlots} ${document.availableSlots == 1 ? 'court' : 'courts'} available',
+          style: TextStyle(
+            fontSize: 14, 
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSubscriptionIcon(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    return SizedBox(
-      width: 48,
-      height: 48,
-      child: user == null
-          ? IconButton(
-              icon: Icon(Icons.star_border, color: Theme.of(context).colorScheme.primary),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthGate())),
-              padding: EdgeInsets.zero,
-            )
-          : subscribingIcon(document: document, user: user),
-    );
-  }
+    ),
+  );
+}
+Widget _buildAvailableLocations(BuildContext context) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '1 ${1 == 1 ? 'location' : 'locations'}',
+          style: TextStyle(
+            fontSize: 14, 
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+Widget _buildSubscriptionIcon(BuildContext context) {
+  final user = FirebaseAuth.instance.currentUser;
+  return Container(
+    width: 32,
+    height: 32,
+    child: user == null
+        ? IconButton(
+            icon: Icon(Icons.star_border, size: 20, color: Theme.of(context).colorScheme.primary),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthGate())),
+            padding: EdgeInsets.zero,
+          )
+        : subscribingIcon(document: document, user: user),
+  );
+}
 }

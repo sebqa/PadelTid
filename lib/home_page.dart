@@ -4,6 +4,7 @@ import 'package:flutter_application_1/consent_snackbar.dart';
 import 'package:flutter_application_1/document_service.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'custom_app_bar.dart';
@@ -26,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   late Future<List<Document>> futureDocuments;
   late Future<List<Document>>? recommendedDocuments;
   final DocumentService documentService = DocumentService();
+  bool consentShown = false;
 
   @override
   void initState() {
@@ -157,18 +159,29 @@ class _HomePageState extends State<HomePage> {
           child: const Icon(Icons.tune),
           onPressed: showSettingsDialog,
         ),
-        body: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            const CustomAppBar(),
-            SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildFutureBuilder(),
-                childCount: 1,
+        body: Stack(
+          children: [
+            //svgpicture from url
+            SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: SvgPicture.asset(
+                'assets/images/4698abd180d4266f723d.svg',
               ),
             ),
-          ],
+            CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              const CustomAppBar(),
+              SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildFutureBuilder(),
+                  childCount: 1,
+                ),
+              ),
+            ],
+          ),]
         ),
       ),
     );
@@ -184,7 +197,10 @@ class _HomePageState extends State<HomePage> {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (snapshot.hasData) {
           final groupedDocuments = _groupDocuments(snapshot.data!);
-    showConsentSnackbar(context, onlyShowIfNotSet: true);
+          if(!consentShown){
+            showConsentSnackbar(context, onlyShowIfNotSet: true);
+            consentShown = true;
+          }
 
           return MainListView(groupedDocuments: groupedDocuments);
         } else {
