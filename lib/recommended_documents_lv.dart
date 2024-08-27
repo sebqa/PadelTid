@@ -12,7 +12,7 @@ class RecommendedDocumentsListView extends StatelessWidget {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: recommendedDocuments.length,
-      separatorBuilder: (context, index) => SizedBox(width: 12),
+      separatorBuilder: (context, index) => SizedBox(width: 0),
       itemBuilder: (context, index) {
         return RecommendedDocumentWidget(recommendedDocuments[index]);
       },
