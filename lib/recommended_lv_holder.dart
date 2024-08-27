@@ -17,12 +17,34 @@ class recommended_lv_holder extends StatelessWidget {
     //randomize order of documents
     documents.shuffle();
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-      child: SizedBox(
-            height: 100, // Increased height for better visibility
-        child: RecommendedDocumentsListView(
-          recommendedDocuments: documents,
-        ),
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                Icon(Icons.recommend, color: Theme.of(context).colorScheme.primaryContainer),
+                SizedBox(width: 8),
+                Text(
+                  'Recommended',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 110, // Adjust this value as needed
+            child: RecommendedDocumentsListView(
+              recommendedDocuments: documents,
+            ),
+          ),
+        ],
       ),
     );
   }
