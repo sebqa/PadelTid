@@ -179,6 +179,30 @@ class _HomePageState extends State<HomePage> {
               slivers: [
                 const CustomAppBar(),
                 SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
+                
+                //insert row
+                SliverToBoxAdapter(
+                  child:  Padding(
+                    padding: const EdgeInsets.only(left: 8.0,top: 16.0),
+                    child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_month, color: Colors.white),
+                                    SizedBox(width: 8),
+                                    Text(
+                    'All timeslots',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                                    ),
+                                  ],
+                                ),
+                  ),
+                ),
+
+
+
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _buildFutureBuilder(),
