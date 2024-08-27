@@ -4,7 +4,6 @@ import 'package:flutter_application_1/consent_snackbar.dart';
 import 'package:flutter_application_1/document_service.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'custom_app_bar.dart';
@@ -163,13 +162,16 @@ class _HomePageState extends State<HomePage> {
         ),
         body: Stack(
           children: [
-            SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
-              child: SvgPicture.asset(
-                'assets/images/4698abd180d4266f723d.svg',
-                fit: BoxFit.fitHeight,
-
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF87CEEB), // Sky blue
+                    Color(0xFFE0F7FA), // Light blue
+                  ],
+                ),
               ),
             ),
             CustomScrollView(

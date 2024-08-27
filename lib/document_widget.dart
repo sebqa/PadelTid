@@ -133,19 +133,20 @@ Widget _buildTimeAndWeatherIcon(BuildContext context) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      
+      SizedBox(
+        width: 28,
+        height: 28,
+        child: SvgPicture.asset(
+          'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg'        ),
+      ),
+      SizedBox(height: 4),
       Text(
         document.time,
         style: TextStyle(
           fontSize: 18,
           color: Theme.of(context).colorScheme.onSurface,
         ),
-      ),
-      SizedBox(height: 4),
-      SizedBox(
-        width: 28,
-        height: 28,
-        child: SvgPicture.asset(
-          'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg'        ),
       ),
     ],
   );
