@@ -236,8 +236,8 @@ Widget _buildAvailableLocations(BuildContext context) {
 Widget _buildSubscriptionIcon(BuildContext context) {
   final user = FirebaseAuth.instance.currentUser;
   return Container(
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     child: user == null
         ? IconButton(
             icon: Icon(Icons.star_border, size: 20, color: Theme.of(context).colorScheme.primary),
