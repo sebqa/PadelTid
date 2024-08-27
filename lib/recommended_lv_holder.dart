@@ -24,6 +24,7 @@ class recommended_lv_holder extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.recommend, color: Theme.of(context).colorScheme.primaryContainer),
                 SizedBox(width: 8),
