@@ -74,9 +74,9 @@ class CloudPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Base cloud shape
     final path = Path()
-      ..moveTo(size.width * 0.2, size.height * 0.5)
-      ..quadraticBezierTo(size.width * 0.05, size.height * 0.45, size.width * 0.1, size.height * 0.3)
-      ..quadraticBezierTo(size.width * 0.15, size.height * 0.15, size.width * 0.3, size.height * 0.2)
+      ..moveTo(size.width * 0.1, size.height * 0.5)
+      ..quadraticBezierTo(size.width * 0.02, size.height * 0.4, size.width * 0.1, size.height * 0.3)
+      ..quadraticBezierTo(size.width * 0.15, size.height * 0.2, size.width * 0.3, size.height * 0.2)
       ..quadraticBezierTo(size.width * 0.45, size.height * 0.05, size.width * 0.55, size.height * 0.2)
       ..quadraticBezierTo(size.width * 0.7, size.height * 0.05, size.width * 0.8, size.height * 0.2)
       ..quadraticBezierTo(size.width * 0.95, size.height * 0.25, size.width * 0.9, size.height * 0.4)
@@ -84,7 +84,7 @@ class CloudPainter extends CustomPainter {
       ..quadraticBezierTo(size.width * 0.75, size.height * 0.85, size.width * 0.6, size.height * 0.8)
       ..quadraticBezierTo(size.width * 0.5, size.height * 0.85, size.width * 0.4, size.height * 0.8)
       ..quadraticBezierTo(size.width * 0.25, size.height * 0.85, size.width * 0.2, size.height * 0.7)
-      ..quadraticBezierTo(size.width * 0.05, size.height * 0.65, size.width * 0.2, size.height * 0.5)
+      ..quadraticBezierTo(size.width * 0.02, size.height * 0.6, size.width * 0.1, size.height * 0.5)
       ..close();
 
     // Shadow
@@ -125,9 +125,9 @@ class CloudClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path()
-      ..moveTo(size.width * 0.2, size.height * 0.5)
-      ..quadraticBezierTo(size.width * 0.05, size.height * 0.45, size.width * 0.1, size.height * 0.3)
-      ..quadraticBezierTo(size.width * 0.15, size.height * 0.15, size.width * 0.3, size.height * 0.2)
+      ..moveTo(size.width * 0.1, size.height * 0.5)
+      ..quadraticBezierTo(size.width * 0.02, size.height * 0.4, size.width * 0.1, size.height * 0.3)
+      ..quadraticBezierTo(size.width * 0.15, size.height * 0.2, size.width * 0.3, size.height * 0.2)
       ..quadraticBezierTo(size.width * 0.45, size.height * 0.05, size.width * 0.55, size.height * 0.2)
       ..quadraticBezierTo(size.width * 0.7, size.height * 0.05, size.width * 0.8, size.height * 0.2)
       ..quadraticBezierTo(size.width * 0.95, size.height * 0.25, size.width * 0.9, size.height * 0.4)
@@ -135,7 +135,7 @@ class CloudClipper extends CustomClipper<Path> {
       ..quadraticBezierTo(size.width * 0.75, size.height * 0.85, size.width * 0.6, size.height * 0.8)
       ..quadraticBezierTo(size.width * 0.5, size.height * 0.85, size.width * 0.4, size.height * 0.8)
       ..quadraticBezierTo(size.width * 0.25, size.height * 0.85, size.width * 0.2, size.height * 0.7)
-      ..quadraticBezierTo(size.width * 0.05, size.height * 0.65, size.width * 0.2, size.height * 0.5)
+      ..quadraticBezierTo(size.width * 0.02, size.height * 0.6, size.width * 0.1, size.height * 0.5)
       ..close();
     return path;
   }

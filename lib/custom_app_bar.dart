@@ -13,7 +13,6 @@ class CustomAppBar extends StatelessWidget {
     return SliverAppBar(
       toolbarHeight: 100,
       backgroundColor: Colors.transparent,
-      centerTitle: true,
       title: SizedBox(
         
         child: Row(
