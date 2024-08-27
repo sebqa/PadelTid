@@ -13,27 +13,31 @@ class CustomAppBar extends StatelessWidget {
     return SliverAppBar(
       toolbarHeight: 100,
       backgroundColor: Colors.transparent,
+      centerTitle: false,
       title: SizedBox(
-        
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-                MultiSelectSearchRequestDropdown(),
+            Padding(
+              padding: EdgeInsets.only(left: 8.0), // Adjust this value as needed
+              child: MultiSelectSearchRequestDropdown(),
+            ),
           ],
         ),
       ),
-            elevation: 0,
-            actions: [
-              IconButton(
-                icon: Icon(Icons.settings),
-                onPressed: () {
-                 Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => const AuthGate(),
-    ),
-  );
-                },
+      elevation: 0,
+      actions: [
+        IconButton(
+          icon: Icon(Icons.settings),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const AuthGate(),
               ),
-            ],
-          );
+            );
+          },
+        ),
+      ],
+    );
   }
 }
