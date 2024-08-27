@@ -140,19 +140,21 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    
     return MaterialApp(
-      scrollBehavior: MyCustomScrollBehavior(),
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        FirebaseUILocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', 'US')],
-      title: 'PADELTID',
-      theme: _buildTheme(context),
-      home: Scaffold(
+  scrollBehavior: MyCustomScrollBehavior(),
+  localizationsDelegates: [
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    FirebaseUILocalizations.delegate,
+  ],
+  supportedLocales: const [Locale('en', 'US')],
+  title: 'PADELTID',
+  theme: _buildTheme(context),
+  home: Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: 750), // Set your desired max width here
+      child: Scaffold(
         floatingActionButton: FloatingActionButton(
           backgroundColor: Theme.of(context).colorScheme.onPrimary,
           foregroundColor: Theme.of(context).colorScheme.primary,
@@ -167,24 +169,28 @@ class _HomePageState extends State<HomePage> {
               child: SvgPicture.asset(
                 'images/4698abd180d4266f723d.svg',
                 fit: BoxFit.fitHeight,
+
               ),
             ),
             CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              const CustomAppBar(),
-              SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildFutureBuilder(),
-                  childCount: 1,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                const CustomAppBar(),
+                SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildFutureBuilder(),
+                    childCount: 1,
+                  ),
                 ),
-              ),
-            ],
-          ),]
+              ],
+            ),
+          ]
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildFutureBuilder() {
