@@ -161,12 +161,12 @@ class _HomePageState extends State<HomePage> {
         ),
         body: Stack(
           children: [
-            //svgpicture from url
             SizedBox(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height,
               child: SvgPicture.asset(
-                'assets/images/4698abd180d4266f723d.svg',
+                'images/4698abd180d4266f723d.svg',
+                fit: BoxFit.fitHeight,
               ),
             ),
             CustomScrollView(
