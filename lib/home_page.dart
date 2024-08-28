@@ -11,6 +11,16 @@ import 'document_widget.dart';
 import 'introduction_widget.dart';
 import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class Location {
+  final String name;
+  final String location;
+  final String imageUrl;
+
+  Location(
+      {required this.name, required this.location, required this.imageUrl});
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -33,36 +43,39 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     //call showConsentSnackbar from consent_snackbar.dart
-    recommendedDocuments = documentService.fetchDocuments(4.0, 10.0, false, true);
+    recommendedDocuments =
+        documentService.fetchDocuments(4.0, 10.0, false, true);
     _initializePreferences();
   }
 
   Future<void> _initializePreferences() async {
     sharedPreferences = await SharedPreferences.getInstance();
     setState(() {
-      windSpeedThreshold = sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
-      precipitationProbabilityThreshold = sharedPreferences.getDouble('precipitationProbabilityThreshold') ?? 100.0;
-      showUnavailableSlots = sharedPreferences.getBool('showUnavailableSlots') ?? true;
+      windSpeedThreshold =
+          sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
+      precipitationProbabilityThreshold =
+          sharedPreferences.getDouble('precipitationProbabilityThreshold') ??
+              100.0;
+      showUnavailableSlots =
+          sharedPreferences.getBool('showUnavailableSlots') ?? true;
     });
     _fetchDocuments();
   }
 
   void _fetchDocuments() {
-    futureDocuments = documentService.fetchDocuments(
-      windSpeedThreshold,
-      precipitationProbabilityThreshold,
-      showUnavailableSlots,
-      false
-    );
-    
+    futureDocuments = documentService.fetchDocuments(windSpeedThreshold,
+        precipitationProbabilityThreshold, showUnavailableSlots, false);
   }
 
   Future<void> updateThresholds() async {
     try {
-      if( sharedPreferences.getString("user_consent") == "all"){
-      await sharedPreferences.setDouble('windSpeedThreshold', windSpeedThreshold);
-      await sharedPreferences.setDouble('precipitationProbabilityThreshold', precipitationProbabilityThreshold);
-      await sharedPreferences.setBool('showUnavailableSlots', showUnavailableSlots);
+      if (sharedPreferences.getString("user_consent") == "all") {
+        await sharedPreferences.setDouble(
+            'windSpeedThreshold', windSpeedThreshold);
+        await sharedPreferences.setDouble('precipitationProbabilityThreshold',
+            precipitationProbabilityThreshold);
+        await sharedPreferences.setBool(
+            'showUnavailableSlots', showUnavailableSlots);
       }
       _fetchDocuments();
       setState(() {});
@@ -88,10 +101,12 @@ class _HomePageState extends State<HomePage> {
               _buildSlider('Wind Speed', windSpeedThreshold, 0, 50, (value) {
                 setState(() => windSpeedThreshold = value);
               }),
-              _buildSlider('Precipitation Probability', precipitationProbabilityThreshold, 0, 100, (value) {
+              _buildSlider('Precipitation Probability',
+                  precipitationProbabilityThreshold, 0, 100, (value) {
                 setState(() => precipitationProbabilityThreshold = value);
               }),
-              _buildCheckbox('Show unavailable timeslots', showUnavailableSlots, (value) {
+              _buildCheckbox('Show unavailable timeslots', showUnavailableSlots,
+                  (value) {
                 setState(() => showUnavailableSlots = value ?? false);
               }),
             ],
@@ -114,7 +129,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSlider(String label, double value, double min, double max, ValueChanged<double> onChanged) {
+  Widget _buildSlider(String label, double value, double min, double max,
+      ValueChanged<double> onChanged) {
     return Column(
       children: [
         Text('$label: ${value.round()}${label == 'Wind Speed' ? ' m/s' : '%'}'),
@@ -129,7 +145,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCheckbox(String label, bool value, ValueChanged<bool?> onChanged) {
+  Widget _buildCheckbox(
+      String label, bool value, ValueChanged<bool?> onChanged) {
     return Row(
       children: [
         Checkbox(value: value, onChanged: onChanged),
@@ -141,89 +158,82 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-  scrollBehavior: MyCustomScrollBehavior(),
-  localizationsDelegates: [
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    FirebaseUILocalizations.delegate,
-  ],
-  supportedLocales: const [Locale('en', 'US')],
-  title: 'PADELTID',
-  theme: _buildTheme(context),
-  home: Center(
-    child: ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: 750), // Set your desired max width here
-      child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Theme.of(context).colorScheme.onPrimary,
-          foregroundColor: Theme.of(context).colorScheme.primary,
-          child: const Icon(Icons.tune),
-          onPressed: showSettingsDialog,
-        ),
-        body: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF87CEEB), // Sky blue
-                    Color(0xFFE0F7FA), // Light blue
-                  ],
+      scrollBehavior: MyCustomScrollBehavior(),
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FirebaseUILocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en', 'US')],
+      title: 'PADELTID',
+      theme: _buildTheme(context),
+      home: Center(
+        child: ConstrainedBox(
+          constraints:
+              BoxConstraints(maxWidth: 750), // Set your desired max width here
+          child: Scaffold(
+            floatingActionButton: FloatingActionButton(
+              backgroundColor: Theme.of(context).colorScheme.onPrimary,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              child: const Icon(Icons.tune),
+              onPressed: showSettingsDialog,
+            ),
+            body: Stack(children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF87CEEB), // Sky blue
+                      Color.fromARGB(255, 56, 5, 210), // Light blue
+                    ],
+                  ),
                 ),
               ),
-            ),
-            CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                const CustomAppBar(),
-
-                introduction_widget(),
-                SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
-                
-                
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.calendar_month, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text(
-                            'All timeslots',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+              CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  const CustomAppBar(),
+                  introduction_widget(),
+                  SliverRecommendedLV(
+                      recommendedDocuments: recommendedDocuments),
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.calendar_month, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'All timeslots',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                
-
-
-
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildFutureBuilder(),
-                    childCount: 1,
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildFutureBuilder(),
+                      childCount: 1,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ]
+                ],
+              ),
+            ]),
+          ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   Widget _buildFutureBuilder() {
@@ -236,7 +246,7 @@ class _HomePageState extends State<HomePage> {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (snapshot.hasData) {
           final groupedDocuments = _groupDocuments(snapshot.data!);
-          if(!consentShown){
+          if (!consentShown) {
             showConsentSnackbar(context, onlyShowIfNotSet: true);
             consentShown = true;
           }
@@ -258,11 +268,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   ThemeData _buildTheme(BuildContext context) {
-    final colorScheme = ColorScheme(
+    final ColorScheme colorScheme = ColorScheme(
       brightness: Brightness.light,
       primary: const Color(0xFFFF7F07),
       primaryContainer: Colors.white,
-      onPrimary: Colors.white,
+      onPrimary: Colors.black,
       secondary: const Color(0xFFBBBBBB),
       onSecondary: const Color(0xFFEAEAEA),
       tertiary: const Color(0xFFFF7F07),
@@ -274,48 +284,26 @@ class _HomePageState extends State<HomePage> {
       onSurface: Colors.black,
     );
 
-    return ThemeData.light().copyWith(
+    return ThemeData(
       colorScheme: colorScheme,
-      sliderTheme: SliderThemeData(
-        activeTrackColor: colorScheme.tertiary,
-        inactiveTrackColor: colorScheme.onPrimary,
-        thumbColor: colorScheme.tertiary,
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10.0),
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 20.0),
-        overlayColor: colorScheme.onPrimary,
+      primaryColor: colorScheme.primary,
+      scaffoldBackgroundColor: colorScheme.surface,
+      appBarTheme: AppBarTheme(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
       ),
-      textTheme: TextTheme(
-        bodySmall: TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: 12,
-          fontFamily: 'Roboto',
-          fontWeight: FontWeight.w600,
-        ),
-        headlineSmall: TextStyle(
-          color: colorScheme.primary,
-          fontSize: 24,
-          fontFamily: 'Roboto',
-          fontWeight: FontWeight.bold,
-        ),
-        titleMedium: TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: 16,
-          fontFamily: 'Roboto',
-          fontWeight: FontWeight.normal,
-        ),
-        bodyMedium: TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: 14,
-          fontFamily: 'Roboto',
-          fontWeight: FontWeight.normal,
-        ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: colorScheme.secondary,
+        foregroundColor: colorScheme.onSecondary,
       ),
+      iconTheme: IconThemeData(color: colorScheme.primary),
     );
   }
 }
 
 class SliverRecommendedLV extends StatelessWidget {
-  const SliverRecommendedLV({Key? key, required this.recommendedDocuments}) : super(key: key);
+  const SliverRecommendedLV({Key? key, required this.recommendedDocuments})
+      : super(key: key);
 
   final Future<List<Document>>? recommendedDocuments;
 
@@ -345,7 +333,8 @@ class SliverRecommendedLV extends StatelessWidget {
 }
 
 class ListViewbuilder extends StatelessWidget {
-  const ListViewbuilder({Key? key, required this.documentsForDate}) : super(key: key);
+  const ListViewbuilder({Key? key, required this.documentsForDate})
+      : super(key: key);
 
   final List<Document> documentsForDate;
 
@@ -356,7 +345,8 @@ class ListViewbuilder extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: documentsForDate.length,
-      itemBuilder: (_, index) => DocumentWidget(document: documentsForDate[index]),
+      itemBuilder: (_, index) =>
+          DocumentWidget(document: documentsForDate[index]),
     );
   }
 }
@@ -364,8 +354,7 @@ class ListViewbuilder extends StatelessWidget {
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
-    PointerDeviceKind.touch,
-    PointerDeviceKind.mouse,
-  };
-  
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      };
 }
