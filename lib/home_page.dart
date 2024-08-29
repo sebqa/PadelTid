@@ -230,14 +230,18 @@ class _HomePageState extends State<HomePage> {
                           if (_showOnboarding)
                             SliverToBoxAdapter(
                               child: OnboardingScreen(
-                                onDismiss: (selectedLocations, windSpeed,
-                                    precipitationProbability) {
+                                onDismiss: (selectedLocations,
+                                    windSpeed,
+                                    precipitationProbability,
+                                    showUnavailableCourts) {
                                   setState(() {
                                     _showOnboarding = false;
                                     _selectedLocations = selectedLocations;
                                     windSpeedThreshold = windSpeed;
                                     precipitationProbabilityThreshold =
                                         precipitationProbability;
+                                    showUnavailableSlots =
+                                        showUnavailableCourts;
                                   });
                                   updateThresholds();
                                 },
