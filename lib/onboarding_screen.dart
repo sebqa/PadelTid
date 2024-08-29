@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'location_selector.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  final Function(List<String>, double, double) onDismiss;
+  final Function(List<String>, double, double, bool) onDismiss;
 
   const OnboardingScreen({Key? key, required this.onDismiss}) : super(key: key);
 
@@ -18,6 +18,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   List<String> _selectedLocations = [];
   double _windSpeedThreshold = 10.0;
   double _precipitationProbabilityThreshold = 50.0;
+  bool _showUnavailableCourts = true;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 _buildWelcomePage(context),
                 _buildLocationSelectorPage(context),
                 _buildWeatherFilterPage(context),
+                _buildPreferencesPage(context),
                 _buildFinalPage(context),
               ],
             ),
@@ -187,6 +189,50 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  Widget _buildPreferencesPage(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Preferences',
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Show unavailable courts',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              Switch(
+                value: _showUnavailableCourts,
+                onChanged: (value) {
+                  setState(() {
+                    _showUnavailableCourts = value;
+                  });
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 32),
+          Text(
+            'You can choose to get notified when conditions change for a timeslot',
+            style: TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _dismissOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_seen_onboarding', true);
@@ -194,8 +240,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setDouble('wind_speed_threshold', _windSpeedThreshold);
     await prefs.setDouble('precipitation_probability_threshold',
         _precipitationProbabilityThreshold);
+    await prefs.setBool('show_unavailable_courts', _showUnavailableCourts);
     widget.onDismiss(_selectedLocations, _windSpeedThreshold,
-        _precipitationProbabilityThreshold);
+        _precipitationProbabilityThreshold, _showUnavailableCourts);
   }
 
   // Create a new method for the button row
@@ -216,7 +263,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
-              4,
+              5,
               (index) => Container(
                 margin: EdgeInsets.symmetric(horizontal: 5),
                 width: 10,
@@ -232,7 +279,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              if (_currentPage < 3) {
+              if (_currentPage < 4) {
                 _pageController.nextPage(
                   duration: Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
@@ -241,7 +288,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 _dismissOnboarding();
               }
             },
-            child: Text(_currentPage < 3 ? 'Next' : 'Get Started'),
+            child: Text(_currentPage < 4 ? 'Next' : 'Get Started'),
             style: ElevatedButton.styleFrom(
               foregroundColor: Color(0xFF1E88E5),
               backgroundColor: Colors.white,
