@@ -34,10 +34,6 @@ void main() async {
   runApp(MaterialApp(
     home: HomePage(),
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      appBarTheme: AppBarTheme(
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-      ),
-    ),
+   
   ));
 }
