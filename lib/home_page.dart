@@ -12,6 +12,7 @@ import 'introduction_widget.dart';
 import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 
 class Location {
   final String name;
@@ -168,68 +169,74 @@ class _HomePageState extends State<HomePage> {
       supportedLocales: const [Locale('en', 'US')],
       title: 'PADELTID',
       theme: _buildTheme(context),
-      home: Center(
-        child: ConstrainedBox(
-          constraints:
-              BoxConstraints(maxWidth: 750), // Set your desired max width here
-          child: Scaffold(
-            floatingActionButton: FloatingActionButton(
-              backgroundColor: Theme.of(context).colorScheme.onPrimary,
-              foregroundColor: Theme.of(context).colorScheme.primary,
-              child: const Icon(Icons.tune),
-              onPressed: showSettingsDialog,
-            ),
-            body: Stack(children: [
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFF87CEEB), // Sky blue
-                      Color.fromARGB(255, 56, 5, 210), // Light blue
-                    ],
+      home: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+                maxWidth: 750), // Set your desired max width here
+            child: Scaffold(
+              floatingActionButton: FloatingActionButton(
+                backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                child: const Icon(Icons.tune),
+                onPressed: showSettingsDialog,
+              ),
+              body: Stack(children: [
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF87CEEB), // Sky blue
+                        Color.fromARGB(255, 56, 5, 210), // Light blue
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  const CustomAppBar(),
-                  introduction_widget(),
-                  SliverRecommendedLV(
-                      recommendedDocuments: recommendedDocuments),
-                  SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.calendar_month, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text(
-                              'All timeslots',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    const CustomAppBar(),
+                    introduction_widget(),
+                    SliverRecommendedLV(
+                        recommendedDocuments: recommendedDocuments),
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.calendar_month, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text(
+                                'All timeslots',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _buildFutureBuilder(),
-                      childCount: 1,
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _buildFutureBuilder(),
+                        childCount: 1,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ]),
+                  ],
+                ),
+              ]),
+            ),
           ),
         ),
       ),
@@ -286,7 +293,7 @@ class _HomePageState extends State<HomePage> {
 
     return ThemeData(
       colorScheme: colorScheme,
-      primaryColor: colorScheme.primary,
+      primaryColor: Colors.white,
       scaffoldBackgroundColor: colorScheme.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.primary,
