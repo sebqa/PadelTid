@@ -5,16 +5,19 @@ import 'package:flutter_application_1/model/document.dart';
 import 'package:http/http.dart' as http;
 
 class DocumentService {
-  Future<List<Document>> fetchDocuments(double windSpeed, double precipitationProbability,
-      bool showUnavailableSlots, bool fetchRecommended) async {
-          List<dynamic> subscribedDocs = [];
+  Future<List<Document>> fetchDocuments(
+      double windSpeed,
+      double precipitationProbability,
+      bool showUnavailableSlots,
+      bool fetchRecommended,
+      List<String> selectedLocations) async {
+    List<dynamic> subscribedDocs = [];
 
-        //get subscribedDocs
-        if(fetchRecommended){
-          
-        } else{
-              subscribedDocs = await getSubscribedDocs();
-        }
+    //get subscribedDocs
+    if (fetchRecommended) {
+    } else {
+      subscribedDocs = await getSubscribedDocs();
+    }
     final url = Uri.parse(
         'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=$windSpeed&precipitation_probability_threshold=$precipitationProbability&showUnavailableSlots=$showUnavailableSlots');
     final response = await http.get(url);
@@ -28,27 +31,26 @@ class DocumentService {
     }
   }
 
- Future<List<dynamic>> getSubscribedDocs() async {
+  Future<List<dynamic>> getSubscribedDocs() async {
     //http request to get all subscribed docs
 
     //if user is signed in
     if (FirebaseAuth.instance.currentUser != null) {
       final userId = FirebaseAuth.instance.currentUser!.uid;
-    Uri url = Uri.parse(
-        'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getSubscribed?userId=${userId}');
+      Uri url = Uri.parse(
+          'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getSubscribed?userId=${userId}');
 
-    final response = await http.get(url);
-    print(response.body);
-    if (response.statusCode == 200) {
-      //parse json
-      List<dynamic> subscribedDocs = json.decode(response.body);
-      return subscribedDocs;
+      final response = await http.get(url);
+      print(response.body);
+      if (response.statusCode == 200) {
+        //parse json
+        List<dynamic> subscribedDocs = json.decode(response.body);
+        return subscribedDocs;
+      } else {
+        throw Exception('Failed to load documents');
+      }
     } else {
-      throw Exception('Failed to load documents');
+      return [];
     }
-  } else {
-    return [];
   }
-    }
-    
 }

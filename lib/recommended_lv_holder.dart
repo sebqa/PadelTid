@@ -13,7 +13,9 @@ class recommended_lv_holder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //drop documents where time is not between 10:00:00 and 20:00:00
-    documents.removeWhere((document) => int.parse(document.time.split(':')[0]) < 10 || int.parse(document.time.split(':')[0]) > 20);
+    documents.removeWhere((document) =>
+        int.parse(document.time.split(':')[0]) < 10 ||
+        int.parse(document.time.split(':')[0]) > 20);
     //randomize order of documents
     documents.shuffle();
     return Container(
@@ -26,7 +28,8 @@ class recommended_lv_holder extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.recommend, color: Theme.of(context).colorScheme.primaryContainer),
+                Icon(Icons.recommend,
+                    color: Theme.of(context).colorScheme.primaryContainer),
                 SizedBox(width: 8),
                 Text(
                   'Recommended',
