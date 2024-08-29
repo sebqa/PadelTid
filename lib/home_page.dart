@@ -8,11 +8,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'custom_app_bar.dart';
 import 'document_widget.dart';
-import 'introduction_widget.dart';
 import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'onboarding_screen.dart';
+import 'location_selector.dart';
 
 class Location {
   final String name;
@@ -39,14 +39,31 @@ class _HomePageState extends State<HomePage> {
   late Future<List<Document>>? recommendedDocuments;
   final DocumentService documentService = DocumentService();
   bool consentShown = false;
+  bool _showOnboarding = false;
+  List<String> _selectedLocations = [];
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    //call showConsentSnackbar from consent_snackbar.dart
+    _checkOnboardingStatus();
     recommendedDocuments =
-        documentService.fetchDocuments(4.0, 10.0, false, true);
+        documentService.fetchDocuments(4.0, 10.0, false, true, []);
     _initializePreferences();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+    setState(() {
+      _showOnboarding = !hasSeenOnboarding;
+      if (!_showOnboarding) {
+        _selectedLocations = prefs.getStringList('selected_locations') ?? [];
+        windSpeedThreshold = prefs.getDouble('wind_speed_threshold') ?? 10.0;
+        precipitationProbabilityThreshold =
+            prefs.getDouble('precipitation_probability_threshold') ?? 50.0;
+      }
+    });
   }
 
   Future<void> _initializePreferences() async {
@@ -64,8 +81,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _fetchDocuments() {
-    futureDocuments = documentService.fetchDocuments(windSpeedThreshold,
-        precipitationProbabilityThreshold, showUnavailableSlots, false);
+    futureDocuments = documentService.fetchDocuments(
+      windSpeedThreshold,
+      precipitationProbabilityThreshold,
+      showUnavailableSlots,
+      false,
+      _selectedLocations,
+    );
   }
 
   Future<void> updateThresholds() async {
@@ -169,76 +191,113 @@ class _HomePageState extends State<HomePage> {
       supportedLocales: const [Locale('en', 'US')],
       title: 'PADELTID',
       theme: _buildTheme(context),
-      home: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-                maxWidth: 750), // Set your desired max width here
-            child: Scaffold(
-              floatingActionButton: FloatingActionButton(
-                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                foregroundColor: Theme.of(context).colorScheme.primary,
-                child: const Icon(Icons.tune),
-                onPressed: showSettingsDialog,
-              ),
-              body: Stack(children: [
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF87CEEB), // Sky blue
-                        Color.fromARGB(255, 56, 5, 210), // Light blue
-                      ],
-                    ),
+      home: Stack(
+        children: [
+          AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.dark,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 750),
+                child: Scaffold(
+                  floatingActionButton: FloatingActionButton(
+                    backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    child: const Icon(Icons.tune),
+                    onPressed: showSettingsDialog,
                   ),
-                ),
-                CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    const CustomAppBar(),
-                    introduction_widget(),
-                    SliverRecommendedLV(
-                        recommendedDocuments: recommendedDocuments),
-                    SliverToBoxAdapter(
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.calendar_month, color: Colors.white),
-                              SizedBox(width: 8),
-                              Text(
-                                'All timeslots',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                  body: Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFF87CEEB),
+                              Color.fromARGB(255, 56, 5, 210),
                             ],
                           ),
                         ),
                       ),
-                    ),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildFutureBuilder(),
-                        childCount: 1,
+                      CustomScrollView(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          const CustomAppBar(),
+                          if (_showOnboarding)
+                            SliverToBoxAdapter(
+                              child: OnboardingScreen(
+                                onDismiss: (selectedLocations, windSpeed,
+                                    precipitationProbability) {
+                                  setState(() {
+                                    _showOnboarding = false;
+                                    _selectedLocations = selectedLocations;
+                                    windSpeedThreshold = windSpeed;
+                                    precipitationProbabilityThreshold =
+                                        precipitationProbability;
+                                  });
+                                  updateThresholds();
+                                },
+                              ),
+                            ),
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: LocationSelector(
+                                onLocationsChanged: (locations) {
+                                  setState(() {
+                                    _selectedLocations = locations;
+                                  });
+                                  updateThresholds();
+                                },
+                                initialLocations: _selectedLocations,
+                              ),
+                            ),
+                          ),
+                          SliverRecommendedLV(
+                              recommendedDocuments: recommendedDocuments),
+                          SliverToBoxAdapter(
+                            child: Center(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.calendar_month,
+                                        color: Colors.white),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'All timeslots',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => _buildFutureBuilder(),
+                              childCount: 1,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ]),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

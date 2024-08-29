@@ -12,10 +12,8 @@ class CustomAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      toolbarHeight: 100,
       backgroundColor: Colors.transparent,
       centerTitle: false,
-      title: LocationSelector(),
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.light,
       actions: [

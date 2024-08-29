@@ -1,15 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/home_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
+class Location {
+  final String name;
+  final String location;
+  final String imageUrl;
+
+  Location(
+      {required this.name, required this.location, required this.imageUrl});
+}
+
 class LocationSelector extends StatefulWidget {
+  final Function(List<String>) onLocationsChanged;
+  final List<String> initialLocations;
+
+  const LocationSelector({
+    Key? key,
+    required this.onLocationsChanged,
+    required this.initialLocations,
+  }) : super(key: key);
+
   @override
   _LocationSelectorState createState() => _LocationSelectorState();
 }
 
 class _LocationSelectorState extends State<LocationSelector> {
   List<Location> _selectedLocations = [];
-  final List<Location> _locations = [
+  final List<Location> _availableLocations = [
     Location(
         name: 'Holbæk Padel Klub',
         location: '59.3293° N, 18.0686° E',
@@ -26,38 +44,68 @@ class _LocationSelectorState extends State<LocationSelector> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadSelectedLocations();
+  }
+
+  Future<void> _loadSelectedLocations() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedLocations = prefs.getStringList('selected_locations') ?? [];
+    setState(() {
+      _selectedLocations = _availableLocations
+          .where((location) => savedLocations.contains(location.name))
+          .toList();
+    });
+  }
+
+  Future<void> _saveSelectedLocations() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+        'selected_locations', _selectedLocations.map((l) => l.name).toList());
+  }
+
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
+      builder: (context, constraints) {
         return MultiSelectDialogField<Location>(
-          items: _locations
-              .map((e) => MultiSelectItem<Location>(e, e.name))
+          items: _availableLocations
+              .map((location) =>
+                  MultiSelectItem<Location>(location, location.name))
               .toList(),
-          listType: MultiSelectListType.LIST,
-          onConfirm: (values) {
-            setState(() {
-              _selectedLocations = values;
-            });
-          },
-          chipDisplay: MultiSelectChipDisplay.none(),
-          title: Text("Select locations"),
+          initialValue: _selectedLocations,
+          searchable: true,
+          title: Text("Select Locations"),
           selectedColor: Theme.of(context).colorScheme.primary,
-          buttonIcon: Icon(Icons.location_on,
-              color: Theme.of(context).colorScheme.onSurface),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey),
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.all(Radius.circular(40)),
+            border: Border.all(
+              color: Theme.of(context).primaryColor,
+              width: 2,
+            ),
+          ),
+          buttonIcon: Icon(
+            Icons.location_on,
+            color: Theme.of(context).primaryColor,
           ),
           buttonText: Text(
             _getButtonText(constraints.maxWidth),
             style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
+                color: Colors.white,
                 fontSize: 14,
                 fontWeight: FontWeight.normal),
           ),
-          searchable: true,
-          selectedItemsTextStyle: TextStyle(color: Colors.black),
+          onConfirm: (results) {
+            setState(() {
+              _selectedLocations = results;
+            });
+            widget.onLocationsChanged(
+                _selectedLocations.map((l) => l.name).toList());
+            _saveSelectedLocations();
+          },
+          chipDisplay: MultiSelectChipDisplay.none(),
         );
       },
     );
