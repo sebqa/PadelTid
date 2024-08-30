@@ -6,7 +6,8 @@ import 'package:flutter_application_1/model/document.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'custom_app_bar.dart';
+
+import 'login_page.dart';
 import 'document_widget.dart';
 import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
@@ -42,6 +43,7 @@ class _HomePageState extends State<HomePage> {
   bool _showOnboarding = false;
   List<String> _selectedLocations = [];
   final ScrollController _scrollController = ScrollController();
+  bool _showFab = false;
 
   @override
   void initState() {
@@ -50,6 +52,14 @@ class _HomePageState extends State<HomePage> {
     recommendedDocuments =
         documentService.fetchDocuments(4.0, 10.0, false, true, []);
     _initializePreferences();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkOnboardingStatus() async {
@@ -70,12 +80,12 @@ class _HomePageState extends State<HomePage> {
     sharedPreferences = await SharedPreferences.getInstance();
     setState(() {
       windSpeedThreshold =
-          sharedPreferences.getDouble('windSpeedThreshold') ?? 50.0;
+          sharedPreferences.getDouble('wind_speed_threshold') ?? 50.0;
       precipitationProbabilityThreshold =
-          sharedPreferences.getDouble('precipitationProbabilityThreshold') ??
+          sharedPreferences.getDouble('precipitation_probability_threshold') ??
               100.0;
       showUnavailableSlots =
-          sharedPreferences.getBool('showUnavailableSlots') ?? true;
+          sharedPreferences.getBool('show_unavailable_courts') ?? true;
     });
     _fetchDocuments();
   }
@@ -94,11 +104,11 @@ class _HomePageState extends State<HomePage> {
     try {
       if (sharedPreferences.getString("user_consent") == "all") {
         await sharedPreferences.setDouble(
-            'windSpeedThreshold', windSpeedThreshold);
-        await sharedPreferences.setDouble('precipitationProbabilityThreshold',
+            'wind_speed_threshold', windSpeedThreshold);
+        await sharedPreferences.setDouble('precipitation_probability_threshold',
             precipitationProbabilityThreshold);
         await sharedPreferences.setBool(
-            'showUnavailableSlots', showUnavailableSlots);
+            'show_unavailable_courts', showUnavailableSlots);
       }
       _fetchDocuments();
       setState(() {});
@@ -117,7 +127,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSettingsDialog() {
     return StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('Adjust Thresholds'),
+        title: const Text('Filter'),
         content: SingleChildScrollView(
           child: ListBody(
             children: [
@@ -178,6 +188,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _onScroll() {
+    final showFab =
+        _scrollController.offset > 300; // Adjust this value as needed
+    if (showFab != _showFab) {
+      setState(() {
+        _showFab = showFab;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -202,12 +222,16 @@ class _HomePageState extends State<HomePage> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: 750),
                 child: Scaffold(
-                  floatingActionButton: FloatingActionButton(
-                    backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                    foregroundColor: Theme.of(context).colorScheme.primary,
-                    child: const Icon(Icons.tune),
-                    onPressed: showSettingsDialog,
-                  ),
+                  floatingActionButton: _showFab
+                      ? FloatingActionButton(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          child: const Icon(Icons.tune),
+                          onPressed: showSettingsDialog,
+                        )
+                      : null,
                   body: Stack(
                     children: [
                       Container(
@@ -226,7 +250,6 @@ class _HomePageState extends State<HomePage> {
                         controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         slivers: [
-                          const CustomAppBar(),
                           if (_showOnboarding)
                             SliverToBoxAdapter(
                               child: OnboardingScreen(
@@ -247,20 +270,38 @@ class _HomePageState extends State<HomePage> {
                                 },
                               ),
                             ),
+                          //const CustomAppBar(),
                           SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: LocationSelector(
-                                onLocationsChanged: (locations) {
-                                  setState(() {
-                                    _selectedLocations = locations;
-                                  });
-                                  updateThresholds();
-                                },
-                                initialLocations: _selectedLocations,
-                              ),
+                              child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: LocationSelector(
+                                    onLocationsChanged: (locations) {
+                                      setState(() {
+                                        _selectedLocations = locations;
+                                      });
+                                      updateThresholds();
+                                    },
+                                    initialLocations: _selectedLocations,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                IconButton(
+                                  icon: Icon(Icons.settings,
+                                      color: Colors.white, size: 30),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => const AuthGate(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
-                          ),
+                          )),
                           SliverRecommendedLV(
                               recommendedDocuments: recommendedDocuments),
                           SliverToBoxAdapter(
@@ -356,7 +397,7 @@ class _HomePageState extends State<HomePage> {
 
     return ThemeData(
       colorScheme: colorScheme,
-      primaryColor: Colors.white,
+      primaryColor: Color(0xFF87CEEB),
       scaffoldBackgroundColor: colorScheme.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.primary,

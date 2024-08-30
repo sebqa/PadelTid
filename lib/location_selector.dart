@@ -79,16 +79,17 @@ class _LocationSelectorState extends State<LocationSelector> {
           title: Text("Select Locations"),
           selectedColor: Theme.of(context).colorScheme.primary,
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            color:
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1),
             borderRadius: BorderRadius.all(Radius.circular(40)),
             border: Border.all(
-              color: Theme.of(context).primaryColor,
+              color: Theme.of(context).colorScheme.primaryContainer,
               width: 2,
             ),
           ),
           buttonIcon: Icon(
             Icons.location_on,
-            color: Theme.of(context).primaryColor,
+            color: Theme.of(context).colorScheme.primaryContainer,
           ),
           buttonText: Text(
             _getButtonText(constraints.maxWidth),
