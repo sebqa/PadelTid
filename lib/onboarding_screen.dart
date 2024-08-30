@@ -48,7 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // Move the button row here
           _buildButtonRow(),
           // Add another SizedBox to create space at the bottom
-          SizedBox(height: 40),
+          SizedBox(height: 180),
         ],
       ),
     );
@@ -247,60 +247,85 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Create a new method for the button row
   Widget _buildButtonRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: () => _dismissOnboarding(),
-            child: Text('Dismiss'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              textStyle: TextStyle(fontSize: 16),
+    return Column(
+      children: [
+        // Circles
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            5,
+            (index) => Container(
+              margin: EdgeInsets.symmetric(horizontal: 5),
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _currentPage == index
+                    ? Colors.white
+                    : Colors.white.withOpacity(0.5),
+              ),
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              5,
-              (index) => Container(
-                margin: EdgeInsets.symmetric(horizontal: 5),
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _currentPage == index
-                      ? Colors.white
-                      : Colors.white.withOpacity(0.5),
+        ),
+        SizedBox(height: 20), // Add space between circles and buttons
+        // Buttons
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Back button
+              TextButton(
+                onPressed: _currentPage > 0
+                    ? () {
+                        _pageController.previousPage(
+                          duration: Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    : null,
+                child: Text('Previous'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  textStyle: TextStyle(fontSize: 16),
                 ),
               ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (_currentPage < 4) {
-                _pageController.nextPage(
-                  duration: Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              } else {
-                _dismissOnboarding();
-              }
-            },
-            child: Text(_currentPage < 4 ? 'Next' : 'Get Started'),
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Color(0xFF1E88E5),
-              backgroundColor: Colors.white,
-              textStyle: TextStyle(fontSize: 16),
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+              // Dismiss button
+              TextButton(
+                onPressed: () => _dismissOnboarding(),
+                child: Text('Dismiss'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  textStyle: TextStyle(fontSize: 16),
+                ),
               ),
-            ),
+              // Next/Get Started button
+              ElevatedButton(
+                onPressed: () {
+                  if (_currentPage < 4) {
+                    _pageController.nextPage(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  } else {
+                    _dismissOnboarding();
+                  }
+                },
+                child: Text(_currentPage < 4 ? 'Next' : 'Get Started'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Color(0xFF1E88E5),
+                  backgroundColor: Colors.white,
+                  textStyle: TextStyle(fontSize: 16),
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
