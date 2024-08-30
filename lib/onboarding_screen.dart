@@ -23,7 +23,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height - 60,
+      height: MediaQuery.of(context).size.height,
       child: Column(
         children: [
           Expanded(
@@ -48,7 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // Move the button row here
           _buildButtonRow(),
           // Add another SizedBox to create space at the bottom
-          SizedBox(height: 150),
+          SizedBox(height: 40),
         ],
       ),
     );
