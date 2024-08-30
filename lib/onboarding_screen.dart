@@ -19,6 +19,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   double _windSpeedThreshold = 10.0;
   double _precipitationProbabilityThreshold = 50.0;
   bool _showUnavailableCourts = true;
+  String _courtPreference = 'both';
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +36,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 });
               },
               children: [
-                _buildWelcomePage(context),
-                _buildLocationSelectorPage(context),
+                _buildWelcomeAndLocationPage(context),
                 _buildWeatherFilterPage(context),
                 _buildPreferencesPage(context),
                 _buildFinalPage(context),
@@ -54,36 +54,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildWelcomePage(BuildContext context) {
-    return _buildOnboardingPage(
-      context,
-      'Welcome to PADELTID',
-      'Find your perfect padel court with ease',
-      Icons.sports_tennis,
-    );
-  }
-
-  Widget _buildLocationSelectorPage(BuildContext context) {
-    return Column(
-      children: [
-        _buildOnboardingPage(
-          context,
-          'Select your location',
-          'Choose the locations where you want to find padel courts',
-          Icons.location_pin,
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: LocationSelector(
-            onLocationsChanged: (locations) {
-              setState(() {
-                _selectedLocations = locations;
-              });
-            },
-            initialLocations: _selectedLocations,
+  Widget _buildWelcomeAndLocationPage(BuildContext context) {
+    return Center(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Welcome to PADELTID',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium
+                    ?.copyWith(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 32),
+              Text(
+                'Select your locations',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16),
+              LocationSelector(
+                onLocationsChanged: (locations) {
+                  setState(() {
+                    _selectedLocations = locations;
+                  });
+                },
+                initialLocations: _selectedLocations,
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -204,6 +212,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 32),
+          Text(
+            'Court Type Preference',
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          SizedBox(height: 16),
+          SegmentedButton<String>(
+            segments: [
+              ButtonSegment(value: 'indoor', label: Text('Indoor')),
+              ButtonSegment(value: 'outdoor', label: Text('Outdoor')),
+              ButtonSegment(value: 'both', label: Text('Both')),
+            ],
+            selected: {_courtPreference},
+            onSelectionChanged: (Set<String> newSelection) {
+              setState(() {
+                _courtPreference = newSelection.first;
+              });
+            },
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return Theme.of(context).colorScheme.primary;
+                  }
+                  return Colors.white;
+                },
+              ),
+              foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return Colors.white;
+                  }
+                  return Theme.of(context).colorScheme.primary;
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: 32),
           Row(
             children: [
               Expanded(
@@ -214,6 +259,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               Switch(
                 value: _showUnavailableCourts,
+                activeColor: Colors.white,
+                activeTrackColor: Theme.of(context).colorScheme.primary,
+                inactiveThumbColor: Theme.of(context).colorScheme.primary,
+                inactiveTrackColor: Colors.white,
                 onChanged: (value) {
                   setState(() {
                     _showUnavailableCourts = value;
@@ -241,6 +290,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setDouble('precipitation_probability_threshold',
         _precipitationProbabilityThreshold);
     await prefs.setBool('show_unavailable_courts', _showUnavailableCourts);
+    await prefs.setString(
+        'court_preference', _courtPreference); // Add this line
     widget.onDismiss(_selectedLocations, _windSpeedThreshold,
         _precipitationProbabilityThreshold, _showUnavailableCourts);
   }
@@ -249,11 +300,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildButtonRow() {
     return Column(
       children: [
-        // Circles
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            5,
+            4, // Update this to 4 since we now have 4 pages
             (index) => Container(
               margin: EdgeInsets.symmetric(horizontal: 5),
               width: 10,
@@ -267,64 +317,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
         ),
-        SizedBox(height: 20), // Add space between circles and buttons
-        // Buttons
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Back button
-              TextButton(
-                onPressed: _currentPage > 0
-                    ? () {
-                        _pageController.previousPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    : null,
-                child: Text('Previous'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  textStyle: TextStyle(fontSize: 16),
-                ),
-              ),
-              // Dismiss button
-              TextButton(
-                onPressed: () => _dismissOnboarding(),
-                child: Text('Dismiss'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  textStyle: TextStyle(fontSize: 16),
-                ),
-              ),
-              // Next/Get Started button
-              ElevatedButton(
-                onPressed: () {
-                  if (_currentPage < 4) {
-                    _pageController.nextPage(
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  } else {
-                    _dismissOnboarding();
-                  }
-                },
-                child: Text(_currentPage < 4 ? 'Next' : 'Get Started'),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Color(0xFF1E88E5),
-                  backgroundColor: Colors.white,
-                  textStyle: TextStyle(fontSize: 16),
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-              ),
-            ],
+        SizedBox(height: 20),
+        // Dismiss button
+        TextButton(
+          onPressed: () => _dismissOnboarding(),
+          child: Text('Dismiss'),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.white,
+            textStyle: TextStyle(fontSize: 16),
           ),
         ),
+        // Get Started button (only on the last page)
+        if (_currentPage == 3)
+          ElevatedButton(
+            onPressed: _dismissOnboarding,
+            child: Text('Get Started'),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Color(0xFF1E88E5),
+              backgroundColor: Colors.white,
+              textStyle: TextStyle(fontSize: 16),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+          ),
       ],
     );
   }
