@@ -15,7 +15,6 @@ class CustomAppBar extends StatelessWidget {
       backgroundColor: Colors.transparent,
       centerTitle: false,
       elevation: 0,
-      systemOverlayStyle: SystemUiOverlayStyle.light,
       actions: [
         IconButton(
           icon: Icon(Icons.settings, color: Colors.white, size: 30),
