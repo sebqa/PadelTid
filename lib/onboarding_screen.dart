@@ -119,70 +119,83 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 32),
-          Text(
-            'Wind Speed: ${_windSpeedThreshold.round()} m/s',
-            style: TextStyle(color: Colors.white),
+          _buildSliderWithLabel(
+            context: context,
+            icon: Icons.air,
+            label: 'Wind Speed',
+            value: '${_windSpeedThreshold.round()} m/s',
+            slider: Slider(
+              value: _windSpeedThreshold,
+              min: 0,
+              max: 20,
+              divisions: 20,
+              label: _windSpeedThreshold.round().toString(),
+              onChanged: (value) {
+                setState(() {
+                  _windSpeedThreshold = value;
+                });
+              },
+            ),
           ),
-          Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              Slider(
-                value: _windSpeedThreshold,
-                min: 0,
-                max: 20,
-                divisions: 20,
-                label: _windSpeedThreshold.round().toString(),
-                onChanged: (value) {
-                  setState(() {
-                    _windSpeedThreshold = value;
-                  });
-                },
-              ),
-              Positioned(
-                left: _calculateIndicatorPosition(context, 4, 0, 20),
-                child: _buildRecommendedIndicator('4 m/s'),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Precipitation Probability: ${_precipitationProbabilityThreshold.round()}%',
-            style: TextStyle(color: Colors.white),
-          ),
-          Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              Slider(
-                value: _precipitationProbabilityThreshold,
-                min: 0,
-                max: 100,
-                divisions: 20,
-                label: _precipitationProbabilityThreshold.round().toString(),
-                onChanged: (value) {
-                  setState(() {
-                    _precipitationProbabilityThreshold = value;
-                  });
-                },
-              ),
-              Positioned(
-                left: _calculateIndicatorPosition(context, 10, 0, 100),
-                child: _buildRecommendedIndicator('10%'),
-              ),
-            ],
+          SizedBox(height: 24),
+          _buildSliderWithLabel(
+            context: context,
+            icon: Icons.umbrella,
+            label: 'Precipitation Probability',
+            value: '${_precipitationProbabilityThreshold.round()}%',
+            slider: Slider(
+              value: _precipitationProbabilityThreshold,
+              min: 0,
+              max: 100,
+              divisions: 20,
+              label: _precipitationProbabilityThreshold.round().toString(),
+              onChanged: (value) {
+                setState(() {
+                  _precipitationProbabilityThreshold = value;
+                });
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  double _calculateIndicatorPosition(
-      BuildContext context, double value, double min, double max) {
-    final sliderWidth =
-        MediaQuery.of(context).size.width - 32; // Adjust for padding
-    final fraction = (value - min) / (max - min);
-    return 16 +
-        (sliderWidth * fraction) -
-        8; // 16 for left padding, -8 to center the indicator
+  Widget _buildSliderWithLabel({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String value,
+    required Widget slider,
+  }) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 24),
+                SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        slider,
+      ],
+    );
   }
 
   Widget _buildFinalPage(BuildContext context) {
@@ -373,20 +386,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ],
     );
   }
-}
-
-Widget _buildRecommendedIndicator(String label) {
-  return Column(
-    children: [
-      Text(
-        label,
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      ),
-      Icon(
-        Icons.arrow_drop_up,
-        color: Colors.white,
-        size: 20,
-      ),
-    ],
-  );
 }
