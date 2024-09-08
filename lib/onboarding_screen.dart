@@ -123,34 +123,54 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Wind Speed: ${_windSpeedThreshold.round()} m/s',
             style: TextStyle(color: Colors.white),
           ),
-          Slider(
-            value: _windSpeedThreshold,
-            min: 0,
-            max: 20,
-            divisions: 20,
-            label: _windSpeedThreshold.round().toString(),
-            onChanged: (value) {
-              setState(() {
-                _windSpeedThreshold = value;
-              });
-            },
+          Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Slider(
+                value: _windSpeedThreshold,
+                min: 0,
+                max: 20,
+                divisions: 20,
+                label: _windSpeedThreshold.round().toString(),
+                onChanged: (value) {
+                  setState(() {
+                    _windSpeedThreshold = value;
+                  });
+                },
+              ),
+              Positioned(
+                left: MediaQuery.of(context).size.width * 0.2 -
+                    16, // Adjust this value as needed
+                child: _buildRecommendedIndicator('4 m/s'),
+              ),
+            ],
           ),
           SizedBox(height: 16),
           Text(
             'Precipitation Probability: ${_precipitationProbabilityThreshold.round()}%',
             style: TextStyle(color: Colors.white),
           ),
-          Slider(
-            value: _precipitationProbabilityThreshold,
-            min: 0,
-            max: 100,
-            divisions: 20,
-            label: _precipitationProbabilityThreshold.round().toString(),
-            onChanged: (value) {
-              setState(() {
-                _precipitationProbabilityThreshold = value;
-              });
-            },
+          Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Slider(
+                value: _precipitationProbabilityThreshold,
+                min: 0,
+                max: 100,
+                divisions: 20,
+                label: _precipitationProbabilityThreshold.round().toString(),
+                onChanged: (value) {
+                  setState(() {
+                    _precipitationProbabilityThreshold = value;
+                  });
+                },
+              ),
+              Positioned(
+                left: MediaQuery.of(context).size.width * 0.1 -
+                    16, // Adjust this value as needed
+                child: _buildRecommendedIndicator('10%'),
+              ),
+            ],
           ),
         ],
       ),
@@ -345,4 +365,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ],
     );
   }
+}
+
+Widget _buildRecommendedIndicator(String label) {
+  return Column(
+    children: [
+      Text(
+        label,
+        style: TextStyle(color: Colors.white, fontSize: 12),
+      ),
+      Icon(
+        Icons.arrow_drop_down,
+        color: Colors.white,
+        size: 20,
+      ),
+    ],
+  );
 }

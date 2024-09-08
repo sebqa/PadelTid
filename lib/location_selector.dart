@@ -32,7 +32,6 @@ class _LocationSelectorState extends State<LocationSelector> {
         name: 'Holbæk Padel Klub',
         location: '59.3293° N, 18.0686° E',
         imageUrl: 'https://example.com/stockholm.jpg'),
-
   ];
 
   @override
