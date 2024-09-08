@@ -139,8 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
               Positioned(
-                left: MediaQuery.of(context).size.width * 0.2 -
-                    16, // Adjust this value as needed
+                left: _calculateIndicatorPosition(context, 4, 0, 20),
                 child: _buildRecommendedIndicator('4 m/s'),
               ),
             ],
@@ -166,8 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
               Positioned(
-                left: MediaQuery.of(context).size.width * 0.1 -
-                    16, // Adjust this value as needed
+                left: _calculateIndicatorPosition(context, 10, 0, 100),
                 child: _buildRecommendedIndicator('10%'),
               ),
             ],
@@ -175,6 +173,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
       ),
     );
+  }
+
+  double _calculateIndicatorPosition(
+      BuildContext context, double value, double min, double max) {
+    final sliderWidth =
+        MediaQuery.of(context).size.width - 32; // Adjust for padding
+    final fraction = (value - min) / (max - min);
+    return 16 +
+        (sliderWidth * fraction) -
+        8; // 16 for left padding, -8 to center the indicator
   }
 
   Widget _buildFinalPage(BuildContext context) {
@@ -375,7 +383,7 @@ Widget _buildRecommendedIndicator(String label) {
         style: TextStyle(color: Colors.white, fontSize: 12),
       ),
       Icon(
-        Icons.arrow_drop_down,
+        Icons.arrow_drop_up,
         color: Colors.white,
         size: 20,
       ),
