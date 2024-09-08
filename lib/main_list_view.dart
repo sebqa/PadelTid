@@ -54,12 +54,15 @@ class MainListView extends StatelessWidget {
 
               documentsForDate.sort((a, b) => a.time.compareTo(b.time));
 
-              //if date is today or tomorrow, write that instead of the date
-              final formattedDate = parsedDate.day == DateTime.now().day ||
-                      parsedDate.day == DateTime.now().day + 1
+              //if date is today or tomorrow, write whichever of those it is
+              final today = DateTime.now();
+              final tomorrow = DateTime.now().add(Duration(days: 1));
+              final formattedDate = parsedDate.isAtSameMomentAs(today)
                   ? 'Today'
-                  : '${weekdayName[parsedDate.weekday - 1]}, '
-                      '${parsedDate.day}/${parsedDate.month}';
+                  : parsedDate.isAtSameMomentAs(tomorrow)
+                      ? 'Tomorrow'
+                      : '${weekdayName[parsedDate.weekday - 1]}, ${parsedDate.day}/${parsedDate.month}';
+
               return Column(
                 children: [
                   ExpansionTile(
