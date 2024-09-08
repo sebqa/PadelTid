@@ -42,8 +42,6 @@ class _HomePageState extends State<HomePage> {
   bool consentShown = false;
   bool _showOnboarding = false;
   List<String> _selectedLocations = [];
-  final ScrollController _scrollController = ScrollController();
-  bool _showFab = false;
 
   @override
   void initState() {
@@ -52,14 +50,6 @@ class _HomePageState extends State<HomePage> {
     recommendedDocuments =
         documentService.fetchDocuments(4.0, 10.0, false, true, []);
     _initializePreferences();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
   }
 
   Future<void> _checkOnboardingStatus() async {
@@ -188,16 +178,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _onScroll() {
-    final showFab =
-        _scrollController.offset > 300; // Adjust this value as needed
-    if (showFab != _showFab) {
-      setState(() {
-        _showFab = showFab;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -222,16 +202,6 @@ class _HomePageState extends State<HomePage> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: 750),
                 child: Scaffold(
-                  floatingActionButton: _showFab
-                      ? FloatingActionButton(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.onPrimary,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          child: const Icon(Icons.tune),
-                          onPressed: showSettingsDialog,
-                        )
-                      : null,
                   body: Stack(
                     children: [
                       Container(
@@ -247,7 +217,6 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       CustomScrollView(
-                        controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         slivers: [
                           if (_showOnboarding)
@@ -312,16 +281,29 @@ class _HomePageState extends State<HomePage> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.calendar_month,
-                                        color: Colors.white),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'All timeslots',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                    Expanded(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.calendar_month,
+                                              color: Colors.white),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'All timeslots',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                    ),
+                                    IconButton(
+                                      icon:
+                                          Icon(Icons.tune, color: Colors.white),
+                                      onPressed: showSettingsDialog,
                                     ),
                                   ],
                                 ),
