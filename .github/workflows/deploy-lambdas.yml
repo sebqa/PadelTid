@@ -21,7 +21,19 @@ jobs:
       run: |
         mkdir -p firebase-layer/python
         cd firebase-layer/python
-        pip install firebase-admin -t .
+        # Install minimal set of required packages
+        pip install --no-cache-dir \
+          firebase-admin \
+          google-auth \
+          google-cloud-firestore \
+          grpcio \
+          -t .
+        # Remove unnecessary files to reduce size
+        find . -type d -name "tests" -exec rm -rf {} +
+        find . -type d -name "*.dist-info" -exec rm -rf {} +
+        find . -type f -name "*.pyc" -delete
+        find . -type f -name "*.pyo" -delete
+        find . -type d -name "__pycache__" -exec rm -rf {} +
         cd ..
         zip -r firebase-layer.zip python/
         
@@ -72,6 +84,10 @@ jobs:
           {
             name: 'subTopic',
             handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'sendNotification',
+            handler: 'sendNotification.lambda_handler'
           },
           {
             name: 'getClubs',
