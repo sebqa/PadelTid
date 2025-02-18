@@ -34,13 +34,18 @@ jobs:
         
     - name: Update Layer
       run: |
-        LAYER_VERSION=$(aws lambda publish-layer-version \
+        LAYER_ARN=$(aws lambda publish-layer-version \
           --layer-name firebase-admin-layer \
           --zip-file fileb://firebase-layer/firebase-layer.zip \
           --compatible-runtimes python3.9 \
-          --query 'Version' \
+          --query 'LayerVersionArn' \
           --output text)
-        echo "LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV
+        # Update the functions to use the new layer
+        for func in "sendNotification" "subTopic"; do
+          aws lambda update-function-configuration \
+            --function-name $func \
+            --layers $LAYER_ARN
+        done
 
   deploy-functions:
     needs: deploy-layer
@@ -86,9 +91,9 @@ jobs:
       run: |
         cd functions/${{ matrix.function.name }}
         if [ -f requirements.txt ]; then
-          # Skip firebase-admin as it's in the layer
+          # Skip firebase-admin for functions using the layer
           if [ "${{ matrix.function.name }}" = "subTopic" ] || [ "${{ matrix.function.name }}" = "sendNotification" ]; then
-            grep -v "firebase-admin" requirements.txt | pip install -r /dev/stdin -t .
+            pip install pymongo requests -t .
           else
             pip install -r requirements.txt -t .
           fi
