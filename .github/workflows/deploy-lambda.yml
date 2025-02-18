@@ -1,14 +1,43 @@
-name: Deploy Lambda
+name: Deploy Lambda Functions
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
     paths:
-      - 'functions/getCourtslambda/**'
+      - 'functions/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        function: [
+          {
+            name: 'getCourts',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'getPadelTid',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'getWeather',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'getSubscribed',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'subscribeToTopic',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'notificationService',
+            handler: 'sendNotification.lambda_handler'
+          }
+        ]
+    
     steps:
     - uses: actions/checkout@v3
     
@@ -17,25 +46,33 @@ jobs:
       with:
         python-version: '3.9'
     
-    - name: Install dependencies
+    - name: Install dependencies for ${{ matrix.function.name }}
       run: |
-        cd functions/getCourtslambda
-        pip install -r requirements.txt -t .
+        cd functions/
+        if [ -f ${{ matrix.function.name }}/requirements.txt ]; then
+          pip install -r ${{ matrix.function.name }}/requirements.txt -t ${{ matrix.function.name }}/
+        fi
         
+    - name: Copy credentials if needed
+      run: |
+        if [ -d "functions/credentials" ]; then
+          cp -r functions/credentials functions/${{ matrix.function.name }}/
+        fi
+      
     - name: Zip function
       run: |
-        cd functions/getCourtslambda
-        zip -r ../../function.zip .
+        cd functions/${{ matrix.function.name }}
+        zip -r ../../${{ matrix.function.name }}.zip .
         
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: eu-north-1  # Replace with your AWS region
+        aws-region: eu-north-1
         
     - name: Update Lambda
       run: |
         aws lambda update-function-code \
-          --function-name getCourts \
-          --zip-file fileb://function.zip 
+          --function-name ${{ matrix.function.name }} \
+          --zip-file fileb://${{ matrix.function.name }}.zip 
