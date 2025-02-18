@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class Location {
+class Club {
+  final String id;
   final String name;
-  final String location;
-  final String imageUrl;
+  final String url;
+  final int totalCourts;
 
-  Location(
-      {required this.name, required this.location, required this.imageUrl});
+  Club({
+    required this.id,
+    required this.name,
+    required this.url,
+    required this.totalCourts,
+  });
+
+  factory Club.fromJson(Map<String, dynamic> json) {
+    return Club(
+      id: json['_id'],
+      name: json['name'],
+      url: json['url'],
+      totalCourts: json['total_courts'],
+    );
+  }
 }
 
 class LocationSelector extends StatefulWidget {
@@ -26,52 +42,84 @@ class LocationSelector extends StatefulWidget {
 }
 
 class _LocationSelectorState extends State<LocationSelector> {
-  List<Location> _selectedLocations = [];
-  final List<Location> _availableLocations = [
-    Location(
-        name: 'Holbæk Padel Klub',
-        location: '59.3293° N, 18.0686° E',
-        imageUrl: 'https://example.com/stockholm.jpg'),
-  ];
+  List<Club> _selectedClubs = [];
+  List<Club> _availableClubs = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadSelectedLocations();
+    _fetchClubs();
   }
 
-  Future<void> _loadSelectedLocations() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedLocations = prefs.getStringList('selected_locations') ?? [];
-    setState(() {
-      _selectedLocations = _availableLocations
-          .where((location) => savedLocations.contains(location.name))
-          .toList();
-    });
+  Future<void> _fetchClubs() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final response = await http.get(
+        Uri.parse('https://rvhxwa55v5.execute-api.eu-north-1.amazonaws.com/default/getClubs'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> clubsJson = json.decode(response.body);
+        final clubs = clubsJson.map((json) => Club.fromJson(json)).toList();
+        
+        final prefs = await SharedPreferences.getInstance();
+        final savedLocations = prefs.getStringList('selected_locations') ?? [];
+
+        setState(() {
+          _availableClubs = clubs;
+          _selectedClubs = _availableClubs
+              .where((club) => savedLocations.contains(club.name))
+              .toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'Failed to load clubs';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Error: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _saveSelectedLocations() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
-        'selected_locations', _selectedLocations.map((l) => l.name).toList());
+        'selected_locations', _selectedClubs.map((c) => c.name).toList());
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(child: Text(_error!));
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        return MultiSelectDialogField<Location>(
-          items: _availableLocations
-              .map((location) =>
-                  MultiSelectItem<Location>(location, location.name))
+        return MultiSelectDialogField<Club>(
+          items: _availableClubs
+              .map((club) => MultiSelectItem<Club>(club, club.name))
               .toList(),
-          initialValue: _selectedLocations,
+          initialValue: _selectedClubs,
           searchable: true,
           title: Text("Select Locations"),
           selectedColor: Theme.of(context).colorScheme.primary,
           decoration: BoxDecoration(
-            color:
-                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1),
             borderRadius: BorderRadius.all(Radius.circular(40)),
             border: Border.all(
               color: Theme.of(context).colorScheme.primaryContainer,
@@ -91,10 +139,10 @@ class _LocationSelectorState extends State<LocationSelector> {
           ),
           onConfirm: (results) {
             setState(() {
-              _selectedLocations = results;
+              _selectedClubs = results;
             });
             widget.onLocationsChanged(
-                _selectedLocations.map((l) => l.name).toList());
+                _selectedClubs.map((c) => c.name).toList());
             _saveSelectedLocations();
           },
           chipDisplay: MultiSelectChipDisplay.none(),
@@ -104,15 +152,15 @@ class _LocationSelectorState extends State<LocationSelector> {
   }
 
   String _getButtonText(double maxWidth) {
-    if (_selectedLocations.isEmpty) {
+    if (_selectedClubs.isEmpty) {
       return "Select locations";
-    } else if (_selectedLocations.length == 1) {
-      return _selectedLocations[0].name;
+    } else if (_selectedClubs.length == 1) {
+      return _selectedClubs[0].name;
     } else {
-      String text = _selectedLocations.map((l) => l.name).join(", ");
-      int maxChars = (maxWidth / 10).floor(); // Adjusted calculation
+      String text = _selectedClubs.map((c) => c.name).join(", ");
+      int maxChars = (maxWidth / 10).floor();
       if (text.length > maxChars) {
-        return "${text.substring(0, maxChars)}... (${_selectedLocations.length})";
+        return "${text.substring(0, maxChars)}... (${_selectedClubs.length})";
       } else {
         return text;
       }
