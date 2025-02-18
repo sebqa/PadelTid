@@ -1,6 +1,7 @@
 import json
 import os
 from pymongo import MongoClient
+from bson import ObjectId
 
 def lambda_handler(event, context):
     try:
@@ -9,8 +10,8 @@ def lambda_handler(event, context):
         db = client['padelTimes']
         clubs_collection = db['clubs']
         
-        # Get all clubs
-        clubs = list(clubs_collection.find({}, {'_id': str}))
+        # Get all clubs without the projection parameter
+        clubs = list(clubs_collection.find({}))
         
         # Convert ObjectId to string for JSON serialization
         for club in clubs:
