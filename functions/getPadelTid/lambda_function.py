@@ -25,9 +25,18 @@ def lambda_handler(event,context):
                     { '$gt': [
                         { '$concat': ['$date', ' ', '$time'] },
                         current_time_str
-                    ]},
-                    { '$gte': [{ '$toInt': { '$substr': ['$time', 0, 2] }}, 6] },
-                    { '$lte': [{ '$toInt': { '$substr': ['$time', 0, 2] }}, 24] }
+                    ]},  { '$regexMatch': {
+                        'input': '$time',
+                        'regex': '^0[6-9]:'
+                    }},
+                    { '$regexMatch': {
+                        'input': '$time',
+                        'regex': '^1[0-9]:' 
+                    }},
+                    { '$regexMatch': {
+                        'input': '$time',
+                        'regex': '^2[0-4]:'
+                    }}
                 ] 
             }
         }
