@@ -18,13 +18,28 @@ class DocumentService {
     } else {
       subscribedDocs = await getSubscribedDocs();
     }
+    
+    // Build query parameters including selected locations
+    final queryParams = {
+      'wind_speed_threshold': windSpeed.toString(),
+      'precipitation_probability_threshold': precipitationProbability.toString(),
+      'showUnavailableSlots': showUnavailableSlots.toString(),
+      'locations': selectedLocations.join(','), // Add selected locations
+    };
+    
     final url = Uri.parse(
-        'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=$windSpeed&precipitation_probability_threshold=$precipitationProbability&showUnavailableSlots=$showUnavailableSlots');
+        'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid')
+        .replace(queryParameters: queryParams);
+        
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
       return jsonList
           .map((json) => Document.fromJson(json, subscribedDocs))
+          .where((doc) => 
+            // If no locations selected, show all. Otherwise filter by selected locations
+            selectedLocations.isEmpty || 
+            doc.clubs.keys.any((club) => selectedLocations.contains(club)))
           .toList();
     } else {
       throw Exception('Failed to load documents');

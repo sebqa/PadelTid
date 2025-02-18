@@ -13,36 +13,36 @@ def lambda_handler(event,context):
         wind_speed_threshold = float(event['queryStringParameters']['wind_speed_threshold'])
         precipitation_probability_threshold = float(event['queryStringParameters']['precipitation_probability_threshold'])
         showUnavailableSlots = event['queryStringParameters']['showUnavailableSlots']
-        current_time = datetime.now()  # Get the current date and time
-        current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')  # Format current time as string
+        locations = event['queryStringParameters'].get('locations', '').split(',')
+        locations = [loc for loc in locations if loc] # Remove empty strings
         
-        # Query the collection
+        current_time = datetime.now()
+        current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Base query
         query = {
             'precipitation_probability': {'$lt': precipitation_probability_threshold},
             'wind_speed': {'$lt': wind_speed_threshold},
-            '$expr': {  # Use $expr to enable comparison of fields
-               '$and': [
-                    { '$gt': [
-                        { '$concat': ['$date', ' ', '$time'] },
-                        current_time_str
-                    ]},
-                    { '$or': [
-                        { '$regexMatch': {
-                            'input': '$time',
-                            'regex': '^0[6-9]:'
-                        }},
-						{ '$regexMatch': {
-                            'input': '$time',
-                            'regex': '^1[0-9]:'
-                        }},
-                        { '$regexMatch': {
-                            'input': '$time',
-                            'regex': '^2[0-4]:'
-                        }}
+            '$expr': {
+                '$and': [
+                    {'$gt': [{'$concat': ['$date', ' ', '$time']}, current_time_str]},
+                    {'$or': [
+                        {'$regexMatch': {'input': '$time', 'regex': '^0[6-9]:'}},
+                        {'$regexMatch': {'input': '$time', 'regex': '^1[0-9]:'}},
+                        {'$regexMatch': {'input': '$time', 'regex': '^2[0-4]:'}}
                     ]}
-                ] 
+                ]
             }
         }
+        
+        # Add location filter if locations are specified
+        if locations:
+            query['clubs'] = {
+                '$exists': True,
+                '$ne': {},
+                '$elemMatch': {'club_name': {'$in': locations}}
+            }
+            
         if showUnavailableSlots == "false":
             query['available_slots'] = {'$gt': 0}
 
