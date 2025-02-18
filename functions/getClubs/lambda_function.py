@@ -9,6 +9,7 @@ def lambda_handler(event, context):
         db = client['padelTimes']
         clubs_collection = db['clubs']
         
+        
         # Get all clubs
         clubs = list(clubs_collection.find({}, {'_id': str}))
         
