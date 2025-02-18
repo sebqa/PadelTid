@@ -19,26 +19,14 @@ def lambda_handler(event,context):
         query = {
             'precipitation_probability': {'$lt': precipitation_probability_threshold},
             'wind_speed': {'$lt': wind_speed_threshold},
-            '$expr': {  # Use $expr to enable comparison of fields
-               '$and': [
+            '$expr': {
+                '$and': [
                     { '$gt': [
                         { '$concat': ['$date', ' ', '$time'] },
                         current_time_str
                     ]},
-                    { '$or': [
-                        { '$regexMatch': {
-                            'input': '$time',
-                            'regex': '^0[6-9]:'
-                        }},
-						{ '$regexMatch': {
-                            'input': '$time',
-                            'regex': '^1[0-9]:'
-                        }},
-                        { '$regexMatch': {
-                            'input': '$time',
-                            'regex': '^2[0-4]:'
-                        }}
-                    ]}
+                    { '$gte': [{ '$toInt': { '$substr': ['$time', 0, 2] }}, 6] },
+                    { '$lte': [{ '$toInt': { '$substr': ['$time', 0, 2] }}, 24] }
                 ] 
             }
         }
