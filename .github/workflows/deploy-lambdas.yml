@@ -72,10 +72,6 @@ jobs:
           {
             name: 'subTopic',
             handler: 'lambda_function.lambda_handler'
-          },
-          {
-            name: 'sendNotification',
-            handler: 'sendNotification.lambda_handler'
           }
         ]
     
