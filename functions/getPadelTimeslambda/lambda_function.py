@@ -15,6 +15,7 @@ def lambda_handler(event,context):
         showUnavailableSlots = event['queryStringParameters']['showUnavailableSlots']
         current_time = datetime.now()  # Get the current date and time
         current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')  # Format current time as string
+        
         # Query the collection
         query = {
             'precipitation_probability': {'$lt': precipitation_probability_threshold},
