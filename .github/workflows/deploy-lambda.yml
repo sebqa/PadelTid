@@ -29,11 +29,11 @@ jobs:
             handler: 'lambda_function.lambda_handler'
           },
           {
-            name: 'subscribeToTopic',
+            name: 'subTopic',
             handler: 'lambda_function.lambda_handler'
           },
           {
-            name: 'notificationService',
+            name: 'sendNotification',
             handler: 'sendNotification.lambda_handler'
           }
         ]
