@@ -1,0 +1,119 @@
+name: Deploy Lambda Functions
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'functions/**'
+
+jobs:
+  deploy-layer:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Create Firebase Layer
+      run: |
+        mkdir -p firebase-layer/python
+        cd firebase-layer/python
+        pip install firebase-admin -t .
+        cd ..
+        zip -r firebase-layer.zip python/
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-north-1
+        
+    - name: Update Layer
+      run: |
+        LAYER_VERSION=$(aws lambda publish-layer-version \
+          --layer-name firebase-admin-layer \
+          --zip-file fileb://firebase-layer/firebase-layer.zip \
+          --compatible-runtimes python3.9 \
+          --query 'Version' \
+          --output text)
+        echo "LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV
+
+  deploy-functions:
+    needs: deploy-layer
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        function: [
+          {
+            name: 'getCourts',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'getPadelTid',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'getWeather',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'getSubscribed',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'subTopic',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'sendNotification',
+            handler: 'sendNotification.lambda_handler'
+          }
+        ]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies for ${{ matrix.function.name }}
+      run: |
+        cd functions/${{ matrix.function.name }}
+        if [ -f requirements.txt ]; then
+          # Skip firebase-admin as it's in the layer
+          if [ "${{ matrix.function.name }}" = "subTopic" ] || [ "${{ matrix.function.name }}" = "sendNotification" ]; then
+            grep -v "firebase-admin" requirements.txt | pip install -r /dev/stdin -t .
+          else
+            pip install -r requirements.txt -t .
+          fi
+        fi
+        
+    - name: Copy credentials if needed
+      run: |
+        if [ -d "functions/credentials" ]; then
+          cp -r functions/credentials functions/${{ matrix.function.name }}/
+        fi
+      
+    - name: Zip function
+      run: |
+        cd functions/${{ matrix.function.name }}
+        zip -r ../../${{ matrix.function.name }}.zip .
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-north-1
+        
+    - name: Update Lambda
+      run: |
+        aws lambda update-function-code \
+          --function-name ${{ matrix.function.name }} \
+          --zip-file fileb://${{ matrix.function.name }}.zip 
