@@ -13,18 +13,15 @@ class DocumentService {
       List<String> selectedLocations) async {
     List<dynamic> subscribedDocs = [];
 
-    //get subscribedDocs
-    if (fetchRecommended) {
-    } else {
+    if (!fetchRecommended) {
       subscribedDocs = await getSubscribedDocs();
     }
     
-    // Build query parameters including selected locations
     final queryParams = {
       'wind_speed_threshold': windSpeed.toString(),
       'precipitation_probability_threshold': precipitationProbability.toString(),
       'showUnavailableSlots': showUnavailableSlots.toString(),
-      'locations': selectedLocations.join(','), // Add selected locations
+      'locations': selectedLocations.join(','),
     };
     
     final url = Uri.parse(
@@ -35,9 +32,12 @@ class DocumentService {
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
       return jsonList
-          .map((json) => Document.fromJson(json, subscribedDocs))
+          .map((json) => Document.fromJson(
+              json, 
+              subscribedDocs, 
+              selectedLocations: selectedLocations
+          ))
           .where((doc) => 
-            // If no locations selected, show all. Otherwise filter by selected locations
             selectedLocations.isEmpty || 
             doc.clubs.keys.any((club) => selectedLocations.contains(club)))
           .toList();

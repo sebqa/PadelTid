@@ -30,6 +30,7 @@ class Document {
   final double windSpeed;
   final String symbolCode;
   final bool? subscribed;
+  final List<String> selectedLocations;
 
   Document({
     required this.airTemperature,
@@ -39,15 +40,18 @@ class Document {
     required this.time,
     required this.windSpeed,
     required this.symbolCode,
+    required this.selectedLocations,
     this.subscribed,
   });
 
   int get totalAvailableSlots => 
     clubs.values.fold(0, (sum, club) => sum + club.availableSlots);
 
-  int get totalClubs => clubs.length;
+  int get totalClubs => selectedLocations.isEmpty 
+    ? clubs.length 
+    : clubs.keys.where((club) => selectedLocations.contains(club)).length;
 
-  factory Document.fromJson(Map<String, dynamic> json, List<dynamic> subscribedDocs) {
+  factory Document.fromJson(Map<String, dynamic> json, List<dynamic> subscribedDocs, {List<String> selectedLocations = const []}) {
     Map<String, ClubAvailability> clubs = {};
     if (json.containsKey('clubs')) {
       (json['clubs'] as Map<String, dynamic>).forEach((key, value) {
@@ -64,6 +68,7 @@ class Document {
       time: json['time'].substring(0, 5),
       windSpeed: json['wind_speed'],
       symbolCode: json['symbol_code'],
+      selectedLocations: selectedLocations,
     );
   }
 
