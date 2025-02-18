@@ -204,7 +204,7 @@ class DocumentWidget extends StatelessWidget {
               size: 16, color: Theme.of(context).colorScheme.primary),
           SizedBox(width: 6),
           Text(
-            '${document.availableSlots} ${document.availableSlots == 1 ? 'court' : 'courts'} available',
+            '${document.totalAvailableSlots} ${document.totalAvailableSlots == 1 ? 'court' : 'courts'} available',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -227,7 +227,7 @@ class DocumentWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '1 ${1 == 1 ? 'location' : 'locations'}',
+            '${document.totalClubs} ${document.totalClubs == 1 ? 'location' : 'locations'}',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
