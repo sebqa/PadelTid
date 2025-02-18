@@ -37,16 +37,17 @@ def lambda_handler(event,context):
         
         # Add location filter if locations are specified
         if locations:
-            query['clubs'] = {
-                '$exists': True,
-                '$ne': {},
-                '$elemMatch': {'club_name': {'$in': locations}}
-            }
+            query['$or'] = [
+                {f'clubs.{location}': {'$exists': True}} 
+                for location in locations
+            ]
             
         if showUnavailableSlots == "false":
             query['available_slots'] = {'$gt': 0}
 
+        print("Query:", query)  # Debug print
         results = list(collection.find(query, {'_id': 0}))
+        print("Results:", results)  # Debug print
 
         return {
             'statusCode': 200,
@@ -58,4 +59,13 @@ def lambda_handler(event,context):
             'body': json.dumps(results)
         }
     except Exception as e:
-        return json.dumps({'error': str(e)})
+        print("Error:", str(e))  # Debug print
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
+            'body': json.dumps({'error': str(e)})
+        }
