@@ -72,6 +72,10 @@ jobs:
           {
             name: 'subTopic',
             handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'getClubs',
+            handler: 'lambda_function.lambda_handler'
           }
         ]
     
