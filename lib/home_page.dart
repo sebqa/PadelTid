@@ -175,7 +175,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 Icons.air,
                 windSpeedThreshold,
                 (value) {
-                  setState(() => windSpeedThreshold = value);
+                setState(() => windSpeedThreshold = value);
                 },
                 0,
                 20,
@@ -187,7 +187,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 Icons.umbrella,
                 precipitationProbabilityThreshold,
                 (value) {
-                  setState(() => precipitationProbabilityThreshold = value);
+                setState(() => precipitationProbabilityThreshold = value);
                 },
                 0,
                 100,
@@ -279,9 +279,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
           child: Slider(
             value: current,
-            min: min,
-            max: max,
-            onChanged: onChanged,
+          min: min,
+          max: max,
+          onChanged: onChanged,
           ),
         ),
       ],
@@ -293,22 +293,22 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
                   Color(0xFF4A90E2).withOpacity(0.2),
                   Colors.black,
-                ],
+                            ],
                 stops: [0.0, 0.5],
-              ),
-            ),
-          ),
-          CustomScrollView(
-            slivers: [
+                          ),
+                        ),
+                      ),
+                      CustomScrollView(
+                        slivers: [
               SliverAppBar(
                 backgroundColor: Colors.transparent,
                 floating: true,
@@ -326,31 +326,31 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ),
                 ],
               ),
-              SliverToBoxAdapter(
-                child: Padding(
+                          SliverToBoxAdapter(
+                              child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                              children: [
                       LocationSelector(
-                        onLocationsChanged: (locations) {
-                          setState(() {
-                            _selectedLocations = locations;
-                          });
-                          updateThresholds();
-                        },
-                        initialLocations: _selectedLocations,
-                      ),
+                                    onLocationsChanged: (locations) {
+                                      setState(() {
+                                        _selectedLocations = locations;
+                                      });
+                                      updateThresholds();
+                                    },
+                                    initialLocations: _selectedLocations,
+                                  ),
                       SizedBox(height: 24),
                       Row(
-                        children: [
+                                  children: [
                           Icon(Icons.recommend, color: Colors.white70),
-                          SizedBox(width: 8),
-                          Text(
+                                          SizedBox(width: 8),
+                                          Text(
                             'Recommended',
-                            style: TextStyle(
+                                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                                              fontSize: 18,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

@@ -107,7 +107,7 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
         filteredClubs = clubs
             .where((club) =>
                 club.name.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+          .toList();
       }
     });
   }
@@ -208,7 +208,7 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
                                 color: Colors.transparent,
                                 child: InkWell(
                                   onTap: () {
-                                    setState(() {
+            setState(() {
                                       if (isSelected) {
                                         selectedLocations.remove(club.name);
                                       } else {
