@@ -63,7 +63,9 @@ class Document {
   });
 
   // Get weather from first available selected location or first available club
-  Weather get weather {
+  Weather? get weather {
+    if (clubs.isEmpty) return null;
+    
     if (selectedLocations.isNotEmpty) {
       for (var location in selectedLocations) {
         if (clubs.containsKey(location)) {
@@ -74,10 +76,10 @@ class Document {
     return clubs.values.first.weather;
   }
 
-  double get airTemperature => weather.airTemperature;
-  double get precipitationProbability => weather.precipitationProbability;
-  double get windSpeed => weather.windSpeed;
-  String get symbolCode => weather.symbolCode;
+  double get airTemperature => weather?.airTemperature ?? 0.0;
+  double get precipitationProbability => weather?.precipitationProbability ?? 0.0;
+  double get windSpeed => weather?.windSpeed ?? 0.0;
+  String get symbolCode => weather?.symbolCode ?? 'clearsky_day';
 
   int get totalAvailableSlots => 
     clubs.values.fold(0, (sum, club) => sum + club.availableSlots);
@@ -90,7 +92,9 @@ class Document {
     Map<String, ClubAvailability> clubs = {};
     if (json.containsKey('clubs')) {
       (json['clubs'] as Map<String, dynamic>).forEach((key, value) {
-        clubs[key] = ClubAvailability.fromJson(value);
+        if (value != null) {  // Only add non-null club data
+          clubs[key] = ClubAvailability.fromJson(value);
+        }
       });
     }
 
