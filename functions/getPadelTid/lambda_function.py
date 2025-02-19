@@ -37,33 +37,32 @@ def lambda_handler(event,context):
         if locations:
             location_conditions = []
             for location in locations:
-                location_conditions.append({
+                conditions = {
                     '$and': [
                         {f'clubs.{location}': {'$exists': True}},
                         {f'clubs.{location}.weather.wind_speed': {'$lt': wind_speed_threshold}},
                         {f'clubs.{location}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
                     ]
-                })
+                }
+                if showUnavailableSlots == "false":
+                    conditions['$and'].append({f'clubs.{location}.available_slots': {'$gt': 0}})
+                location_conditions.append(conditions)
             query['$or'] = location_conditions
         else:
             # If no locations specified, check all clubs
-            query['$expr']['$and'].append({
-                '$or': [
-                    {
-                        '$and': [
-                            {f'clubs.{club}.weather.wind_speed': {'$lt': wind_speed_threshold}},
-                            {f'clubs.{club}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
-                        ]
-                    }
-                    for club in db['clubs'].distinct('name')
-                ]
-            })
-            
-        if showUnavailableSlots == "false":
-            query['$or'] = query.get('$or', []).extend([
-                {f'clubs.{loc}.available_slots': {'$gt': 0}} 
-                for loc in (locations if locations else db['clubs'].distinct('name'))
-            ])
+            all_clubs = db['clubs'].distinct('name')
+            club_conditions = []
+            for club in all_clubs:
+                conditions = {
+                    '$and': [
+                        {f'clubs.{club}.weather.wind_speed': {'$lt': wind_speed_threshold}},
+                        {f'clubs.{club}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
+                    ]
+                }
+                if showUnavailableSlots == "false":
+                    conditions['$and'].append({f'clubs.{club}.available_slots': {'$gt': 0}})
+                club_conditions.append(conditions)
+            query['$or'] = club_conditions
 
         print("Query:", query)
         results = list(collection.find(query, {'_id': 0}))
