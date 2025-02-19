@@ -33,40 +33,56 @@ def lambda_handler(event,context):
             }
         }
         
+        # Determine which clubs to include
+        clubs_to_check = locations if locations else db['clubs'].distinct('name')
+        
         # Add weather and location conditions
-        if locations:
-            location_conditions = []
-            for location in locations:
-                conditions = {
-                    '$and': [
-                        {f'clubs.{location}': {'$exists': True}},
-                        {f'clubs.{location}.weather.wind_speed': {'$lt': wind_speed_threshold}},
-                        {f'clubs.{location}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
-                    ]
-                }
-                if showUnavailableSlots == "false":
-                    conditions['$and'].append({f'clubs.{location}.available_slots': {'$gt': 0}})
-                location_conditions.append(conditions)
-            query['$or'] = location_conditions
-        else:
-            # If no locations specified, check all clubs
-            all_clubs = db['clubs'].distinct('name')
-            club_conditions = []
-            for club in all_clubs:
-                conditions = {
-                    '$and': [
-                        {f'clubs.{club}.weather.wind_speed': {'$lt': wind_speed_threshold}},
-                        {f'clubs.{club}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
-                    ]
-                }
-                if showUnavailableSlots == "false":
-                    conditions['$and'].append({f'clubs.{club}.available_slots': {'$gt': 0}})
-                club_conditions.append(conditions)
-            query['$or'] = club_conditions
+        club_conditions = []
+        for club in clubs_to_check:
+            conditions = {
+                '$and': [
+                    {f'clubs.{club}': {'$exists': True}},
+                    {f'clubs.{club}.weather.wind_speed': {'$lt': wind_speed_threshold}},
+                    {f'clubs.{club}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
+                ]
+            }
+            if showUnavailableSlots == "false":
+                conditions['$and'].append({f'clubs.{club}.available_slots': {'$gt': 0}})
+            club_conditions.append(conditions)
+        query['$or'] = club_conditions
+
+        # Create projection to only return necessary fields
+        projection = {
+            '_id': 0,
+            'date': 1,
+            'time': 1,
+        }
+        # Add only the requested clubs to the projection
+        for club in clubs_to_check:
+            projection[f'clubs.{club}'] = 1
 
         print("Query:", query)
-        results = list(collection.find(query, {'_id': 0}))
-        print("Results:", results)
+        results = list(collection.find(query, projection))
+        
+        # Clean up results to remove empty clubs
+        cleaned_results = []
+        for doc in results:
+            # Only include clubs that have data
+            filtered_clubs = {
+                name: data 
+                for name, data in doc.get('clubs', {}).items() 
+                if data is not None and name in clubs_to_check
+            }
+            
+            if filtered_clubs:  # Only include document if it has valid clubs
+                cleaned_doc = {
+                    'date': doc['date'],
+                    'time': doc['time'],
+                    'clubs': filtered_clubs
+                }
+                cleaned_results.append(cleaned_doc)
+
+        print("Results:", cleaned_results)
 
         return {
             'statusCode': 200,
@@ -75,7 +91,7 @@ def lambda_handler(event,context):
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
-            'body': json.dumps(results)
+            'body': json.dumps(cleaned_results)
         }
     except Exception as e:
         print("Error:", str(e))
