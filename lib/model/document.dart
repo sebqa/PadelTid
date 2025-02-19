@@ -3,12 +3,14 @@ class ClubAvailability {
   final String clubName;
   final int availableSlots;
   final int totalCourts;
+  final Weather weather;
 
   ClubAvailability({
     required this.clubId,
     required this.clubName,
     required this.availableSlots,
     required this.totalCourts,
+    required this.weather,
   });
 
   factory ClubAvailability.fromJson(Map<String, dynamic> json) {
@@ -17,32 +19,65 @@ class ClubAvailability {
       clubName: json['club_name'],
       availableSlots: json['available_slots'],
       totalCourts: json['total_courts'],
+      weather: Weather.fromJson(json['weather']),
+    );
+  }
+}
+
+class Weather {
+  final double windSpeed;
+  final double precipitationProbability;
+  final double airTemperature;
+  final String symbolCode;
+
+  Weather({
+    required this.windSpeed,
+    required this.precipitationProbability,
+    required this.airTemperature,
+    required this.symbolCode,
+  });
+
+  factory Weather.fromJson(Map<String, dynamic> json) {
+    return Weather(
+      windSpeed: json['wind_speed'].toDouble(),
+      precipitationProbability: json['precipitation_probability'].toDouble(),
+      airTemperature: json['air_temperature'].toDouble(),
+      symbolCode: json['symbol_code'],
     );
   }
 }
 
 class Document {
-  final double airTemperature;
-  final Map<String, ClubAvailability> clubs;
   final String date;
-  final double precipitationProbability;
   final String time;
-  final double windSpeed;
-  final String symbolCode;
+  final Map<String, ClubAvailability> clubs;
   final bool? subscribed;
   final List<String> selectedLocations;
 
   Document({
-    required this.airTemperature,
-    required this.clubs,
     required this.date,
-    required this.precipitationProbability,
     required this.time,
-    required this.windSpeed,
-    required this.symbolCode,
+    required this.clubs,
     required this.selectedLocations,
     this.subscribed,
   });
+
+  // Get weather from first available selected location or first available club
+  Weather get weather {
+    if (selectedLocations.isNotEmpty) {
+      for (var location in selectedLocations) {
+        if (clubs.containsKey(location)) {
+          return clubs[location]!.weather;
+        }
+      }
+    }
+    return clubs.values.first.weather;
+  }
+
+  double get airTemperature => weather.airTemperature;
+  double get precipitationProbability => weather.precipitationProbability;
+  double get windSpeed => weather.windSpeed;
+  String get symbolCode => weather.symbolCode;
 
   int get totalAvailableSlots => 
     clubs.values.fold(0, (sum, club) => sum + club.availableSlots);
@@ -60,14 +95,10 @@ class Document {
     }
 
     return Document(
-      airTemperature: json['air_temperature'],
+      date: json['date'],
+      time: json['time'].substring(0, 5),
       clubs: clubs,
       subscribed: subscribedDocs.contains(json['date'].replaceAll('-', '') + json['time'].replaceAll(':', '')) ? true : false,
-      date: json['date'],
-      precipitationProbability: json['precipitation_probability'],
-      time: json['time'].substring(0, 5),
-      windSpeed: json['wind_speed'],
-      symbolCode: json['symbol_code'],
       selectedLocations: selectedLocations,
     );
   }
