@@ -147,65 +147,142 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildSettingsDialog() {
-    return StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: const Text('Filter'),
-        content: SingleChildScrollView(
-          child: ListBody(
+    return Dialog(
+      backgroundColor: Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: StatefulBuilder(
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSlider('Wind Speed', windSpeedThreshold, 0, 50, (value) {
-                setState(() => windSpeedThreshold = value);
-              }),
-              _buildSlider('Precipitation Probability',
-                  precipitationProbabilityThreshold, 0, 100, (value) {
-                setState(() => precipitationProbabilityThreshold = value);
-              }),
-              _buildCheckbox('Show unavailable timeslots', showUnavailableSlots,
-                  (value) {
-                setState(() => showUnavailableSlots = value ?? false);
-              }),
+              Text(
+                'Weather Preferences',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 24),
+              _buildSettingsSlider(
+                'Wind Speed',
+                '${windSpeedThreshold.round()} m/s',
+                Icons.air,
+                windSpeedThreshold,
+                (value) {
+                  setState(() => windSpeedThreshold = value);
+                },
+                0,
+                20,
+              ),
+              SizedBox(height: 24),
+              _buildSettingsSlider(
+                'Precipitation',
+                '${precipitationProbabilityThreshold.round()}%',
+                Icons.umbrella,
+                precipitationProbabilityThreshold,
+                (value) {
+                  setState(() => precipitationProbabilityThreshold = value);
+                },
+                0,
+                100,
+              ),
+              SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Show Unavailable Courts',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  Switch(
+                    value: showUnavailableSlots,
+                    onChanged: (value) {
+                      setState(() => showUnavailableSlots = value);
+                    },
+                    activeColor: Colors.white,
+                    activeTrackColor: Color(0xFF4A90E2),
+                  ),
+                ],
+              ),
+              SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      updateThresholds();
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF4A90E2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text('Apply'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            child: const Text('Apply'),
-            onPressed: () {
-              updateThresholds();
-              Navigator.of(context).pop();
-            },
-          ),
-          TextButton(
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
       ),
     );
   }
 
-  Widget _buildSlider(String label, double value, double min, double max,
-      ValueChanged<double> onChanged) {
+  Widget _buildSettingsSlider(
+    String label,
+    String value,
+    IconData icon,
+    double current,
+    Function(double) onChanged,
+    double min,
+    double max,
+  ) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$label: ${value.round()}${label == 'Wind Speed' ? ' m/s' : '%'}'),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          divisions: max.toInt(),
-          onChanged: onChanged,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: Colors.white70, size: 20),
+                SizedBox(width: 8),
+                Text(label, style: TextStyle(color: Colors.white)),
+              ],
+            ),
+            Text(value, style: TextStyle(color: Colors.white70)),
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildCheckbox(
-      String label, bool value, ValueChanged<bool?> onChanged) {
-    return Row(
-      children: [
-        Checkbox(value: value, onChanged: onChanged),
-        Text(label),
+        SizedBox(height: 8),
+        SliderTheme(
+          data: SliderThemeData(
+            activeTrackColor: Color(0xFF4A90E2),
+            inactiveTrackColor: Colors.white24,
+            thumbColor: Colors.white,
+            overlayColor: Colors.white.withOpacity(0.1),
+          ),
+          child: Slider(
+            value: current,
+            min: min,
+            max: max,
+            onChanged: onChanged,
+          ),
+        ),
       ],
     );
   }

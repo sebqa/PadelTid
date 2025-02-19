@@ -119,62 +119,71 @@ class RecommendedDocumentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 0,
       margin: EdgeInsets.symmetric(horizontal: 8),
+      color: Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Container(
-        width: 160,
+        width: 140,
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Text(
+              document.time,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  document.time,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Icon(Icons.thermostat, color: Colors.white70, size: 16),
+                SizedBox(width: 4),
                 Text(
                   '${document.airTemperature}°',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey,
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 4),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s'),
-                _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%'),
+                Icon(Icons.air, color: Colors.white70, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '${document.windSpeed}m/s',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.umbrella, color: Colors.white70, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '${document.precipitationProbability}%',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                ),
               ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildInfoItem(BuildContext context, IconData icon, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: Colors.grey),
-        SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-        ),
-      ],
     );
   }
 }
