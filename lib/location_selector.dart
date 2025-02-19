@@ -70,7 +70,7 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
     setState(() => isLoading = true);
     try {
       final response = await http.get(
-        Uri.parse('https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getClubs'),
+        Uri.parse('https://rvhxwa55v5.execute-api.eu-north-1.amazonaws.com/default/getClubs'),
       );
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
