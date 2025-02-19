@@ -59,6 +59,8 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
   bool isExpanded = false;
   late AnimationController _controller;
   late Animation<double> _expandAnimation;
+  TextEditingController _searchController = TextEditingController();
+  List<Location> filteredLocations = [];
 
   @override
   void initState() {
@@ -98,100 +100,144 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
     }
   }
 
+  void _filterLocations(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        filteredLocations = locations;
+      } else {
+        filteredLocations = locations
+            .where((location) =>
+                location.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header with selected locations count
-        InkWell(
-          onTap: () {
-            setState(() {
-              isExpanded = !isExpanded;
-              if (isExpanded) {
-                _controller.forward();
-              } else {
-                _controller.reverse();
-              }
-            });
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.white70),
-                SizedBox(width: 8),
-                Text(
-                  selectedLocations.isEmpty 
-                      ? 'Select locations' 
-                      : '${selectedLocations.length} location${selectedLocations.length != 1 ? 's' : ''} selected',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () {
+              setState(() {
+                isExpanded = !isExpanded;
+                if (isExpanded) {
+                  _controller.forward();
+                  filteredLocations = locations;
+                } else {
+                  _controller.reverse();
+                }
+              });
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.location_on, color: Colors.white70),
+                  SizedBox(width: 8),
+                  Text(
+                    selectedLocations.isEmpty 
+                        ? 'Select locations' 
+                        : '${selectedLocations.length} location${selectedLocations.length != 1 ? 's' : ''} selected',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                Spacer(),
-                AnimatedRotation(
-                  duration: Duration(milliseconds: 200),
-                  turns: isExpanded ? 0.5 : 0,
-                  child: Icon(Icons.keyboard_arrow_down, color: Colors.white70),
-                ),
-              ],
+                  Spacer(),
+                  AnimatedRotation(
+                    duration: Duration(milliseconds: 200),
+                    turns: isExpanded ? 0.5 : 0,
+                    child: Icon(Icons.keyboard_arrow_down, color: Colors.white70),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         // Expandable location list
         SizeTransition(
           sizeFactor: _expandAnimation,
-          child: Container(
-            margin: EdgeInsets.only(top: 8),
-            child: isLoading
-                ? Center(child: CircularProgressIndicator(color: Colors.white))
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: locations.map<Widget>((location) {
-                      final isSelected = selectedLocations.contains(location.name);
-                      return AnimatedContainer(
-                        duration: Duration(milliseconds: 200),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                if (isSelected) {
-                                  selectedLocations.remove(location.name);
-                                } else {
-                                  selectedLocations.add(location.name);
-                                }
-                              });
-                              widget.onLocationsChanged(selectedLocations);
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected ? Color(0xFF4A90E2) : Colors.transparent,
-                                border: Border.all(
-                                  color: isSelected ? Color(0xFF4A90E2) : Colors.white30,
-                                  width: 1,
+          child: Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _filterLocations,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search locations...',
+                    hintStyle: TextStyle(color: Colors.white54),
+                    prefixIcon: Icon(Icons.search, color: Colors.white54),
+                    filled: true,
+                    fillColor: Color(0xFF1E1E1E),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
+              ),
+              // Location chips
+              Container(
+                margin: EdgeInsets.only(top: 8),
+                child: isLoading
+                    ? Center(child: CircularProgressIndicator(color: Colors.white))
+                    : Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: (filteredLocations.isEmpty ? locations : filteredLocations)
+                            .map<Widget>((location) {
+                          final isSelected = selectedLocations.contains(location.name);
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isSelected) {
+                                    selectedLocations.remove(location.name);
+                                  } else {
+                                    selectedLocations.add(location.name);
+                                  }
+                                });
+                                widget.onLocationsChanged(selectedLocations);
+                                HapticFeedback.lightImpact();
+                              },
+                              borderRadius: BorderRadius.circular(20),
+                              child: AnimatedContainer(
+                                duration: Duration(milliseconds: 200),
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? Color(0xFF4A90E2) : Colors.transparent,
+                                  border: Border.all(
+                                    color: isSelected ? Color(0xFF4A90E2) : Colors.white30,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                location.name,
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.white70,
-                                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                child: Text(
+                                  location.name,
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : Colors.white70,
+                                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                          );
+                        }).toList(),
+                      ),
+              ),
+            ],
           ),
         ),
       ],
@@ -201,6 +247,7 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
   @override
   void dispose() {
     _controller.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 }
