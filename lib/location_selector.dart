@@ -19,12 +19,18 @@ class Club {
   });
 
   factory Club.fromJson(Map<String, dynamic> json) {
-    return Club(
-      name: json['name'],
-      latitude: json['latitude'].toDouble(),
-      longitude: json['longitude'].toDouble(),
-      totalCourts: json['total_courts'],
-    );
+    try {
+      return Club(
+        name: json['name'] as String,
+        latitude: double.parse(json['latitude'].toString()),
+        longitude: double.parse(json['longitude'].toString()),
+        totalCourts: int.parse(json['total_courts'].toString()),
+      );
+    } catch (e) {
+      print('Error parsing club: $json');
+      print('Error: $e');
+      rethrow;
+    }
   }
 }
 
@@ -73,15 +79,22 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
         Uri.parse('https://rvhxwa55v5.execute-api.eu-north-1.amazonaws.com/default/getClubs'),
       );
       if (response.statusCode == 200) {
+        print('API Response: ${response.body}');
+        
         final List<dynamic> data = json.decode(response.body);
         setState(() {
           clubs = data.map((item) => Club.fromJson(item)).toList();
+          print('Parsed Clubs: ${clubs.length}');
           filteredClubs = clubs;
           isLoading = false;
         });
+      } else {
+        print('Error status code: ${response.statusCode}');
+        setState(() => isLoading = false);
       }
     } catch (e) {
       print('Error fetching clubs: $e');
+      print(StackTrace.current);
       setState(() => isLoading = false);
     }
   }
@@ -101,6 +114,8 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    print('Building LocationSelector - Clubs: ${clubs.length}, Filtered: ${filteredClubs.length}, Loading: $isLoading');
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -172,64 +187,74 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
               ),
               Container(
                 margin: EdgeInsets.only(top: 8),
-                child: isLoading
+                child: isLoading 
                     ? Center(child: CircularProgressIndicator(color: Colors.white))
-                    : Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: filteredClubs.map<Widget>((club) {
-                          final isSelected = selectedLocations.contains(club.name);
-                          return Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  if (isSelected) {
-                                    selectedLocations.remove(club.name);
-                                  } else {
-                                    selectedLocations.add(club.name);
-                                  }
-                                });
-                                widget.onLocationsChanged(selectedLocations);
-                                HapticFeedback.lightImpact();
-                              },
-                              borderRadius: BorderRadius.circular(20),
-                              child: AnimatedContainer(
-                                duration: Duration(milliseconds: 200),
-                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? Color(0xFF4A90E2) : Colors.transparent,
-                                  border: Border.all(
-                                    color: isSelected ? Color(0xFF4A90E2) : Colors.white30,
-                                    width: 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      club.name,
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white : Colors.white70,
-                                        fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                                      ),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '(${club.totalCourts})',
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white70 : Colors.white38,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                    : filteredClubs.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                'No clubs found',
+                                style: TextStyle(color: Colors.white70),
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
+                          )
+                        : Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: filteredClubs.map<Widget>((club) {
+                              final isSelected = selectedLocations.contains(club.name);
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      if (isSelected) {
+                                        selectedLocations.remove(club.name);
+                                      } else {
+                                        selectedLocations.add(club.name);
+                                      }
+                                    });
+                                    widget.onLocationsChanged(selectedLocations);
+                                    HapticFeedback.lightImpact();
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: AnimatedContainer(
+                                    duration: Duration(milliseconds: 200),
+                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? Color(0xFF4A90E2) : Colors.transparent,
+                                      border: Border.all(
+                                        color: isSelected ? Color(0xFF4A90E2) : Colors.white30,
+                                        width: 1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          club.name,
+                                          style: TextStyle(
+                                            color: isSelected ? Colors.white : Colors.white70,
+                                            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                          ),
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          '(${club.totalCourts})',
+                                          style: TextStyle(
+                                            color: isSelected ? Colors.white70 : Colors.white38,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
               ),
             ],
           ),
