@@ -71,7 +71,12 @@ def lambda_handler(event,context):
             filtered_clubs = {}
             
             for name, data in doc.get('clubs', {}).items():
+                # Skip if club data is missing or not in requested clubs
                 if data is None or name not in clubs_to_check:
+                    continue
+                
+                # Skip if club doesn't have both weather and availability data
+                if 'weather' not in data or 'available_slots' not in data:
                     continue
                     
                 available_slots = data.get('available_slots', 0)
