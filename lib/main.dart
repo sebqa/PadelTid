@@ -34,6 +34,31 @@ void main() async {
   runApp(MaterialApp(
     home: HomePage(),
     debugShowCheckedModeBanner: false,
-   
+    theme: ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: Colors.black,
+      colorScheme: const ColorScheme.dark(
+        primary: Colors.white,
+        secondary: Colors.grey,
+        surface: Color(0xFF1E1E1E),
+        background: Colors.black,
+        onBackground: Colors.white,
+        onSurface: Colors.white,
+      ),
+      cardTheme: CardTheme(
+        color: Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      textTheme: const TextTheme(
+        headlineMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        headlineSmall: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        titleLarge: TextStyle(color: Colors.white),
+        titleMedium: TextStyle(color: Colors.white),
+        bodyLarge: TextStyle(color: Colors.white70),
+        bodyMedium: TextStyle(color: Colors.white70),
+      ),
+    ),
   ));
 }

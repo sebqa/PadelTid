@@ -6,10 +6,17 @@ import 'package:flutter_application_1/model/document.dart';
 import 'document_page.dart';
 import 'widgets/subscribing_icon.dart';
 
-class DocumentWidget extends StatelessWidget {
-  const DocumentWidget({Key? key, required this.document}) : super(key: key);
-
+class DocumentWidget extends StatefulWidget {
   final Document document;
+
+  DocumentWidget({required this.document});
+
+  @override
+  State<DocumentWidget> createState() => _DocumentWidgetState();
+}
+
+class _DocumentWidgetState extends State<DocumentWidget> {
+  bool _isPressed = false;
 
   static final weatherSymbolKeys = {
     'clearsky_day': '01d',
@@ -102,157 +109,90 @@ class DocumentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0, bottom: 8.0),
-      child: InkWell(
-        onTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DocumentPage(document: document),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 300),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.95 + (0.05 * value),
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
+        );
+      },
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 150),
+          transform: Matrix4.identity()
+            ..scale(_isPressed ? 0.98 : 1.0),
+          child: Card(
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        widget.document.time,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            '${widget.document.airTemperature}°C',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            ' | ',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          Text(
+                            '${widget.document.windSpeed}m/s',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        '${widget.document.totalClubs} location${widget.document.totalClubs != 1 ? 's' : ''}',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        ' | ',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      Text(
+                        '${widget.document.totalAvailableSlots} courts available',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          );
-          print(result);
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _buildTimeAndWeatherIcon(context),
-                SizedBox(width: 16),
-                Expanded(child: _buildWeatherInfo(context)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeAndWeatherIcon(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 28,
-          height: 28,
-          child: SvgPicture.asset(
-              'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg'),
-        ),
-        SizedBox(height: 4),
-        Text(
-          document.time,
-          style: TextStyle(
-            fontSize: 18,
-            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildWeatherInfo(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildInfoItem(context, Icons.thermostat_outlined,
-                '${document.airTemperature}°C'),
-            _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s'),
-            _buildInfoItem(context, Icons.umbrella,
-                '${document.precipitationProbability}%'),
-            _buildSubscriptionIcon(context),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            _buildAvailableLocations(context),
-            SizedBox(width: 8),
-            _buildAvailableCourts(context),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoItem(BuildContext context, IconData icon, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: Theme.of(context).colorScheme.secondary),
-        SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 14)),
-      ],
-    );
-  }
-
-  Widget _buildAvailableCourts(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.sports_baseball,
-              size: 16, color: Theme.of(context).colorScheme.primary),
-          SizedBox(width: 6),
-          Text(
-            '${document.totalAvailableSlots} ${document.totalAvailableSlots == 1 ? 'court' : 'courts'} available',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvailableLocations(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '${document.totalClubs} ${document.totalClubs == 1 ? 'location' : 'locations'}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSubscriptionIcon(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Container(
-      width: 40,
-      height: 40,
-      child: user == null
-          ? IconButton(
-              icon: Icon(Icons.star_border,
-                  size: 20, color: Theme.of(context).colorScheme.primary),
-              onPressed: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (_) => const AuthGate())),
-              padding: EdgeInsets.zero,
-            )
-          : SubscribingIcon(document: document, user: user),
     );
   }
 }

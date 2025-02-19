@@ -31,7 +31,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   double windSpeedThreshold = 50.0;
   double precipitationProbabilityThreshold = 100.0;
   bool showUnavailableSlots = true;
@@ -42,10 +42,32 @@ class _HomePageState extends State<HomePage> {
   bool consentShown = false;
   bool _showOnboarding = false;
   List<String> _selectedLocations = [];
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    ));
+
+    _controller.forward();
     _checkOnboardingStatus();
     _initializePreferences();
   }
@@ -401,6 +423,12 @@ class _HomePageState extends State<HomePage> {
       ),
       iconTheme: IconThemeData(color: colorScheme.primary),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
 

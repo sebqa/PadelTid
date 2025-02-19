@@ -31,139 +31,109 @@ class LocationSelector extends StatefulWidget {
   final Function(List<String>) onLocationsChanged;
   final List<String> initialLocations;
 
-  const LocationSelector({
-    Key? key,
+  LocationSelector({
     required this.onLocationsChanged,
     required this.initialLocations,
-  }) : super(key: key);
+  });
 
   @override
   _LocationSelectorState createState() => _LocationSelectorState();
 }
 
 class _LocationSelectorState extends State<LocationSelector> {
-  List<Club> _selectedClubs = [];
-  List<Club> _availableClubs = [];
-  bool _isLoading = true;
-  String? _error;
+  late List<String> selectedLocations;
+  List<Location> locations = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchClubs();
+    selectedLocations = List.from(widget.initialLocations);
+    fetchLocations();
   }
 
-  Future<void> _fetchClubs() async {
+  Future<void> fetchLocations() async {
+    setState(() => isLoading = true);
     try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-
       final response = await http.get(
-        Uri.parse('https://rvhxwa55v5.execute-api.eu-north-1.amazonaws.com/default/getClubs'),
+        Uri.parse('https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getClubs'),
       );
-
       if (response.statusCode == 200) {
-        final List<dynamic> clubsJson = json.decode(response.body);
-        final clubs = clubsJson.map((json) => Club.fromJson(json)).toList();
-        
-        final prefs = await SharedPreferences.getInstance();
-        final savedLocations = prefs.getStringList('selected_locations') ?? [];
-
+        final List<dynamic> data = json.decode(response.body);
         setState(() {
-          _availableClubs = clubs;
-          _selectedClubs = _availableClubs
-              .where((club) => savedLocations.contains(club.name))
-              .toList();
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _error = 'Failed to load clubs';
-          _isLoading = false;
+          locations = data.map((item) => Location(
+            name: item['name'],
+            latitude: item['latitude'],
+            longitude: item['longitude'],
+          )).toList();
+          isLoading = false;
         });
       }
     } catch (e) {
-      setState(() {
-        _error = 'Error: $e';
-        _isLoading = false;
-      });
+      print('Error fetching locations: $e');
+      setState(() => isLoading = false);
     }
-  }
-
-  Future<void> _saveSelectedLocations() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-        'selected_locations', _selectedClubs.map((c) => c.name).toList());
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator(color: Colors.white));
     }
 
-    if (_error != null) {
-      return Center(child: Text(_error!));
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return MultiSelectDialogField<Club>(
-          items: _availableClubs
-              .map((club) => MultiSelectItem<Club>(club, club.name))
-              .toList(),
-          initialValue: _selectedClubs,
-          searchable: true,
-          title: Text("Select Locations"),
-          selectedColor: Theme.of(context).colorScheme.primary,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1),
-            borderRadius: BorderRadius.all(Radius.circular(40)),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              width: 2,
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: locations.map((location) {
+          final isSelected = selectedLocations.contains(location.name);
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: Duration(milliseconds: 200),
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: 0.95 + (0.05 * value),
+                child: Opacity(
+                  opacity: value,
+                  child: child,
+                ),
+              );
+            },
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    selectedLocations.remove(location.name);
+                  } else {
+                    selectedLocations.add(location.name);
+                  }
+                });
+                widget.onLocationsChanged(selectedLocations);
+              },
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : Colors.transparent,
+                  border: Border.all(
+                    color: isSelected ? Colors.white : Colors.white54,
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  location.name,
+                  style: TextStyle(
+                    color: isSelected ? Colors.black : Colors.white,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
             ),
-          ),
-          buttonIcon: Icon(
-            Icons.location_on,
-            color: Theme.of(context).colorScheme.primaryContainer,
-          ),
-          buttonText: Text(
-            _getButtonText(constraints.maxWidth),
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.normal),
-          ),
-          onConfirm: (results) {
-            setState(() {
-              _selectedClubs = results;
-            });
-            widget.onLocationsChanged(
-                _selectedClubs.map((c) => c.name).toList());
-            _saveSelectedLocations();
-          },
-          chipDisplay: MultiSelectChipDisplay.none(),
-        );
-      },
+          );
+        }).toList(),
+      ),
     );
-  }
-
-  String _getButtonText(double maxWidth) {
-    if (_selectedClubs.isEmpty) {
-      return "Select locations";
-    } else if (_selectedClubs.length == 1) {
-      return _selectedClubs[0].name;
-    } else {
-      String text = _selectedClubs.map((c) => c.name).join(", ");
-      int maxChars = (maxWidth / 10).floor();
-      if (text.length > maxChars) {
-        return "${text.substring(0, maxChars)}... (${_selectedClubs.length})";
-      } else {
-        return text;
-      }
-    }
   }
 }

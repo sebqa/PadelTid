@@ -119,68 +119,43 @@ class RecommendedDocumentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DocumentPage(document: document),
+      elevation: 0,
+      margin: EdgeInsets.symmetric(horizontal: 8),
+      child: Container(
+        width: 160,
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  document.time,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${document.airTemperature}°',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
             ),
-          );
-        },
-        child: Container(
-          width: 160,
-          padding: EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    document.time,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  Text(
-                    _getDisplayDate(document.date),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildInfoItem(context, Icons.thermostat,
-                      '${document.airTemperature}°C'),
-                  SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: SvgPicture.asset(
-                      'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(document.symbolCode)}.svg',
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildInfoItem(
-                      context, Icons.air, '${document.windSpeed}m/s'),
-                  _buildInfoItem(context, Icons.umbrella,
-                      '${document.precipitationProbability}%'),
-                ],
-              ),
-            ],
-          ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildInfoItem(context, Icons.air, '${document.windSpeed}m/s'),
+                _buildInfoItem(context, Icons.umbrella, '${document.precipitationProbability}%'),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -190,9 +165,15 @@ class RecommendedDocumentWidget extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: Theme.of(context).colorScheme.secondary),
+        Icon(icon, size: 14, color: Colors.grey),
         SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 12)),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+          ),
+        ),
       ],
     );
   }
