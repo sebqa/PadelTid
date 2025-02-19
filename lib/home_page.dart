@@ -11,6 +11,7 @@ import 'login_page.dart';
 import 'document_widget.dart';
 import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
+import 'RecommendedDocumentWidget.dart';
 import 'package:flutter/services.dart';
 import 'onboarding_screen.dart';
 import 'location_selector.dart';
