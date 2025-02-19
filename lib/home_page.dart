@@ -47,23 +47,31 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _checkOnboardingStatus();
-    recommendedDocuments =
-        documentService.fetchDocuments(4.0, 10.0, false, true, []);
     _initializePreferences();
   }
 
   Future<void> _checkOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+    _selectedLocations = prefs.getStringList('selected_locations') ?? [];
+    
     setState(() {
       _showOnboarding = !hasSeenOnboarding;
       if (!_showOnboarding) {
-        _selectedLocations = prefs.getStringList('selected_locations') ?? [];
         windSpeedThreshold = prefs.getDouble('wind_speed_threshold') ?? 10.0;
         precipitationProbabilityThreshold =
             prefs.getDouble('precipitation_probability_threshold') ?? 50.0;
       }
     });
+
+    // Initialize recommended documents with selected locations
+    recommendedDocuments = documentService.fetchDocuments(
+      4.0, 
+      10.0, 
+      false, 
+      true, 
+      _selectedLocations
+    );
   }
 
   Future<void> _initializePreferences() async {
@@ -76,6 +84,8 @@ class _HomePageState extends State<HomePage> {
               100.0;
       showUnavailableSlots =
           sharedPreferences.getBool('show_unavailable_courts') ?? true;
+      _selectedLocations = 
+          sharedPreferences.getStringList('selected_locations') ?? [];
     });
     _fetchDocuments();
   }
