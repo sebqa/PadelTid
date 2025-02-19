@@ -109,88 +109,76 @@ class _DocumentWidgetState extends State<DocumentWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 300),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: 0.95 + (0.05 * value),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
-        );
-      },
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) => setState(() => _isPressed = false),
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 150),
-          transform: Matrix4.identity()
-            ..scale(_isPressed ? 0.98 : 1.0),
-          child: Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        widget.document.time,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            '${widget.document.airTemperature}°C',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          Text(
-                            ' | ',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          Text(
-                            '${widget.document.windSpeed}m/s',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                        ],
-                      ),
-                    ],
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.document.time,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        '${widget.document.totalClubs} location${widget.document.totalClubs != 1 ? 's' : ''}',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 16,
-                        ),
+                ),
+                Row(
+                  children: [
+                    Icon(Icons.thermostat, color: Colors.white70, size: 20),
+                    SizedBox(width: 4),
+                    Text(
+                      '${widget.document.airTemperature}°',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
                       ),
-                      Text(
-                        ' | ',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      Text(
-                        '${widget.document.totalAvailableSlots} courts available',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                    Text(' | ', style: TextStyle(color: Colors.white30)),
+                    Icon(Icons.air, color: Colors.white70, size: 20),
+                    SizedBox(width: 4),
+                    Text(
+                      '${widget.document.windSpeed}m/s',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.white30, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '${widget.document.totalClubs} location${widget.document.totalClubs != 1 ? 's' : ''}',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                Text(' | ', style: TextStyle(color: Colors.white30)),
+                Icon(Icons.sports_tennis, color: Colors.white30, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '${widget.document.totalAvailableSlots} courts',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                Text(' | ', style: TextStyle(color: Colors.white30)),
+                Icon(Icons.umbrella, color: Colors.white30, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '${widget.document.precipitationProbability}%',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

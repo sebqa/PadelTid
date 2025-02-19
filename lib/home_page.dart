@@ -212,140 +212,68 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      scrollBehavior: MyCustomScrollBehavior(),
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        FirebaseUILocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', 'US')],
-      title: 'PADELTID',
-      theme: _buildTheme(context),
-      home: Stack(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
         children: [
-          AnnotatedRegion<SystemUiOverlayStyle>(
-            value: SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: Brightness.dark,
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF4A90E2).withOpacity(0.2),
+                  Colors.black,
+                ],
+                stops: [0.0, 0.5],
+              ),
             ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 750),
-                child: Scaffold(
-                  body: Stack(
+          ),
+          CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                backgroundColor: Colors.transparent,
+                floating: true,
+                actions: [
+                  IconButton(
+                    icon: Icon(Icons.tune, color: Colors.white),
+                    onPressed: () => showSettingsDialog(),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.settings, color: Colors.white),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AuthGate()),
+                    ),
+                  ),
+                ],
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Color(0xFF87CEEB),
-                              Color.fromARGB(255, 56, 5, 210),
-                            ],
-                          ),
-                        ),
+                      LocationSelector(
+                        onLocationsChanged: (locations) {
+                          setState(() {
+                            _selectedLocations = locations;
+                          });
+                          updateThresholds();
+                        },
+                        initialLocations: _selectedLocations,
                       ),
-                      CustomScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        slivers: [
-                          if (_showOnboarding)
-                            SliverToBoxAdapter(
-                              child: OnboardingScreen(
-                                onDismiss: (selectedLocations,
-                                    windSpeed,
-                                    precipitationProbability,
-                                    showUnavailableCourts) {
-                                  setState(() {
-                                    _showOnboarding = false;
-                                    _selectedLocations = selectedLocations;
-                                    windSpeedThreshold = windSpeed;
-                                    precipitationProbabilityThreshold =
-                                        precipitationProbability;
-                                    showUnavailableSlots =
-                                        showUnavailableCourts;
-                                  });
-                                  updateThresholds();
-                                },
-                              ),
-                            ),
-                          //const CustomAppBar(),
-                          SliverToBoxAdapter(
-                              child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: LocationSelector(
-                                    onLocationsChanged: (locations) {
-                                      setState(() {
-                                        _selectedLocations = locations;
-                                      });
-                                      updateThresholds();
-                                    },
-                                    initialLocations: _selectedLocations,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                IconButton(
-                                  icon: Icon(Icons.settings,
-                                      color: Colors.white, size: 30),
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => const AuthGate(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          )),
-                          SliverRecommendedLV(
-                              recommendedDocuments: recommendedDocuments),
-                          SliverToBoxAdapter(
-                            child: Center(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.calendar_month,
-                                              color: Colors.white),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'All timeslots',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon:
-                                          Icon(Icons.tune, color: Colors.white),
-                                      onPressed: showSettingsDialog,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) => _buildFutureBuilder(),
-                              childCount: 1,
+                      SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Icon(Icons.recommend, color: Colors.white70),
+                          SizedBox(width: 8),
+                          Text(
+                            'Recommended',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -354,7 +282,53 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ),
                 ),
               ),
-            ),
+              if (recommendedDocuments != null)
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 140,
+                    child: FutureBuilder<List<Document>>(
+                      future: recommendedDocuments,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: snapshot.data!.length,
+                            itemBuilder: (context, index) {
+                              return RecommendedDocumentWidget(
+                                snapshot.data![index],
+                              );
+                            },
+                          );
+                        }
+                        return Center(child: CircularProgressIndicator());
+                      },
+                    ),
+                  ),
+                ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20, 32, 20, 16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: Colors.white70),
+                      SizedBox(width: 8),
+                      Text(
+                        'All timeslots',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _buildFutureBuilder(),
+              ),
+            ],
           ),
         ],
       ),
