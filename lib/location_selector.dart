@@ -63,8 +63,8 @@ class _LocationSelectorState extends State<LocationSelector> {
         setState(() {
           locations = data.map((item) => Location(
             name: item['name'],
-            latitude: item['latitude'],
-            longitude: item['longitude'],
+            latitude: item['latitude'].toDouble(),
+            longitude: item['longitude'].toDouble(),
           )).toList();
           isLoading = false;
         });
@@ -86,7 +86,7 @@ class _LocationSelectorState extends State<LocationSelector> {
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: locations.map((location) {
+        children: locations.map<Widget>((location) {
           final isSelected = selectedLocations.contains(location.name);
           return TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
