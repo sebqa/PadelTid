@@ -14,15 +14,13 @@ def lambda_handler(event,context):
         precipitation_probability_threshold = float(event['queryStringParameters']['precipitation_probability_threshold'])
         showUnavailableSlots = event['queryStringParameters']['showUnavailableSlots']
         locations = event['queryStringParameters'].get('locations', '').split(',')
-        locations = [loc for loc in locations if loc] # Remove empty strings
+        locations = [loc for loc in locations if loc]
         
         current_time = datetime.now()
         current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
         
         # Base query
         query = {
-            'precipitation_probability': {'$lt': precipitation_probability_threshold},
-            'wind_speed': {'$lt': wind_speed_threshold},
             '$expr': {
                 '$and': [
                     {'$gt': [{'$concat': ['$date', ' ', '$time']}, current_time_str]},
@@ -35,19 +33,38 @@ def lambda_handler(event,context):
             }
         }
         
-        # Add location filter if locations are specified
+        # Add weather and location conditions
         if locations:
-            query['$or'] = [
-                {f'clubs.{location}': {'$exists': True}} 
-                for location in locations
-            ]
+            location_conditions = []
+            for location in locations:
+                location_conditions.append({
+                    '$and': [
+                        {f'clubs.{location}': {'$exists': True}},
+                        {f'weather.{location}.wind_speed': {'$lt': wind_speed_threshold}},
+                        {f'weather.{location}.precipitation_probability': {'$lt': precipitation_probability_threshold}}
+                    ]
+                })
+            query['$or'] = location_conditions
+        else:
+            # If no locations specified, check all clubs
+            query['$expr']['$and'].append({
+                '$or': [
+                    {
+                        '$and': [
+                            {f'weather.{club}.wind_speed': {'$lt': wind_speed_threshold}},
+                            {f'weather.{club}.precipitation_probability': {'$lt': precipitation_probability_threshold}}
+                        ]
+                    }
+                    for club in db['clubs'].distinct('name')
+                ]
+            })
             
         if showUnavailableSlots == "false":
             query['available_slots'] = {'$gt': 0}
 
-        print("Query:", query)  # Debug print
+        print("Query:", query)
         results = list(collection.find(query, {'_id': 0}))
-        print("Results:", results)  # Debug print
+        print("Results:", results)
 
         return {
             'statusCode': 200,
@@ -59,7 +76,7 @@ def lambda_handler(event,context):
             'body': json.dumps(results)
         }
     except Exception as e:
-        print("Error:", str(e))  # Debug print
+        print("Error:", str(e))
         return {
             'statusCode': 500,
             'headers': {
