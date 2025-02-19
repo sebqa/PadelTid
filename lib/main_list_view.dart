@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/home_page.dart';
 import 'package:flutter_application_1/model/document.dart';
+import 'package:flutter_application_1/document_widget.dart';
 
 class MainListView extends StatelessWidget {
   const MainListView({
@@ -39,7 +40,7 @@ class MainListView extends StatelessWidget {
                   ),
                 ),
               ),
-              ...documentsForDate.map((doc) => DocumentWidget(document: doc)),
+              ...documentsForDate.map((doc) => DocumentWidget(document: doc)).toList(),
             ],
           );
         },

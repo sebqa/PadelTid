@@ -27,6 +27,18 @@ class Club {
   }
 }
 
+class Location {
+  final String name;
+  final double latitude;
+  final double longitude;
+
+  Location({
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+  });
+}
+
 class LocationSelector extends StatefulWidget {
   final Function(List<String>) onLocationsChanged;
   final List<String> initialLocations;
