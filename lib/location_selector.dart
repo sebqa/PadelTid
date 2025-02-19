@@ -6,38 +6,26 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class Club {
-  final String id;
   final String name;
-  final String url;
+  final double latitude;
+  final double longitude;
   final int totalCourts;
 
   Club({
-    required this.id,
     required this.name,
-    required this.url,
+    required this.latitude,
+    required this.longitude,
     required this.totalCourts,
   });
 
   factory Club.fromJson(Map<String, dynamic> json) {
     return Club(
-      id: json['_id'],
       name: json['name'],
-      url: json['url'],
+      latitude: json['latitude'].toDouble(),
+      longitude: json['longitude'].toDouble(),
       totalCourts: json['total_courts'],
     );
   }
-}
-
-class Location {
-  final String name;
-  final double latitude;
-  final double longitude;
-
-  Location({
-    required this.name,
-    required this.latitude,
-    required this.longitude,
-  });
 }
 
 class LocationSelector extends StatefulWidget {
@@ -55,13 +43,13 @@ class LocationSelector extends StatefulWidget {
 
 class _LocationSelectorState extends State<LocationSelector> with SingleTickerProviderStateMixin {
   late List<String> selectedLocations;
-  List<Location> locations = [];
+  List<Club> clubs = [];
+  List<Club> filteredClubs = [];
   bool isLoading = true;
   bool isExpanded = false;
   late AnimationController _controller;
   late Animation<double> _expandAnimation;
   TextEditingController _searchController = TextEditingController();
-  List<Location> filteredLocations = [];
 
   @override
   void initState() {
@@ -75,10 +63,10 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
       parent: _controller,
       curve: Curves.easeInOut,
     );
-    fetchLocations();
+    fetchClubs();
   }
 
-  Future<void> fetchLocations() async {
+  Future<void> fetchClubs() async {
     setState(() => isLoading = true);
     try {
       final response = await http.get(
@@ -87,28 +75,25 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
-          locations = data.map((item) => Location(
-            name: item['name'],
-            latitude: item['latitude'].toDouble(),
-            longitude: item['longitude'].toDouble(),
-          )).toList();
+          clubs = data.map((item) => Club.fromJson(item)).toList();
+          filteredClubs = clubs;
           isLoading = false;
         });
       }
     } catch (e) {
-      print('Error fetching locations: $e');
+      print('Error fetching clubs: $e');
       setState(() => isLoading = false);
     }
   }
 
-  void _filterLocations(String query) {
+  void _filterClubs(String query) {
     setState(() {
       if (query.isEmpty) {
-        filteredLocations = locations;
+        filteredClubs = clubs;
       } else {
-        filteredLocations = locations
-            .where((location) =>
-                location.name.toLowerCase().contains(query.toLowerCase()))
+        filteredClubs = clubs
+            .where((club) =>
+                club.name.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -119,7 +104,6 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header with selected locations count
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -129,7 +113,7 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
                 isExpanded = !isExpanded;
                 if (isExpanded) {
                   _controller.forward();
-                  filteredLocations = locations;
+                  filteredClubs = clubs;
                 } else {
                   _controller.reverse();
                 }
@@ -139,12 +123,12 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
               padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Row(
                 children: [
-                  Icon(Icons.location_on, color: Colors.white70),
+                  Icon(Icons.sports_tennis, color: Colors.white70),
                   SizedBox(width: 8),
                   Text(
                     selectedLocations.isEmpty 
-                        ? 'Select locations' 
-                        : '${selectedLocations.length} location${selectedLocations.length != 1 ? 's' : ''} selected',
+                        ? 'Select clubs' 
+                        : '${selectedLocations.length} club${selectedLocations.length != 1 ? 's' : ''} selected',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -162,20 +146,18 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
             ),
           ),
         ),
-        // Expandable location list
         SizeTransition(
           sizeFactor: _expandAnimation,
           child: Column(
             children: [
-              // Search bar
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: _filterLocations,
+                  onChanged: _filterClubs,
                   style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: 'Search locations...',
+                    hintText: 'Search clubs...',
                     hintStyle: TextStyle(color: Colors.white54),
                     prefixIcon: Icon(Icons.search, color: Colors.white54),
                     filled: true,
@@ -188,7 +170,6 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
                   ),
                 ),
               ),
-              // Location chips
               Container(
                 margin: EdgeInsets.only(top: 8),
                 child: isLoading
@@ -196,18 +177,17 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
                     : Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: (filteredLocations.isEmpty ? locations : filteredLocations)
-                            .map<Widget>((location) {
-                          final isSelected = selectedLocations.contains(location.name);
+                        children: filteredClubs.map<Widget>((club) {
+                          final isSelected = selectedLocations.contains(club.name);
                           return Material(
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () {
                                 setState(() {
                                   if (isSelected) {
-                                    selectedLocations.remove(location.name);
+                                    selectedLocations.remove(club.name);
                                   } else {
-                                    selectedLocations.add(location.name);
+                                    selectedLocations.add(club.name);
                                   }
                                 });
                                 widget.onLocationsChanged(selectedLocations);
@@ -225,12 +205,25 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: Text(
-                                  location.name,
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : Colors.white70,
-                                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      club.name,
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : Colors.white70,
+                                        fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '(${club.totalCourts})',
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white70 : Colors.white38,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
