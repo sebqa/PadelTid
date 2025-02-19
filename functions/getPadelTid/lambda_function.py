@@ -39,16 +39,17 @@ def lambda_handler(event,context):
         # Add weather and location conditions
         club_conditions = []
         for club in clubs_to_check:
-            conditions = {
-                '$and': [
-                    {f'clubs.{club}': {'$exists': True}},
-                    {f'clubs.{club}.weather.wind_speed': {'$lt': wind_speed_threshold}},
-                    {f'clubs.{club}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
-                ]
-            }
+            base_conditions = [
+                {f'clubs.{club}': {'$exists': True}},
+                {f'clubs.{club}.weather.wind_speed': {'$lt': wind_speed_threshold}},
+                {f'clubs.{club}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
+            ]
+            
             if showUnavailableSlots == "false":
-                conditions['$and'].append({f'clubs.{club}.available_slots': {'$gt': 0}})
-            club_conditions.append(conditions)
+                base_conditions.append({f'clubs.{club}.available_slots': {'$gt': 0}})
+                
+            club_conditions.append({'$and': base_conditions})
+            
         query['$or'] = club_conditions
 
         # Create projection to only return necessary fields
@@ -67,12 +68,15 @@ def lambda_handler(event,context):
         # Clean up results to remove empty clubs and handle available slots
         cleaned_results = []
         for doc in results:
-            # Only include clubs that have data and meet availability criteria
             filtered_clubs = {}
+            
             for name, data in doc.get('clubs', {}).items():
-                if data is not None and name in clubs_to_check:
-                    if showUnavailableSlots == "true" or data.get('available_slots', 0) > 0:
-                        filtered_clubs[name] = data
+                if data is None or name not in clubs_to_check:
+                    continue
+                    
+                available_slots = data.get('available_slots', 0)
+                if showUnavailableSlots == "true" or available_slots > 0:
+                    filtered_clubs[name] = data
             
             if filtered_clubs:  # Only include document if it has valid clubs
                 cleaned_doc = {
