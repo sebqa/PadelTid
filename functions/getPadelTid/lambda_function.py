@@ -40,8 +40,8 @@ def lambda_handler(event,context):
                 location_conditions.append({
                     '$and': [
                         {f'clubs.{location}': {'$exists': True}},
-                        {f'weather.{location}.wind_speed': {'$lt': wind_speed_threshold}},
-                        {f'weather.{location}.precipitation_probability': {'$lt': precipitation_probability_threshold}}
+                        {f'clubs.{location}.weather.wind_speed': {'$lt': wind_speed_threshold}},
+                        {f'clubs.{location}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
                     ]
                 })
             query['$or'] = location_conditions
@@ -51,8 +51,8 @@ def lambda_handler(event,context):
                 '$or': [
                     {
                         '$and': [
-                            {f'weather.{club}.wind_speed': {'$lt': wind_speed_threshold}},
-                            {f'weather.{club}.precipitation_probability': {'$lt': precipitation_probability_threshold}}
+                            {f'clubs.{club}.weather.wind_speed': {'$lt': wind_speed_threshold}},
+                            {f'clubs.{club}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
                         ]
                     }
                     for club in db['clubs'].distinct('name')
@@ -60,7 +60,10 @@ def lambda_handler(event,context):
             })
             
         if showUnavailableSlots == "false":
-            query['available_slots'] = {'$gt': 0}
+            query['$or'] = query.get('$or', []).extend([
+                {f'clubs.{loc}.available_slots': {'$gt': 0}} 
+                for loc in (locations if locations else db['clubs'].distinct('name'))
+            ])
 
         print("Query:", query)
         results = list(collection.find(query, {'_id': 0}))

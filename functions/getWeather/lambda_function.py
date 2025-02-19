@@ -83,7 +83,7 @@ def insert_weather(data, host, club_name):
 
                     update_object = {
                         '$set': {
-                            f'{club_name}.weather': {
+                            f'clubs.{club_name}.weather': {
                                 'wind_speed': round(new_wind_speed, 1),
                                 'precipitation_probability': round(new_precipitation_probability,1),
                                 'air_temperature': round(new_air_temperature,1),
@@ -100,7 +100,7 @@ def insert_weather(data, host, club_name):
             
             update_object = {
                 '$set': {
-                    f'{club_name}.weather': {
+                    f'clubs.{club_name}.weather': {
                         'wind_speed': wind_speed,
                         'precipitation_probability': precipitation_probability,
                         'air_temperature': air_temperature,
