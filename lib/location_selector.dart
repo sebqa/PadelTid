@@ -52,15 +52,26 @@ class LocationSelector extends StatefulWidget {
   _LocationSelectorState createState() => _LocationSelectorState();
 }
 
-class _LocationSelectorState extends State<LocationSelector> {
+class _LocationSelectorState extends State<LocationSelector> with SingleTickerProviderStateMixin {
   late List<String> selectedLocations;
   List<Location> locations = [];
   bool isLoading = true;
+  bool isExpanded = false;
+  late AnimationController _controller;
+  late Animation<double> _expandAnimation;
 
   @override
   void initState() {
     super.initState();
     selectedLocations = List.from(widget.initialLocations);
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
     fetchLocations();
   }
 
@@ -89,63 +100,107 @@ class _LocationSelectorState extends State<LocationSelector> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Center(child: CircularProgressIndicator(color: Colors.white));
-    }
-
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: locations.map<Widget>((location) {
-          final isSelected = selectedLocations.contains(location.name);
-          return TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: Duration(milliseconds: 200),
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: 0.95 + (0.05 * value),
-                child: Opacity(
-                  opacity: value,
-                  child: child,
-                ),
-              );
-            },
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  if (isSelected) {
-                    selectedLocations.remove(location.name);
-                  } else {
-                    selectedLocations.add(location.name);
-                  }
-                });
-                widget.onLocationsChanged(selectedLocations);
-              },
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 200),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
-                  border: Border.all(
-                    color: isSelected ? Colors.white : Colors.white54,
-                    width: 1,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  location.name,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header with selected locations count
+        InkWell(
+          onTap: () {
+            setState(() {
+              isExpanded = !isExpanded;
+              if (isExpanded) {
+                _controller.forward();
+              } else {
+                _controller.reverse();
+              }
+            });
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.white70),
+                SizedBox(width: 8),
+                Text(
+                  selectedLocations.isEmpty 
+                      ? 'Select locations' 
+                      : '${selectedLocations.length} location${selectedLocations.length != 1 ? 's' : ''} selected',
                   style: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
+                Spacer(),
+                AnimatedRotation(
+                  duration: Duration(milliseconds: 200),
+                  turns: isExpanded ? 0.5 : 0,
+                  child: Icon(Icons.keyboard_arrow_down, color: Colors.white70),
+                ),
+              ],
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        ),
+        // Expandable location list
+        SizeTransition(
+          sizeFactor: _expandAnimation,
+          child: Container(
+            margin: EdgeInsets.only(top: 8),
+            child: isLoading
+                ? Center(child: CircularProgressIndicator(color: Colors.white))
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: locations.map<Widget>((location) {
+                      final isSelected = selectedLocations.contains(location.name);
+                      return AnimatedContainer(
+                        duration: Duration(milliseconds: 200),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (isSelected) {
+                                  selectedLocations.remove(location.name);
+                                } else {
+                                  selectedLocations.add(location.name);
+                                }
+                              });
+                              widget.onLocationsChanged(selectedLocations);
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected ? Color(0xFF4A90E2) : Colors.transparent,
+                                border: Border.all(
+                                  color: isSelected ? Color(0xFF4A90E2) : Colors.white30,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                location.name,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.white70,
+                                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+        ),
+      ],
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
