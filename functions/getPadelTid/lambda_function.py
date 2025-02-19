@@ -64,15 +64,15 @@ def lambda_handler(event,context):
         print("Query:", query)
         results = list(collection.find(query, projection))
         
-        # Clean up results to remove empty clubs
+        # Clean up results to remove empty clubs and handle available slots
         cleaned_results = []
         for doc in results:
-            # Only include clubs that have data
-            filtered_clubs = {
-                name: data 
-                for name, data in doc.get('clubs', {}).items() 
-                if data is not None and name in clubs_to_check
-            }
+            # Only include clubs that have data and meet availability criteria
+            filtered_clubs = {}
+            for name, data in doc.get('clubs', {}).items():
+                if data is not None and name in clubs_to_check:
+                    if showUnavailableSlots == "true" or data.get('available_slots', 0) > 0:
+                        filtered_clubs[name] = data
             
             if filtered_clubs:  # Only include document if it has valid clubs
                 cleaned_doc = {
