@@ -21,12 +21,18 @@ class CustomAppBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          ),
         ),
         child: TextField(
           decoration: InputDecoration(
             hintText: 'Search clubs or locations...',
             hintStyle: TextStyle(color: Colors.grey),
-            prefixIcon: Icon(Icons.search, color: Colors.grey),
+            prefixIcon: Icon(
+              Icons.search,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
@@ -34,7 +40,11 @@ class CustomAppBar extends StatelessWidget {
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.settings, color: Colors.white, size: 24),
+          icon: Icon(
+            Icons.settings,
+            color: Theme.of(context).colorScheme.primary,
+            size: 24,
+          ),
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(

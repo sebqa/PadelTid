@@ -111,10 +111,6 @@ class _DocumentWidgetState extends State<DocumentWidget> {
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -128,26 +124,30 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 Row(
                   children: [
-                    Icon(Icons.thermostat, color: Colors.white70, size: 20),
-                    SizedBox(width: 4),
+                    Icon(Icons.thermostat, 
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20
+                    ),
                     Text(
-                      '${widget.document.airTemperature}°',
+                      ' ${widget.document.airTemperature}°C',
                       style: TextStyle(
                         fontSize: 18,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    Text(' | ', style: TextStyle(color: Colors.white30)),
-                    Icon(Icons.air, color: Colors.white70, size: 20),
-                    SizedBox(width: 4),
+                    Text(' | ', style: TextStyle(color: Colors.grey)),
+                    Icon(Icons.air, 
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20
+                    ),
                     Text(
-                      '${widget.document.windSpeed}m/s',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      ' ${widget.document.windSpeed}m/s',
+                      style: TextStyle(fontSize: 18),
                     ),
                   ],
                 ),
@@ -156,25 +156,22 @@ class _DocumentWidgetState extends State<DocumentWidget> {
             SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on, color: Colors.white30, size: 16),
-                SizedBox(width: 4),
-                Text(
-                  '${widget.document.totalClubs} location${widget.document.totalClubs != 1 ? 's' : ''}',
-                  style: TextStyle(color: Colors.white70),
+                Icon(Icons.location_on, 
+                  color: Theme.of(context).colorScheme.secondary,
+                  size: 16
                 ),
-                Text(' | ', style: TextStyle(color: Colors.white30)),
-                Icon(Icons.sports_tennis, color: Colors.white30, size: 16),
-                SizedBox(width: 4),
                 Text(
-                  '${widget.document.totalAvailableSlots} courts',
-                  style: TextStyle(color: Colors.white70),
+                  ' ${widget.document.totalClubs} location${widget.document.totalClubs != 1 ? 's' : ''}',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
                 ),
-                Text(' | ', style: TextStyle(color: Colors.white30)),
-                Icon(Icons.umbrella, color: Colors.white30, size: 16),
-                SizedBox(width: 4),
+                Text(' | ', style: TextStyle(color: Colors.grey)),
+                Icon(Icons.sports_tennis,
+                  color: Theme.of(context).colorScheme.secondary,
+                  size: 16
+                ),
                 Text(
-                  '${widget.document.precipitationProbability}%',
-                  style: TextStyle(color: Colors.white70),
+                  ' ${widget.document.totalAvailableSlots} courts',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
                 ),
               ],
             ),
@@ -184,3 +181,4 @@ class _DocumentWidgetState extends State<DocumentWidget> {
     );
   }
 }
+

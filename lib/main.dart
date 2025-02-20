@@ -12,8 +12,8 @@ void main() async {
   // Set status bar style
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    statusBarBrightness: Brightness.dark,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
   ));
 
   await Firebase.initializeApp(
@@ -44,29 +44,30 @@ void main() async {
     home: SplashScreen(),
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: Colors.black,
-      colorScheme: const ColorScheme.dark(
-        primary: Colors.white,
-        secondary: Colors.grey,
-        surface: Color(0xFF1E1E1E),
-        background: Colors.black,
-        onBackground: Colors.white,
-        onSurface: Colors.white,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: Colors.white,
+      colorScheme: ColorScheme.light(
+        primary: Color(0xFF4A90E2),
+        secondary: Color(0xFF9CC0E5),
+        surface: Colors.white,
+        background: Color(0xFFF5F7FA),
+        onBackground: Color(0xFF2C3E50),
+        onSurface: Color(0xFF2C3E50),
       ),
       cardTheme: CardTheme(
-        color: Color(0xFF1E1E1E),
+        color: Colors.white,
+        elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      textTheme: const TextTheme(
-        headlineMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        headlineSmall: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(color: Colors.white),
-        titleMedium: TextStyle(color: Colors.white),
-        bodyLarge: TextStyle(color: Colors.white70),
-        bodyMedium: TextStyle(color: Colors.white70),
+      textTheme: TextTheme(
+        headlineMedium: TextStyle(color: Color(0xFF2C3E50), fontWeight: FontWeight.bold),
+        headlineSmall: TextStyle(color: Color(0xFF2C3E50), fontWeight: FontWeight.bold),
+        titleLarge: TextStyle(color: Color(0xFF2C3E50)),
+        titleMedium: TextStyle(color: Color(0xFF2C3E50)),
+        bodyLarge: TextStyle(color: Color(0xFF34495E)),
+        bodyMedium: TextStyle(color: Color(0xFF34495E)),
       ),
     ),
   ));

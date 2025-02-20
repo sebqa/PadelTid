@@ -291,24 +291,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                  Color(0xFF4A90E2).withOpacity(0.2),
-                  Colors.black,
-                            ],
-                stops: [0.0, 0.5],
-                          ),
-                        ),
-                      ),
-                      CustomScrollView(
-                        slivers: [
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF4A90E2).withOpacity(0.1),
+                  Theme.of(context).scaffoldBackgroundColor,
+                ],
+                stops: [0.0, 0.3],
+              ),
+            ),
+          ),
+          CustomScrollView(
+            slivers: [
               SliverAppBar(
                 backgroundColor: Colors.transparent,
                 floating: true,
@@ -326,31 +326,31 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ),
                 ],
               ),
-                          SliverToBoxAdapter(
-                              child: Padding(
+              SliverToBoxAdapter(
+                child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                    children: [
                       LocationSelector(
-                                    onLocationsChanged: (locations) {
-                                      setState(() {
-                                        _selectedLocations = locations;
-                                      });
-                                      updateThresholds();
-                                    },
-                                    initialLocations: _selectedLocations,
-                                  ),
+                        onLocationsChanged: (locations) {
+                          setState(() {
+                            _selectedLocations = locations;
+                          });
+                          updateThresholds();
+                        },
+                        initialLocations: _selectedLocations,
+                      ),
                       SizedBox(height: 24),
                       Row(
-                                  children: [
+                        children: [
                           Icon(Icons.recommend, color: Colors.white70),
-                                          SizedBox(width: 8),
-                                          Text(
+                          SizedBox(width: 8),
+                          Text(
                             'Recommended',
-                                            style: TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
-                                              fontSize: 18,
+                              fontSize: 18,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

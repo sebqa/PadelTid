@@ -33,10 +33,8 @@ class MainListView extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
                 child: Text(
                   _getDisplayDate(parsedDate),
-                  style: TextStyle(
-                    fontSize: 20,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
                 ),
               ),

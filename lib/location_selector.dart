@@ -138,126 +138,94 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
               padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Row(
                 children: [
-                  Icon(Icons.sports_tennis, color: Colors.white70),
+                  Icon(Icons.sports_tennis, 
+                    color: Theme.of(context).colorScheme.primary
+                  ),
                   SizedBox(width: 8),
                   Text(
                     selectedLocations.isEmpty 
                         ? 'Select clubs' 
                         : '${selectedLocations.length} club${selectedLocations.length != 1 ? 's' : ''} selected',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   Spacer(),
-                  AnimatedRotation(
-                    duration: Duration(milliseconds: 200),
-                    turns: isExpanded ? 0.5 : 0,
-                    child: Icon(Icons.keyboard_arrow_down, color: Colors.white70),
+                  Icon(Icons.keyboard_arrow_down, 
+                    color: Theme.of(context).colorScheme.primary
                   ),
                 ],
               ),
             ),
           ),
         ),
-        SizeTransition(
-          sizeFactor: _expandAnimation,
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _filterClubs,
-                  style: TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Search clubs...',
-                    hintStyle: TextStyle(color: Colors.white54),
-                    prefixIcon: Icon(Icons.search, color: Colors.white54),
-                    filled: true,
-                    fillColor: Color(0xFF1E1E1E),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
+        if (isExpanded) Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: TextField(
+            controller: _searchController,
+            onChanged: _filterClubs,
+            decoration: InputDecoration(
+              hintText: 'Search clubs...',
+              hintStyle: TextStyle(color: Colors.grey),
+              prefixIcon: Icon(Icons.search, 
+                color: Theme.of(context).colorScheme.primary
+              ),
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 ),
               ),
-              Container(
-                margin: EdgeInsets.only(top: 8),
-                child: isLoading 
-                    ? Center(child: CircularProgressIndicator(color: Colors.white))
-                    : filteredClubs.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Text(
-                                'No clubs found',
-                                style: TextStyle(color: Colors.white70),
-                              ),
-                            ),
-                          )
-                        : Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: filteredClubs.map<Widget>((club) {
-                              final isSelected = selectedLocations.contains(club.name);
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-            setState(() {
-                                      if (isSelected) {
-                                        selectedLocations.remove(club.name);
-                                      } else {
-                                        selectedLocations.add(club.name);
-                                      }
-                                    });
-                                    widget.onLocationsChanged(selectedLocations);
-                                    HapticFeedback.lightImpact();
-                                  },
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: AnimatedContainer(
-                                    duration: Duration(milliseconds: 200),
-                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? Color(0xFF4A90E2) : Colors.transparent,
-                                      border: Border.all(
-                                        color: isSelected ? Color(0xFF4A90E2) : Colors.white30,
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          club.name,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.white : Colors.white70,
-                                            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                                          ),
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          '(${club.totalCourts})',
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.white70 : Colors.white38,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                ),
               ),
-            ],
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
           ),
+        ),
+        if (isExpanded) Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: filteredClubs.map((club) {
+            final isSelected = selectedLocations.contains(club.name);
+            return FilterChip(
+              selected: isSelected,
+              label: Text(club.name),
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    selectedLocations.add(club.name);
+                  } else {
+                    selectedLocations.remove(club.name);
+                  }
+                });
+                widget.onLocationsChanged(selectedLocations);
+              },
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              checkmarkColor: Theme.of(context).colorScheme.primary,
+              label: Text(
+                club.name,
+                style: TextStyle(
+                  color: isSelected 
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

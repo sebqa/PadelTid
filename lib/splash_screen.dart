@@ -66,17 +66,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF4A90E2).withOpacity(0.2),
-              Colors.black,
+              Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              Theme.of(context).scaffoldBackgroundColor,
             ],
-            stops: [0.0, 0.5],
+            stops: [0.0, 0.3],
           ),
         ),
         child: SafeArea(
@@ -94,13 +94,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         Icon(
                           Icons.sports_tennis,
                           size: 80,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         SizedBox(height: 24),
                         Text(
                           'PADELTID',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 2,
@@ -110,7 +110,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         Text(
                           'Find your perfect court',
                           style: TextStyle(
-                            color: Colors.white70,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                             fontSize: 16,
                             letterSpacing: 0.5,
                           ),
