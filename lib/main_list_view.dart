@@ -8,9 +8,11 @@ class MainListView extends StatefulWidget {
   const MainListView({
     super.key,
     required this.groupedDocuments,
+    required this.onFilterTap,
   });
 
   final Map<String, List<Document>> groupedDocuments;
+  final VoidCallback onFilterTap;
 
   @override
   State<MainListView> createState() => _MainListViewState();
@@ -51,7 +53,7 @@ class _MainListViewState extends State<MainListView> {
                 ),
                 IconButton(
                   icon: Icon(Icons.tune, color: Colors.black),
-                  onPressed: () => showSettingsDialog(),
+                  onPressed: widget.onFilterTap,
                 ),
               ],
             ),

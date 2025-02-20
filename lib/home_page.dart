@@ -362,7 +362,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         showConsentSnackbar(context, onlyShowIfNotSet: true);
                         consentShown = true;
                       }
-                      return MainListView(groupedDocuments: groupedDocuments);
+                      return MainListView(
+                        groupedDocuments: groupedDocuments,
+                        onFilterTap: showSettingsDialog,
+                      );
                     } else {
                       return const Center(child: Text('No data'));
                     }
