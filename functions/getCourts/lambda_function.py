@@ -71,7 +71,7 @@ def getCourts(date):
             'time': from_time
         }
         
-        # Create or update the club availability
+        # Create the club availability update
         club_availability = {
             'club_id': str(club['_id']),
             'club_name': club['name'],
@@ -79,10 +79,15 @@ def getCourts(date):
             'total_courts': total_courts
         }
 
-        # Update or insert the document
+        # Update or insert the document while preserving weather data
         existing_doc = times_collection.find_one(filter)
         if existing_doc:
-            # If document exists, update or add this club's availability
+            # If document exists, preserve weather data if it exists
+            existing_club_data = existing_doc.get('clubs', {}).get(club['name'], {})
+            if 'weather' in existing_club_data:
+                club_availability['weather'] = existing_club_data['weather']
+            
+            # Update only the availability data while preserving other fields
             times_collection.update_one(
                 filter,
                 {
