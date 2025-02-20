@@ -16,33 +16,33 @@ class CustomAppBar extends StatelessWidget {
       floating: true,
       centerTitle: false,
       elevation: 0,
-      title: Container(
-        height: 45,
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-          ),
-        ),
-        child: TextField(
-          decoration: InputDecoration(
-            hintText: 'Search clubs or locations...',
-            hintStyle: TextStyle(color: Colors.grey),
-            prefixIcon: Icon(
-              Icons.search,
-              color: Theme.of(context).colorScheme.primary,
+      title: Row(
+        children: [
+          Text(
+            'PADELTID',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
             ),
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-        ),
+        ],
       ),
       actions: [
         IconButton(
           icon: Icon(
+            Icons.tune,
+            color: Colors.black,
+            size: 24,
+          ),
+          onPressed: () {
+            // Filter action
+          },
+        ),
+        IconButton(
+          icon: Icon(
             Icons.settings,
-            color: Theme.of(context).colorScheme.primary,
+            color: Colors.black,
             size: 24,
           ),
           onPressed: () {

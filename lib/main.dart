@@ -41,7 +41,7 @@ void main() async {
     }
   });
   runApp(MaterialApp(
-    home: SplashScreen(),
+    home: HomePage(),
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       brightness: Brightness.light,

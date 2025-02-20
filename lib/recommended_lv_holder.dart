@@ -47,6 +47,7 @@ class recommended_lv_holder extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
               ],
