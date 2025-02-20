@@ -308,9 +308,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           IconButton(
             icon: Icon(Icons.tune),
             color: Colors.black,
-            onPressed: () {
-              // Filter action
-            },
+            onPressed: () => showSettingsDialog(),
           ),
           IconButton(
             icon: Icon(Icons.settings),
@@ -329,40 +327,40 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         slivers: [
           SliverToBoxAdapter(
             child: LocationSelector(
-              onLocationsChanged: _handleLocationsChanged,
+              onLocationsChanged: (locations) {
+                setState(() {
+                  _selectedLocations = locations;
+                });
+                updateThresholds();
+              },
               initialLocations: _selectedLocations,
             ),
           ),
           if (recommendedDocuments != null)
             SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
           SliverToBoxAdapter(
-            child: MainListView(groupedDocuments: groupedDocuments),
+            child: FutureBuilder<List<Document>>(
+              future: futureDocuments,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (snapshot.hasData) {
+                  final groupedDocuments = _groupDocuments(snapshot.data!);
+                  if (!consentShown) {
+                    showConsentSnackbar(context, onlyShowIfNotSet: true);
+                    consentShown = true;
+                  }
+                  return MainListView(groupedDocuments: groupedDocuments);
+                } else {
+                  return const Center(child: Text('No data'));
+                }
+              },
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFutureBuilder() {
-    return FutureBuilder<List<Document>>(
-      future: futureDocuments,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (snapshot.hasData) {
-          final groupedDocuments = _groupDocuments(snapshot.data!);
-          if (!consentShown) {
-            showConsentSnackbar(context, onlyShowIfNotSet: true);
-            consentShown = true;
-          }
-
-          return MainListView(groupedDocuments: groupedDocuments);
-        } else {
-          return const Center(child: Text('No data'));
-        }
-      },
     );
   }
 
