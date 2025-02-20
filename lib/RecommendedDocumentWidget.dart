@@ -121,26 +121,48 @@ class RecommendedDocumentWidget extends StatelessWidget {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 8),
       child: Container(
-        width: 140,
+        width: 160,
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              document.time,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  document.time,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${document.totalAvailableSlots} courts',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
             Row(
               children: [
-                Icon(Icons.thermostat, 
+                Icon(
+                  Icons.thermostat,
                   color: Theme.of(context).colorScheme.primary,
-                  size: 16
+                  size: 16,
                 ),
                 Text(
                   ' ${document.airTemperature}°',
@@ -149,14 +171,11 @@ class RecommendedDocumentWidget extends StatelessWidget {
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-              ],
-            ),
-            SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.air, 
-                  color: Theme.of(context).colorScheme.secondary,
-                  size: 16
+                Spacer(),
+                Icon(
+                  Icons.air,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 16,
                 ),
                 Text(
                   ' ${document.windSpeed}m/s',
@@ -167,12 +186,13 @@ class RecommendedDocumentWidget extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 4),
+            SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.umbrella, 
-                  color: Theme.of(context).colorScheme.secondary,
-                  size: 16
+                Icon(
+                  Icons.water_drop,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 16,
                 ),
                 Text(
                   ' ${document.precipitationProbability}%',

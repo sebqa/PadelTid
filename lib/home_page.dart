@@ -15,6 +15,7 @@ import 'RecommendedDocumentWidget.dart';
 import 'package:flutter/services.dart';
 import 'onboarding_screen.dart';
 import 'location_selector.dart';
+import 'dotted_pattern_painter.dart';
 
 class Location {
   final String name;
@@ -293,7 +294,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white.withOpacity(0.95),
         elevation: 0,
         title: Text(
           'PADELTID',
@@ -323,41 +324,52 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
         ],
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: LocationSelector(
-              onLocationsChanged: (locations) {
-                setState(() {
-                  _selectedLocations = locations;
-                });
-                updateThresholds();
-              },
-              initialLocations: _selectedLocations,
+      body: Stack(
+        children: [
+          // Background pattern
+          Positioned.fill(
+            child: CustomPaint(
+              painter: DottedPatternPainter(),
             ),
           ),
-          if (recommendedDocuments != null)
-            SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
-          SliverToBoxAdapter(
-            child: FutureBuilder<List<Document>>(
-              future: futureDocuments,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (snapshot.hasData) {
-                  final groupedDocuments = _groupDocuments(snapshot.data!);
-                  if (!consentShown) {
-                    showConsentSnackbar(context, onlyShowIfNotSet: true);
-                    consentShown = true;
-                  }
-                  return MainListView(groupedDocuments: groupedDocuments);
-                } else {
-                  return const Center(child: Text('No data'));
-                }
-              },
-            ),
+          // Main content
+          CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: LocationSelector(
+                  onLocationsChanged: (locations) {
+                    setState(() {
+                      _selectedLocations = locations;
+                    });
+                    updateThresholds();
+                  },
+                  initialLocations: _selectedLocations,
+                ),
+              ),
+              if (recommendedDocuments != null)
+                SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
+              SliverToBoxAdapter(
+                child: FutureBuilder<List<Document>>(
+                  future: futureDocuments,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else if (snapshot.hasData) {
+                      final groupedDocuments = _groupDocuments(snapshot.data!);
+                      if (!consentShown) {
+                        showConsentSnackbar(context, onlyShowIfNotSet: true);
+                        consentShown = true;
+                      }
+                      return MainListView(groupedDocuments: groupedDocuments);
+                    } else {
+                      return const Center(child: Text('No data'));
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),

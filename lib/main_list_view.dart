@@ -37,14 +37,23 @@ class _MainListViewState extends State<MainListView> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-            child: Text(
-              'All Timeslots',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-                height: 1.2,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'All Timeslots',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    height: 1.2,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.tune, color: Colors.black),
+                  onPressed: () => showSettingsDialog(),
+                ),
+              ],
             ),
           ),
           ListView.builder(
