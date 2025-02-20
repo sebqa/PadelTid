@@ -4,7 +4,7 @@ import 'package:flutter_application_1/home_page.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/document_widget.dart';
 
-class MainListView extends StatelessWidget {
+class MainListView extends StatefulWidget {
   const MainListView({
     super.key,
     required this.groupedDocuments,
@@ -13,32 +13,71 @@ class MainListView extends StatelessWidget {
   final Map<String, List<Document>> groupedDocuments;
 
   @override
+  State<MainListView> createState() => _MainListViewState();
+}
+
+class _MainListViewState extends State<MainListView> {
+  Set<String> expandedDates = {};
+
+  void _toggleDate(String date) {
+    setState(() {
+      if (expandedDates.contains(date)) {
+        expandedDates.remove(date);
+      } else {
+        expandedDates.add(date);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       child: ListView.builder(
         shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(),
-        itemCount: groupedDocuments.length,
+        itemCount: widget.groupedDocuments.length,
         itemBuilder: (context, index) {
-          final date = groupedDocuments.keys.toList()[index];
-          final documentsForDate = groupedDocuments[date]!;
+          final date = widget.groupedDocuments.keys.toList()[index];
+          final documentsForDate = widget.groupedDocuments[date]!;
           final parsedDate = DateTime.parse(date);
+          final isExpanded = expandedDates.contains(date);
           
           documentsForDate.sort((a, b) => a.time.compareTo(b.time));
           
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
-                child: Text(
-                  _getDisplayDate(parsedDate),
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+              InkWell(
+                onTap: () => _toggleDate(date),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _getDisplayDate(parsedDate),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        isExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        '${documentsForDate.length} slots',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              ...documentsForDate.map((doc) => DocumentWidget(document: doc)).toList(),
+              if (isExpanded)
+                ...documentsForDate.map((doc) => DocumentWidget(document: doc)).toList(),
             ],
           );
         },
