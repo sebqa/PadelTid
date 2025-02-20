@@ -300,8 +300,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF4A90E2).withOpacity(0.1),
-                  Theme.of(context).scaffoldBackgroundColor,
+                  Colors.grey.shade50,
+                  Colors.white,
                 ],
                 stops: [0.0, 0.3],
               ),

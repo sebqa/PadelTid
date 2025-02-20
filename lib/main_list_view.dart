@@ -57,7 +57,8 @@ class _MainListViewState extends State<MainListView> {
                         child: Text(
                           _getDisplayDate(parsedDate),
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -69,7 +70,8 @@ class _MainListViewState extends State<MainListView> {
                       Text(
                         '${documentsForDate.length} slots',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],

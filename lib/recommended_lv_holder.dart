@@ -19,31 +19,41 @@ class recommended_lv_holder extends StatelessWidget {
     //randomize order of documents
     documents.shuffle();
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      margin: EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey.shade100,
+            width: 1,
+          ),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Icon(Icons.recommend,
-                    color: Theme.of(context).colorScheme.primaryContainer),
+                Icon(
+                  Icons.recommend,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'Recommended',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primaryContainer,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
           SizedBox(
-            height: 110, // Adjust this value as needed
+            height: 130,
             child: RecommendedDocumentsListView(
               recommendedDocuments: documents,
             ),

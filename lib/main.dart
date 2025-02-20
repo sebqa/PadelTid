@@ -47,27 +47,52 @@ void main() async {
       brightness: Brightness.light,
       scaffoldBackgroundColor: Colors.white,
       colorScheme: ColorScheme.light(
-        primary: Color(0xFF4A90E2),
-        secondary: Color(0xFF9CC0E5),
+        primary: Color(0xFF2C3E50),
+        secondary: Color(0xFF34495E),
         surface: Colors.white,
-        background: Color(0xFFF5F7FA),
+        background: Colors.white,
         onBackground: Color(0xFF2C3E50),
         onSurface: Color(0xFF2C3E50),
       ),
       cardTheme: CardTheme(
         color: Colors.white,
-        elevation: 2,
+        elevation: 1,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
         ),
       ),
       textTheme: TextTheme(
-        headlineMedium: TextStyle(color: Color(0xFF2C3E50), fontWeight: FontWeight.bold),
-        headlineSmall: TextStyle(color: Color(0xFF2C3E50), fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(color: Color(0xFF2C3E50)),
-        titleMedium: TextStyle(color: Color(0xFF2C3E50)),
-        bodyLarge: TextStyle(color: Color(0xFF34495E)),
-        bodyMedium: TextStyle(color: Color(0xFF34495E)),
+        headlineMedium: TextStyle(
+          color: Color(0xFF2C3E50),
+          fontWeight: FontWeight.bold,
+          fontFamily: 'SF Pro Display',
+        ),
+        headlineSmall: TextStyle(
+          color: Color(0xFF2C3E50),
+          fontWeight: FontWeight.bold,
+          fontFamily: 'SF Pro Display',
+        ),
+        titleLarge: TextStyle(
+          color: Color(0xFF2C3E50),
+          fontFamily: 'SF Pro Text',
+          fontWeight: FontWeight.w600,
+        ),
+        titleMedium: TextStyle(
+          color: Color(0xFF2C3E50),
+          fontFamily: 'SF Pro Text',
+        ),
+        bodyLarge: TextStyle(
+          color: Color(0xFF34495E),
+          fontFamily: 'SF Pro Text',
+        ),
+        bodyMedium: TextStyle(
+          color: Color(0xFF34495E),
+          fontFamily: 'SF Pro Text',
+        ),
       ),
     ),
   ));
