@@ -32,58 +32,75 @@ class _MainListViewState extends State<MainListView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: ListView.builder(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: widget.groupedDocuments.length,
-        itemBuilder: (context, index) {
-          final date = widget.groupedDocuments.keys.toList()[index];
-          final documentsForDate = widget.groupedDocuments[date]!;
-          final parsedDate = DateTime.parse(date);
-          final isExpanded = expandedDates.contains(date);
-          
-          documentsForDate.sort((a, b) => a.time.compareTo(b.time));
-          
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              InkWell(
-                onTap: () => _toggleDate(date),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _getDisplayDate(parsedDate),
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        isExpanded ? Icons.expand_less : Icons.expand_more,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '${documentsForDate.length} slots',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Text(
+              'All Timeslots',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                height: 1.2,
               ),
-              if (isExpanded)
-                ...documentsForDate.map((doc) => DocumentWidget(document: doc)).toList(),
-            ],
-          );
-        },
+            ),
+          ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: widget.groupedDocuments.length,
+            itemBuilder: (context, index) {
+              final date = widget.groupedDocuments.keys.toList()[index];
+              final documentsForDate = widget.groupedDocuments[date]!;
+              final parsedDate = DateTime.parse(date);
+              final isExpanded = expandedDates.contains(date);
+              
+              documentsForDate.sort((a, b) => a.time.compareTo(b.time));
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    onTap: () => _toggleDate(date),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _getDisplayDate(parsedDate),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            isExpanded ? Icons.expand_less : Icons.expand_more,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            '${documentsForDate.length} slots',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (isExpanded)
+                    ...documentsForDate.map((doc) => DocumentWidget(document: doc)).toList(),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
