@@ -14,44 +14,48 @@ class CustomAppBar extends StatelessWidget {
     return SliverAppBar(
       backgroundColor: Colors.transparent,
       floating: true,
+      pinned: true,
       centerTitle: false,
       elevation: 0,
-      title: Row(
-        children: [
-          Text(
-            'PADELTID',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.tune,
+      toolbarHeight: 60,
+      title: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: Text(
+          'PADELTID',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: Colors.black,
-            size: 24,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
           ),
-          onPressed: () {
-            // Filter action
-          },
         ),
-        IconButton(
-          icon: Icon(
-            Icons.settings,
+      ),
+      iconTheme: IconThemeData(color: Colors.black),
+      actionsIconTheme: IconThemeData(color: Colors.black),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: IconButton(
+            icon: Icon(Icons.tune),
             color: Colors.black,
-            size: 24,
+            onPressed: () {
+              // Filter action
+            },
           ),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const AuthGate(),
-              ),
-            );
-          },
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, right: 8),
+          child: IconButton(
+            icon: Icon(Icons.settings),
+            color: Colors.black,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AuthGate(),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
