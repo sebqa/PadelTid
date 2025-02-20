@@ -202,7 +202,6 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
             final isSelected = selectedLocations.contains(club.name);
             return FilterChip(
               selected: isSelected,
-              label: Text(club.name),
               onSelected: (selected) {
                 setState(() {
                   if (selected) {
