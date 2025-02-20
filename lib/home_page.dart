@@ -292,121 +292,51 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.grey.shade50,
-                  Colors.white,
-                ],
-                stops: [0.0, 0.3],
-              ),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Text(
+          'PADELTID',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.tune),
+            color: Colors.black,
+            onPressed: () {
+              // Filter action
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.settings),
+            color: Colors.black,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AuthGate(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: LocationSelector(
+              onLocationsChanged: _handleLocationsChanged,
+              initialLocations: _selectedLocations,
             ),
           ),
-          CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                backgroundColor: Colors.transparent,
-                floating: true,
-                actions: [
-                  IconButton(
-                    icon: Icon(Icons.tune, color: Colors.white),
-                    onPressed: () => showSettingsDialog(),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.settings, color: Colors.white),
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AuthGate()),
-                    ),
-                  ),
-                ],
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LocationSelector(
-                        onLocationsChanged: (locations) {
-                          setState(() {
-                            _selectedLocations = locations;
-                          });
-                          updateThresholds();
-                        },
-                        initialLocations: _selectedLocations,
-                      ),
-                      SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Icon(Icons.recommend, color: Colors.white70),
-                          SizedBox(width: 8),
-                          Text(
-                            'Recommended',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (recommendedDocuments != null)
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 140,
-                    child: FutureBuilder<List<Document>>(
-                      future: recommendedDocuments,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) {
-                              return RecommendedDocumentWidget(
-                                snapshot.data![index],
-                              );
-                            },
-                          );
-                        }
-                        return Center(child: CircularProgressIndicator());
-                      },
-                    ),
-                  ),
-                ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(20, 32, 20, 16),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: Colors.white70),
-                      SizedBox(width: 8),
-                      Text(
-                        'All timeslots',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _buildFutureBuilder(),
-              ),
-            ],
+          if (recommendedDocuments != null)
+            SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
+          SliverToBoxAdapter(
+            child: MainListView(groupedDocuments: groupedDocuments),
           ),
         ],
       ),
