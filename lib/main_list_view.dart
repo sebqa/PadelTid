@@ -43,7 +43,7 @@ class _MainListViewState extends State<MainListView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'All Timeslots',
+                  'All timeslots',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

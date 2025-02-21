@@ -191,7 +191,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Show Unavailable Courts',
+                        'Show unavailable',
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       Switch(
