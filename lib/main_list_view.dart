@@ -74,23 +74,17 @@ class _MainListViewState extends State<MainListView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.01),
-                            offset: Offset(0, 1),
-                            blurRadius: 2,
-                            spreadRadius: 0,
-                          ),
-                        ],
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        ),
                       ),
                       child: Material(
                         color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: () => _toggleDate(date),
                           borderRadius: BorderRadius.circular(12),
@@ -101,23 +95,25 @@ class _MainListViewState extends State<MainListView> {
                                 Expanded(
                                   child: Text(
                                     _getDisplayDate(parsedDate),
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontSize: 20,
+                                    style: TextStyle(
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.black,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
                                 Text(
                                   '${documentsForDate.length} slots',
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                                    fontSize: 13,
+                                    color: Theme.of(context).colorScheme.primary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 SizedBox(width: 8),
                                 Icon(
                                   isExpanded ? Icons.expand_less : Icons.expand_more,
+                                  size: 20,
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
                               ],
