@@ -75,42 +75,59 @@ class _MainListViewState extends State<MainListView> {
                 children: [
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Card(
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            offset: Offset(0, 2),
+                            blurRadius: 6,
+                            spreadRadius: 0,
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.01),
+                            offset: Offset(0, 1),
+                            blurRadius: 2,
+                            spreadRadius: 0,
+                          ),
+                        ],
                       ),
-                      child: InkWell(
-                        onTap: () => _toggleDate(date),
+                      child: Material(
+                        color: Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _getDisplayDate(parsedDate),
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black,
+                        child: InkWell(
+                          onTap: () => _toggleDate(date),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _getDisplayDate(parsedDate),
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Text(
-                                '${documentsForDate.length} slots',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
-                                  fontWeight: FontWeight.w500,
+                                Text(
+                                  '${documentsForDate.length} slots',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(width: 8),
-                              Icon(
-                                isExpanded ? Icons.expand_less : Icons.expand_more,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ],
+                                SizedBox(width: 8),
+                                Icon(
+                                  isExpanded ? Icons.expand_less : Icons.expand_more,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

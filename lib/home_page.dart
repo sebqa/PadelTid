@@ -307,8 +307,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 CustomPaint(
                   size: Size(300, 300),
                   painter: TennisBallPainter(
-                    color: Colors.white.withOpacity(0.7),
-                    strokeWidth: 2,
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    strokeWidth: 15,
                   ),
                 ),
               ],
@@ -346,7 +346,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 floating: true,
                 snap: false,
                 pinned: false,
-                backgroundColor: Colors.white.withOpacity(0.95),
+                backgroundColor: Colors.transparent,
                 elevation: 0,
                 title: Text(
                   'PADELTID',
