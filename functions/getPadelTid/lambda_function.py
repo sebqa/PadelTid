@@ -41,8 +41,8 @@ def lambda_handler(event,context):
         for club in clubs_to_check:
             base_conditions = [
                 {f'clubs.{club}': {'$exists': True}},
-                {f'clubs.{club}.weather.wind_speed': {'$lt': wind_speed_threshold}},
-                {f'clubs.{club}.weather.precipitation_probability': {'$lt': precipitation_probability_threshold}}
+                {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
+                {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}}
             ]
             
             if showUnavailableSlots == "false":
