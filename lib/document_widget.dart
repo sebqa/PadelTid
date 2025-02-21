@@ -110,7 +110,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(

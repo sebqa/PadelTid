@@ -74,7 +74,7 @@ class _MainListViewState extends State<MainListView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: InkWell(
                       onTap: () => _toggleDate(date),
                       borderRadius: BorderRadius.circular(12),
