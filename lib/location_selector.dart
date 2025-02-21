@@ -112,6 +112,12 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
     });
   }
 
+  Future<void> _saveLocations(List<String> locations) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('selected_locations', locations);
+    widget.onLocationsChanged(locations);
+  }
+
   @override
   Widget build(BuildContext context) {
     print('Building LocationSelector - Clubs: ${clubs.length}, Filtered: ${filteredClubs.length}, Loading: $isLoading');
@@ -210,7 +216,7 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
                     selectedLocations.remove(club.name);
                   }
                 });
-                widget.onLocationsChanged(selectedLocations);
+                _saveLocations(selectedLocations);
               },
               backgroundColor: Theme.of(context).colorScheme.surface,
               selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
