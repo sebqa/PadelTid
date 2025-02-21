@@ -12,6 +12,7 @@ def lambda_handler(event,context):
     try:
         wind_speed_threshold = float(event['queryStringParameters']['wind_speed_threshold'])
         precipitation_probability_threshold = float(event['queryStringParameters']['precipitation_probability_threshold'])
+        temperature_threshold = float(event['queryStringParameters']['temperature_threshold'])
         showUnavailableSlots = event['queryStringParameters']['showUnavailableSlots']
         locations = event['queryStringParameters'].get('locations', '').split(',')
         locations = [loc for loc in locations if loc]
@@ -42,7 +43,8 @@ def lambda_handler(event,context):
             base_conditions = [
                 {f'clubs.{club}': {'$exists': True}},
                 {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
-                {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}}
+                {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}},
+                {f'clubs.{club}.weather.air_temperature': {'$gte': temperature_threshold}},
             ]
             
             if showUnavailableSlots == "false":

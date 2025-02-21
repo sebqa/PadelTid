@@ -36,6 +36,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   double windSpeedThreshold = 50.0;
   double precipitationProbabilityThreshold = 100.0;
+  double temperatureThreshold = 0.0;
   bool showUnavailableSlots = true;
   late SharedPreferences sharedPreferences;
   late Future<List<Document>> futureDocuments;
@@ -78,7 +79,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
     
-    // Load selected locations first
     setState(() {
       _selectedLocations = prefs.getStringList('selected_locations') ?? [];
       _showOnboarding = !hasSeenOnboarding;
@@ -86,15 +86,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         windSpeedThreshold = prefs.getDouble('wind_speed_threshold') ?? 10.0;
         precipitationProbabilityThreshold =
             prefs.getDouble('precipitation_probability_threshold') ?? 50.0;
+        temperatureThreshold = prefs.getDouble('temperature_threshold') ?? 0.0;
       }
     });
 
     // Initialize recommended documents with selected locations
     recommendedDocuments = documentService.fetchDocuments(
-      4.0, 
-      10.0, 
-      false, 
-      true, 
+      windSpeedThreshold,
+      precipitationProbabilityThreshold,
+      temperatureThreshold,
+      false,
+      true,
       _selectedLocations
     );
   }
@@ -107,6 +109,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       precipitationProbabilityThreshold =
           sharedPreferences.getDouble('precipitation_probability_threshold') ??
               50.0;
+      temperatureThreshold =
+          sharedPreferences.getDouble('temperature_threshold') ?? 0.0;
       showUnavailableSlots =
           sharedPreferences.getBool('show_unavailable_courts') ?? true;
       _selectedLocations = 
@@ -119,6 +123,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     futureDocuments = documentService.fetchDocuments(
       windSpeedThreshold,
       precipitationProbabilityThreshold,
+      temperatureThreshold,
       showUnavailableSlots,
       false,
       _selectedLocations,
@@ -132,6 +137,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             'wind_speed_threshold', windSpeedThreshold);
         await sharedPreferences.setDouble('precipitation_probability_threshold',
             precipitationProbabilityThreshold);
+        await sharedPreferences.setDouble(
+            'temperature_threshold', temperatureThreshold);
         await sharedPreferences.setBool(
             'show_unavailable_courts', showUnavailableSlots);
       }
@@ -186,6 +193,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     min: 0,
                     max: 100,
                     unit: '%',
+                  ),
+                  SizedBox(height: 24),
+                  _buildSliderWithLabel(
+                    context: context,
+                    icon: Icons.thermostat,
+                    label: 'Temperature',
+                    value: temperatureThreshold,
+                    onChanged: (value) {
+                      setState(() => temperatureThreshold = value);
+                    },
+                    min: -10,
+                    max: 30,
+                    unit: '°C',
                   ),
                   SizedBox(height: 24),
                   Row(

@@ -8,6 +8,7 @@ class DocumentService {
   Future<List<Document>> fetchDocuments(
       double windSpeed,
       double precipitationProbability,
+      double temperature,
       bool showUnavailableSlots,
       bool fetchRecommended,
       List<String> selectedLocations) async {
@@ -20,6 +21,7 @@ class DocumentService {
     final queryParams = {
       'wind_speed_threshold': windSpeed.toString(),
       'precipitation_probability_threshold': precipitationProbability.toString(),
+      'temperature_threshold': temperature.toString(),
       'showUnavailableSlots': showUnavailableSlots.toString(),
       'locations': selectedLocations.join(','),
     };
