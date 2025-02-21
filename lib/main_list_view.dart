@@ -81,12 +81,6 @@ class _MainListViewState extends State<MainListView> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            offset: Offset(0, 2),
-                            blurRadius: 6,
-                            spreadRadius: 0,
-                          ),
-                          BoxShadow(
                             color: Colors.black.withOpacity(0.01),
                             offset: Offset(0, 1),
                             blurRadius: 2,
