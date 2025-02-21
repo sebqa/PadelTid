@@ -65,43 +65,54 @@ class _MainListViewState extends State<MainListView> {
             itemBuilder: (context, index) {
               final date = widget.groupedDocuments.keys.toList()[index];
               final documentsForDate = widget.groupedDocuments[date]!;
-              final parsedDate = DateTime.parse(date);
               final isExpanded = expandedDates.contains(date);
+              final parsedDate = DateTime.parse(date);
               
               documentsForDate.sort((a, b) => a.time.compareTo(b.time));
               
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  InkWell(
-                    onTap: () => _toggleDate(date),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _getDisplayDate(parsedDate),
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Card(
+                      elevation: 0,
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: InkWell(
+                        onTap: () => _toggleDate(date),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _getDisplayDate(parsedDate),
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
                               ),
-                            ),
+                              Text(
+                                '${documentsForDate.length} slots',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(
+                                isExpanded ? Icons.expand_less : Icons.expand_more,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
                           ),
-                          Icon(
-                            isExpanded ? Icons.expand_less : Icons.expand_more,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            '${documentsForDate.length} slots',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

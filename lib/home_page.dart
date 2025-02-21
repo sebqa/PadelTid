@@ -6,6 +6,7 @@ import 'package:flutter_application_1/model/document.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_application_1/painters/tennis_ball_painter.dart';
 
 import 'login_page.dart';
 import 'document_widget.dart';
@@ -15,7 +16,6 @@ import 'RecommendedDocumentWidget.dart';
 import 'package:flutter/services.dart';
 import 'onboarding_screen.dart';
 import 'location_selector.dart';
-import 'dotted_pattern_painter.dart';
 
 class Location {
   final String name;
@@ -286,43 +286,91 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.white.withOpacity(0.95),
-        elevation: 0,
-        title: Text(
-          'PADELTID',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            color: Colors.black,
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const AuthGate(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
       body: Stack(
         children: [
-          // Background pattern
-          Positioned.fill(
-            child: CustomPaint(
-              painter: DottedPatternPainter(),
+          // Background decoration
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Stack(
+              children: [
+                // Main circle
+                Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                  ),
+                ),
+                // Curved lines
+                CustomPaint(
+                  size: Size(300, 300),
+                  painter: TennisBallPainter(
+                    color: Colors.white.withOpacity(0.7),
+                    strokeWidth: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 100,
+            left: -150,
+            child: Stack(
+              children: [
+                // Main circle
+                Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.03),
+                  ),
+                ),
+                // Curved lines
+                CustomPaint(
+                  size: Size(200, 200),
+                  painter: TennisBallPainter(
+                    color: Colors.white.withOpacity(0.5),
+                    strokeWidth: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
           // Main content
           CustomScrollView(
             slivers: [
+              SliverAppBar(
+                floating: true,
+                snap: false,
+                pinned: false,
+                backgroundColor: Colors.white.withOpacity(0.95),
+                elevation: 0,
+                title: Text(
+                  'PADELTID',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+                actions: [
+                  IconButton(
+                    icon: Icon(Icons.settings),
+                    color: Colors.black,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const AuthGate(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
               SliverToBoxAdapter(
                 child: LocationSelector(
                   onLocationsChanged: (locations) {
