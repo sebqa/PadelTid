@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -70,6 +71,17 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
       curve: Curves.easeInOut,
     );
     fetchClubs();
+  }
+
+  @override
+  void didUpdateWidget(LocationSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update selectedLocations if initialLocations changes
+    if (!listEquals(oldWidget.initialLocations, widget.initialLocations)) {
+      setState(() {
+        selectedLocations = List.from(widget.initialLocations);
+      });
+    }
   }
 
   Future<void> fetchClubs() async {

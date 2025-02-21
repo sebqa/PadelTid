@@ -77,9 +77,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _checkOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-    _selectedLocations = prefs.getStringList('selected_locations') ?? [];
     
+    // Load selected locations first
     setState(() {
+      _selectedLocations = prefs.getStringList('selected_locations') ?? [];
       _showOnboarding = !hasSeenOnboarding;
       if (!_showOnboarding) {
         windSpeedThreshold = prefs.getDouble('wind_speed_threshold') ?? 10.0;
