@@ -102,10 +102,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     sharedPreferences = await SharedPreferences.getInstance();
     setState(() {
       windSpeedThreshold =
-          sharedPreferences.getDouble('wind_speed_threshold') ?? 50.0;
+          sharedPreferences.getDouble('wind_speed_threshold') ?? 10.0;
       precipitationProbabilityThreshold =
           sharedPreferences.getDouble('precipitation_probability_threshold') ??
-              100.0;
+              50.0;
       showUnavailableSlots =
           sharedPreferences.getBool('show_unavailable_courts') ?? true;
       _selectedLocations = 
@@ -144,116 +144,106 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void showSettingsDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) => _buildSettingsDialog(),
-    );
-  }
-
-  Widget _buildSettingsDialog() {
-    return Dialog(
-      backgroundColor: Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: StatefulBuilder(
-        builder: (context, setState) => Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Weather Preferences',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 24),
-              _buildSettingsSlider(
-                'Wind Speed',
-                '${windSpeedThreshold.round()} m/s',
-                Icons.air,
-                windSpeedThreshold,
-                (value) {
-                setState(() => windSpeedThreshold = value);
-                },
-                0,
-                20,
-              ),
-              SizedBox(height: 24),
-              _buildSettingsSlider(
-                'Precipitation',
-                '${precipitationProbabilityThreshold.round()}%',
-                Icons.umbrella,
-                precipitationProbabilityThreshold,
-                (value) {
-                setState(() => precipitationProbabilityThreshold = value);
-                },
-                0,
-                100,
-              ),
-              SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Show Unavailable Courts',
-                    style: TextStyle(color: Colors.white),
+                    'Weather Preferences',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  Switch(
-                    value: showUnavailableSlots,
+                  SizedBox(height: 24),
+                  _buildSliderWithLabel(
+                    context: context,
+                    icon: Icons.air,
+                    label: 'Wind Speed',
+                    value: windSpeedThreshold,
                     onChanged: (value) {
-                      setState(() => showUnavailableSlots = value);
+                      setState(() => windSpeedThreshold = value);
                     },
-                    activeColor: Colors.white,
-                    activeTrackColor: Color(0xFF4A90E2),
+                    min: 0,
+                    max: 20,
+                    unit: 'm/s',
                   ),
-                ],
-              ),
-              SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      updateThresholds();
-                      Navigator.pop(context);
+                  SizedBox(height: 24),
+                  _buildSliderWithLabel(
+                    context: context,
+                    icon: Icons.umbrella,
+                    label: 'Precipitation',
+                    value: precipitationProbabilityThreshold,
+                    onChanged: (value) {
+                      setState(() => precipitationProbabilityThreshold = value);
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF4A90E2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    min: 0,
+                    max: 100,
+                    unit: '%',
+                  ),
+                  SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Show Unavailable Courts',
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
-                    ),
-                    child: Text('Apply'),
+                      Switch(
+                        value: showUnavailableSlots,
+                        onChanged: (value) {
+                          setState(() => showUnavailableSlots = value);
+                        },
+                        activeColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel'),
+                      ),
+                      SizedBox(width: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          updateThresholds();
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('Apply'),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildSettingsSlider(
-    String label,
-    String value,
-    IconData icon,
-    double current,
-    Function(double) onChanged,
-    double min,
-    double max,
-  ) {
+  Widget _buildSliderWithLabel({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required double value,
+    required Function(double) onChanged,
+    required double min,
+    required double max,
+    required String unit,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -262,27 +252,30 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           children: [
             Row(
               children: [
-                Icon(icon, color: Colors.white70, size: 20),
+                Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
                 SizedBox(width: 8),
-                Text(label, style: TextStyle(color: Colors.white)),
+                Text(label, style: Theme.of(context).textTheme.bodyLarge),
               ],
             ),
-            Text(value, style: TextStyle(color: Colors.white70)),
+            Text(
+              '${value.round()}$unit',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ],
         ),
         SizedBox(height: 8),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor: Color(0xFF4A90E2),
-            inactiveTrackColor: Colors.white24,
-            thumbColor: Colors.white,
-            overlayColor: Colors.white.withOpacity(0.1),
+            activeTrackColor: Theme.of(context).colorScheme.primary,
+            inactiveTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            thumbColor: Theme.of(context).colorScheme.primary,
+            overlayColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
           ),
           child: Slider(
-            value: current,
-          min: min,
-          max: max,
-          onChanged: onChanged,
+            value: value,
+            min: min,
+            max: max,
+            onChanged: onChanged,
           ),
         ),
       ],
