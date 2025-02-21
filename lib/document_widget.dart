@@ -110,70 +110,80 @@ class _DocumentWidgetState extends State<DocumentWidget> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      color: Color(0xFFFAF9F7), // Light beige background from image
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: EdgeInsets.all(12),
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  widget.document.time,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+            // Weather symbol on the left
+            Container(
+              width: 40,
+              height: 40,
+              margin: EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1), // Slightly darker beige for icon background
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(widget.document.symbolCode)}.svg',
+                  width: 24,
+                  height: 24,
                 ),
-                Row(
-                  children: [
-                    Icon(Icons.thermostat, 
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 20
-                    ),
-                    Text(
-                      ' ${widget.document.airTemperature}°C',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    Text(' | ', style: TextStyle(color: Colors.grey)),
-                    Icon(Icons.air, 
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 20
-                    ),
-                    Text(
-                      ' ${widget.document.windSpeed}m/s',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.location_on, 
-                  color: Theme.of(context).colorScheme.secondary,
-                  size: 16
-                ),
-                Text(
-                  ' ${widget.document.totalClubs} location${widget.document.totalClubs != 1 ? 's' : ''}',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
-                ),
-                Text(' | ', style: TextStyle(color: Colors.grey)),
-                Icon(Icons.sports_tennis,
-                  color: Theme.of(context).colorScheme.secondary,
-                  size: 16
-                ),
-                Text(
-                  ' ${widget.document.totalAvailableSlots} courts',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
-                ),
-              ],
+            // Time and details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.document.time,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1D1D1D),
+                      height: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        '${widget.document.airTemperature}°C',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      )
+                      
+                    ],
+                  ),
+                  Text(
+                        '${widget.document.windSpeed}m/s',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF93795A), // Brown color for wind speed
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                ],
+              ),
+            ),
+            // Courts info
+            Text(
+              '${widget.document.totalClubs} location | ${widget.document.totalAvailableSlots} courts available',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ],
         ),

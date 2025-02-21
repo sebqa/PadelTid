@@ -45,53 +45,50 @@ void main() async {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       brightness: Brightness.light,
-      scaffoldBackgroundColor: Colors.white,
+      scaffoldBackgroundColor: Color(0xFFF8F8F8),
       colorScheme: ColorScheme.light(
-        primary: Color(0xFF2C3E50),
-        secondary: Color(0xFF34495E),
+        primary: Color(0xFF00875A),
+        onPrimary: Colors.white,
+        secondary: Color(0xFF757575),
         surface: Colors.white,
-        background: Colors.white,
-        onBackground: Color(0xFF2C3E50),
-        onSurface: Color(0xFF2C3E50),
+        background: Color(0xFFF8F8F8),
+        onBackground: Color(0xFF1D1D1D),
+        onSurface: Color(0xFF1D1D1D),
       ),
       cardTheme: CardTheme(
         color: Colors.white,
-        elevation: 1,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: Colors.grey.shade200,
+            color: Color(0xFFEEEEEE),
             width: 1,
           ),
         ),
       ),
       textTheme: TextTheme(
-        headlineMedium: TextStyle(
-          color: Color(0xFF2C3E50),
-          fontWeight: FontWeight.bold,
-          fontFamily: 'SF Pro Display',
+        headlineLarge: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1D1D1D),
         ),
-        headlineSmall: TextStyle(
-          color: Color(0xFF2C3E50),
-          fontWeight: FontWeight.bold,
-          fontFamily: 'SF Pro Display',
+        headlineMedium: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1D1D1D),
         ),
         titleLarge: TextStyle(
-          color: Color(0xFF2C3E50),
-          fontFamily: 'SF Pro Text',
+          fontSize: 20,
           fontWeight: FontWeight.w600,
-        ),
-        titleMedium: TextStyle(
-          color: Color(0xFF2C3E50),
-          fontFamily: 'SF Pro Text',
+          color: Color(0xFF1D1D1D),
         ),
         bodyLarge: TextStyle(
-          color: Color(0xFF34495E),
-          fontFamily: 'SF Pro Text',
+          fontSize: 16,
+          color: Color(0xFF1D1D1D),
         ),
         bodyMedium: TextStyle(
-          color: Color(0xFF34495E),
-          fontFamily: 'SF Pro Text',
+          fontSize: 14,
+          color: Color(0xFF757575),
         ),
       ),
     ),

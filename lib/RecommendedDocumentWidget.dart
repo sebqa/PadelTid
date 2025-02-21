@@ -132,18 +132,14 @@ class RecommendedDocumentWidget extends StatelessWidget {
               children: [
                 Text(
                   document.time,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                  style: Theme.of(context).textTheme.headlineLarge,
                 ),
                 SizedBox(height: 4),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${document.totalAvailableSlots} courts',
@@ -159,47 +155,14 @@ class RecommendedDocumentWidget extends StatelessWidget {
             SizedBox(height: 16),
             Row(
               children: [
-                Icon(
-                  Icons.thermostat,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 16,
-                ),
                 Text(
-                  ' ${document.airTemperature}°',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                  '${document.airTemperature}°C',
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
-                Spacer(),
-                Icon(
-                  Icons.air,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 16,
-                ),
+                Text(' | ', style: Theme.of(context).textTheme.bodyMedium),
                 Text(
-                  ' ${document.windSpeed}m/s',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.water_drop,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 16,
-                ),
-                Text(
-                  ' ${document.precipitationProbability}%',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
+                  '${document.windSpeed}m/s',
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
             ),

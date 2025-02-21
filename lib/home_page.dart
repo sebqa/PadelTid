@@ -307,11 +307,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.tune),
-            color: Colors.black,
-            onPressed: () => showSettingsDialog(),
-          ),
-          IconButton(
             icon: Icon(Icons.settings),
             color: Colors.black,
             onPressed: () {
