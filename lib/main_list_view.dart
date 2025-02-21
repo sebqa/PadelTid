@@ -74,51 +74,102 @@ class _MainListViewState extends State<MainListView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                        ),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => _toggleDate(date),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: InkWell(
+                      onTap: () => _toggleDate(date),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isExpanded 
+                            ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+                            : Colors.transparent,
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                            width: 1,
+                          ),
                           borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _getDisplayDate(parsedDate),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    parsedDate.day.toString(),
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                  Text(
+                                    _getShortMonthName(parsedDate.month),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _getWeekdayName(parsedDate.weekday),
+                                    style: TextStyle(
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  '${documentsForDate.length} slots',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context).colorScheme.primary,
-                                    fontWeight: FontWeight.w500,
+                                  SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 14,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '${documentsForDate.length} slots',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Theme.of(context).colorScheme.primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                SizedBox(width: 8),
-                                Icon(
-                                  isExpanded ? Icons.expand_less : Icons.expand_more,
-                                  size: 20,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
+                            AnimatedRotation(
+                              turns: isExpanded ? 0.5 : 0,
+                              duration: Duration(milliseconds: 200),
+                              child: Icon(
+                                Icons.expand_more,
+                                size: 24,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -150,5 +201,11 @@ class _MainListViewState extends State<MainListView> {
   String _getWeekdayName(int weekday) {
     const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     return weekdays[weekday - 1];
+  }
+
+  String _getShortMonthName(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
   }
 }
