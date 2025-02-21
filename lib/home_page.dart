@@ -358,32 +358,48 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   initialLocations: _selectedLocations,
                 ),
               ),
-              if (recommendedDocuments != null)
-                SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
-              SliverToBoxAdapter(
-                child: FutureBuilder<List<Document>>(
-                  future: futureDocuments,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (snapshot.hasData) {
-                      final groupedDocuments = _groupDocuments(snapshot.data!);
-                      if (!consentShown) {
-                        showConsentSnackbar(context, onlyShowIfNotSet: true);
-                        consentShown = true;
+              if (_selectedLocations.isNotEmpty) ...[
+                if (recommendedDocuments != null)
+                  SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
+                SliverToBoxAdapter(
+                  child: FutureBuilder<List<Document>>(
+                    future: futureDocuments,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (snapshot.hasData) {
+                        final groupedDocuments = _groupDocuments(snapshot.data!);
+                        if (!consentShown) {
+                          showConsentSnackbar(context, onlyShowIfNotSet: true);
+                          consentShown = true;
+                        }
+                        return MainListView(
+                          groupedDocuments: groupedDocuments,
+                          onFilterTap: showSettingsDialog,
+                        );
+                      } else {
+                        return const Center(child: Text('No data'));
                       }
-                      return MainListView(
-                        groupedDocuments: groupedDocuments,
-                        onFilterTap: showSettingsDialog,
-                      );
-                    } else {
-                      return const Center(child: Text('No data'));
-                    }
-                  },
+                    },
+                  ),
                 ),
-              ),
+              ] else
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text(
+                        'Select clubs to see available time slots',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ],

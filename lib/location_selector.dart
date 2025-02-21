@@ -122,117 +122,120 @@ class _LocationSelectorState extends State<LocationSelector> with SingleTickerPr
   Widget build(BuildContext context) {
     print('Building LocationSelector - Clubs: ${clubs.length}, Filtered: ${filteredClubs.length}, Loading: $isLoading');
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(8),
-            onTap: () {
-              setState(() {
-                isExpanded = !isExpanded;
-                if (isExpanded) {
-                  _controller.forward();
-                  filteredClubs = clubs;
-                } else {
-                  _controller.reverse();
-                }
-              });
-            },
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              child: Row(
-                children: [
-                  Icon(Icons.sports_tennis, 
-                    color: Theme.of(context).colorScheme.primary
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    selectedLocations.isEmpty 
-                        ? 'Select clubs' 
-                        : '${selectedLocations.length} club${selectedLocations.length != 1 ? 's' : ''} selected',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Spacer(),
-                  Icon(Icons.keyboard_arrow_down, 
-                    color: Theme.of(context).colorScheme.primary
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (isExpanded) Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: _filterClubs,
-            decoration: InputDecoration(
-              hintText: 'Search clubs...',
-              hintStyle: TextStyle(color: Colors.grey),
-              prefixIcon: Icon(Icons.search, 
-                color: Theme.of(context).colorScheme.primary
-              ),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-          ),
-        ),
-        if (isExpanded) Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: filteredClubs.map((club) {
-            final isSelected = selectedLocations.contains(club.name);
-            return FilterChip(
-              selected: isSelected,
-              onSelected: (selected) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
                 setState(() {
-                  if (selected) {
-                    selectedLocations.add(club.name);
+                  isExpanded = !isExpanded;
+                  if (isExpanded) {
+                    _controller.forward();
+                    filteredClubs = clubs;
                   } else {
-                    selectedLocations.remove(club.name);
+                    _controller.reverse();
                   }
                 });
-                _saveLocations(selectedLocations);
               },
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-              checkmarkColor: Theme.of(context).colorScheme.primary,
-              label: Text(
-                club.name,
-                style: TextStyle(
-                  color: isSelected 
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.sports_tennis, 
+                      color: Theme.of(context).colorScheme.primary
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      selectedLocations.isEmpty 
+                          ? 'Select clubs' 
+                          : '${selectedLocations.length} club${selectedLocations.length != 1 ? 's' : ''} selected',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Spacer(),
+                    Icon(Icons.keyboard_arrow_down, 
+                      color: Theme.of(context).colorScheme.primary
+                    ),
+                  ],
                 ),
               ),
-            );
-          }).toList(),
-        ),
-      ],
+            ),
+          ),
+          if (isExpanded) Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterClubs,
+              decoration: InputDecoration(
+                hintText: 'Search clubs...',
+                hintStyle: TextStyle(color: Colors.grey),
+                prefixIcon: Icon(Icons.search, 
+                  color: Theme.of(context).colorScheme.primary
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (isExpanded) Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: filteredClubs.map((club) {
+              final isSelected = selectedLocations.contains(club.name);
+              return FilterChip(
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      selectedLocations.add(club.name);
+                    } else {
+                      selectedLocations.remove(club.name);
+                    }
+                  });
+                  _saveLocations(selectedLocations);
+                },
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                checkmarkColor: Theme.of(context).colorScheme.primary,
+                label: Text(
+                  club.name,
+                  style: TextStyle(
+                    color: isSelected 
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 
