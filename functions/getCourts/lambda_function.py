@@ -13,12 +13,14 @@ def getCourts(date):
     clubs_collection = db['clubs']
 
     # Get the club information for HPK
-    club = clubs_collection.find_one({"name": "HPK"})
+    club = clubs_collection.find_one({"name": "Holbæk Padel Klub"})
     if not club:
         # Insert HPK if it doesn't exist
         club = {
-            "name": "HPK",
+            "name": "Holbæk Padel Klub",
             "url": "https://holbaekpadel.dk",
+            "latitude": "55.697596",
+            "longitude": "11.68873",
             "total_courts": 8
         }
         clubs_collection.insert_one(club)
