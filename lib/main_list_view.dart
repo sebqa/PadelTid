@@ -77,7 +77,7 @@ class _MainListViewState extends State<MainListView> {
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(

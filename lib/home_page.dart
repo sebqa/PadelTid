@@ -314,31 +314,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ],
             ),
           ),
-          Positioned(
-            top: 100,
-            left: -150,
-            child: Stack(
-              children: [
-                // Main circle
-                Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.03),
-                  ),
-                ),
-                // Curved lines
-                CustomPaint(
-                  size: Size(200, 200),
-                  painter: TennisBallPainter(
-                    color: Colors.white.withOpacity(0.5),
-                    strokeWidth: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          
           // Main content
           CustomScrollView(
             slivers: [
