@@ -98,7 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
               ),
               SizedBox(height: 32),
               _buildSwitch(
-                'Show Unavailable Courts',
+                'Show unavailable',
                 _showUnavailable,
                 (value) {
                   setState(() => _showUnavailable = value);

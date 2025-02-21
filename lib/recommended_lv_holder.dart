@@ -18,8 +18,14 @@ class recommended_lv_holder extends StatelessWidget {
         int.parse(document.time.split(':')[0]) > 20);
     //randomize order of documents
     documents.shuffle();
+
+    // Get screen size
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Calculate responsive height (approximately 16-20% of screen height)
+    final listViewHeight = screenHeight * 0.13;
+
     return Container(
-      margin: EdgeInsets.only(top: 16, bottom: 16),
+      margin: EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -48,7 +54,7 @@ class recommended_lv_holder extends StatelessWidget {
             ),
           ),
           SizedBox(
-            height: 130,
+            height: listViewHeight,
             child: RecommendedDocumentsListView(
               recommendedDocuments: documents,
             ),
