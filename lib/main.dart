@@ -9,11 +9,11 @@ import 'splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Set status bar style
+  // Update status bar style to use primary color
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-    statusBarBrightness: Brightness.light,
+    statusBarColor: const Color(0xFF00875A), // Use primary color
+    statusBarIconBrightness: Brightness.light, // White icons for dark background
+    statusBarBrightness: Brightness.dark, // Dark status bar for light icons
   ));
 
   await Firebase.initializeApp(
@@ -44,6 +44,13 @@ void main() async {
     home: HomePage(),
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
+      appBarTheme: AppBarTheme(
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: const Color(0xFF00875A), // Match primary color
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+      ),
       brightness: Brightness.light,
       scaffoldBackgroundColor: Color(0xFFF8F8F8),
       colorScheme: ColorScheme.light(
