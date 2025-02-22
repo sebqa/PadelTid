@@ -81,23 +81,30 @@ class _SubscribingIconState extends State<SubscribingIcon> {
         return NotificationPreferencesDialog(
           initialPreferences: NotificationPreferences(),
           onSave: (preferences) {
+            final hasAnyPreference = preferences.notifyOnWeatherChange ||
+                                   preferences.notifyWhenAvailable ||
+                                   preferences.notifyWhenOneLeft ||
+                                   preferences.notifyWhenFull;
+
             setState(() {
-              subscribing = true;
+              subscribing = hasAnyPreference;
             });
 
             final user = FirebaseAuth.instance.currentUser!;
-            final fcmToken = getFCMToken(user.uid);
             subscribeToTopic(
               widget.document, 
-              'true', 
+              hasAnyPreference ? 'true' : 'false',  // Subscribe if any preference is true
               user,
               preferences,
             );
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 duration: Duration(seconds: 1),
-                content: Text('Subscribed to timeslot'),
+                content: Text(hasAnyPreference 
+                  ? 'Notification preferences updated'
+                  : 'No longer subscribed to timeslot'
+                ),
               ),
             );
           },
@@ -120,12 +127,18 @@ class _SubscribingIconState extends State<SubscribingIcon> {
         tokens.add(await FirebaseMessaging.instance.getToken() ?? '');
       }
 
+      // Create document ID in the format YYYYMMDDHHMMSS
+      final docId = document.date.replaceAll("-", "") + 
+                   document.time.replaceAll(":", "") + 
+                   "00";
+
       final queryParams = {
         'date': document.date,
         'time': '${document.time}:00',
         'subscribe': subscribe,
-        'device_tokens': json.encode(tokens), // Send all tokens
+        'device_tokens': json.encode(tokens),
         'userId': user.uid,
+        'id': docId,  // Add the document ID
         if (preferences != null) 'preferences': json.encode(preferences.toJson()),
       };
 
@@ -139,15 +152,9 @@ class _SubscribingIconState extends State<SubscribingIcon> {
         String subscribed = response.body;
         Map<String, dynamic> jsonData = json.decode(subscribed);
         if (jsonData['subscribe'] == 'true') {
-          print('Subscribed to topic ' +
-              document.date.replaceAll("-", "") +
-              document.time.replaceAll(":", "") +
-              '00');
+          print('Subscribed to topic ' + docId);
         } else {
-          print("Unsubscribed from topic " +
-              document.date.replaceAll("-", "") +
-              document.time.replaceAll(":", "") +
-              '00');
+          print("Unsubscribed from topic " + docId);
         }
       } else {
         throw Exception('Failed to subscribe to topic');
@@ -173,21 +180,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
           return;
         }
 
-        if (subscribing) {
-          setState(() {
-            subscribing = false;
-          });
-          subscribeToTopic(widget.document, 'false', user);
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              duration: Duration(seconds: 1),
-              content: Text('No longer subscribed to timeslot'),
-            ),
-          );
-        } else {
-          _showSubscriptionDialog();
-        }
+        _showSubscriptionDialog();  // Always show dialog, whether subscribing or not
       },
     );
   }

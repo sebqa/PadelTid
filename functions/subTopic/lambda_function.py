@@ -1,44 +1,7 @@
 import requests, os
 import pymongo
 from pymongo import MongoClient
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import messaging
 import json
-
-# Initialize Firebase Admin SDK only if not already initialized
-def initialize_firebase():
-    try:
-        if not firebase_admin._apps:
-            # Log the project ID to verify we're using the correct credentials
-            project_id = os.environ.get("FIREBASE_PROJECT_ID")
-            print(f"Initializing Firebase with project ID: {project_id}")
-            
-            private_key = os.environ.get("FIREBASE_PRIVATE_KEY", "").replace('\\n', '\n')
-            
-            cred = credentials.Certificate({
-                "type": "service_account",
-                "project_id": project_id,
-                "private_key_id": os.environ.get("FIREBASE_PRIVATE_KEY_ID"),
-                "private_key": private_key,
-                "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
-                "client_id": os.environ.get("FIREBASE_CLIENT_ID"),
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                "client_x509_cert_url": os.environ.get("FIREBASE_CLIENT_CERT_URL")
-            })
-            
-            try:
-                firebase_admin.initialize_app(cred)
-                print("Firebase Admin SDK initialized successfully")
-            except Exception as init_error:
-                print(f"Error initializing Firebase: {str(init_error)}")
-                raise
-    except Exception as e:
-        print(f"Error in initialize_firebase: {str(e)}")
-        print(f"Available environment variables: {[k for k in os.environ.keys() if 'FIREBASE' in k]}")
-        raise
 
 def lambda_handler(event, context):
     try:
@@ -49,7 +12,7 @@ def lambda_handler(event, context):
         userId = event["queryStringParameters"]["userId"]
         preferences = event["queryStringParameters"].get("preferences", "{}")  # Get preferences
 
-        initialize_firebase()
+        # Firebase initialization no longer needed
         return subscribe_to_topic(date, time, subscribe, userId, device_tokens, preferences)
     except Exception as e:
         print(f"Error in lambda_handler: {str(e)}")
@@ -65,7 +28,7 @@ def lambda_handler(event, context):
 
 def subscribe_to_topic(date, time, subscribe, userId, device_tokens_str, preferences_str):
     try:
-        # Parse device tokens
+        # Parse device tokens (keeping this in case it's needed elsewhere)
         device_tokens = json.loads(device_tokens_str)
         
         # Set up MongoDB connection
@@ -102,14 +65,11 @@ def subscribe_to_topic(date, time, subscribe, userId, device_tokens_str, prefere
                 },
                 upsert=True
             )
-            
-            # Subscribe all tokens to Firebase topic
-            response = messaging.subscribe_to_topic(device_tokens, date_time)
         else:
             # Remove from user's subscriptions
             collection.update_one(
                 {"_id": userId}, 
-                {"$pull": {"subscriptions": {"id": date_time}}}  # Updated to match new structure
+                {"$pull": {"subscriptions": {"id": date_time}}}
             )
             
             # Remove user from subscription document
@@ -117,7 +77,7 @@ def subscribe_to_topic(date, time, subscribe, userId, device_tokens_str, prefere
                 {"_id": date_time},
                 {
                     "$pull": {"users": userId},
-                    "$unset": {f"preferences.{userId}": ""}  # Remove user preferences
+                    "$unset": {f"preferences.{userId}": ""}
                 }
             )
             
@@ -125,9 +85,6 @@ def subscribe_to_topic(date, time, subscribe, userId, device_tokens_str, prefere
             db.subscriptions.delete_one(
                 {"_id": date_time, "users": {"$size": 0}}
             )
-            
-            # Unsubscribe all tokens from Firebase topic
-            response = messaging.unsubscribe_from_topic(device_tokens, date_time)
 
         return {
             'statusCode': 200,
@@ -137,7 +94,7 @@ def subscribe_to_topic(date, time, subscribe, userId, device_tokens_str, prefere
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
             'body': json.dumps({
-                "updatedCount": str(response.success_count),
+                "success": True,
                 "subscribe": subscribe
             })
         }
