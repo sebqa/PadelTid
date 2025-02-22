@@ -279,7 +279,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ],
             ),
             Text(
-              '${value.round()}$unit',
+              '${value.toStringAsFixed(1)}$unit',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
@@ -296,7 +296,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             value: value,
             min: min,
             max: max,
-            onChanged: onChanged,
+            divisions: ((max - min) * 10).toInt(), // This creates steps of 0.1
+            onChanged: (newValue) {
+              // Round to 1 decimal place
+              onChanged(double.parse(newValue.toStringAsFixed(1)));
+            },
           ),
         ),
       ],

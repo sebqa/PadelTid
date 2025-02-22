@@ -178,10 +178,16 @@ String currentFCMToken = await setFCMToken(userId);
     return ProfileScreen(
       actions: [
         SignedOutAction(
-          
-          (context) => Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const AuthGate()),
-          ),
+          (context) {
+            // Sign out and clear FCM token
+            removeFCMToken(widget.userId);
+            // Navigate back to AuthGate after sign out
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const AuthGate()),
+              (route) => false, // This removes all previous routes from the stack
+            );
+          },
         ),
         
       ],
@@ -220,8 +226,8 @@ String currentFCMToken = await setFCMToken(userId);
   }
   
   Future<void> removeFCMToken(userId) async {
-    print(userId);
-    updateUserSettings(userId, "device_token", "x");
+    await FirebaseMessaging.instance.deleteToken();
+    await updateUserSettings(userId, "device_token", null);
   }
 
 }
