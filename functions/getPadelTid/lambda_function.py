@@ -12,7 +12,11 @@ def get_user_subscriptions(user_id):
     if not user_id:
         return set()
     user = db_padeltid['users'].find_one({"_id": user_id})
-    return set(user.get('subscriptions', [])) if user else set()
+    if not user or 'subscriptions' not in user:
+        return set()
+    
+    # Extract just the IDs from the subscription objects
+    return {sub['id'] for sub in user.get('subscriptions', [])}
 
 def lambda_handler(event,context):
     try:
