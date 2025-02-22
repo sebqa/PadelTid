@@ -1,23 +1,49 @@
 import json
-import pymongo
-from pymongo import MongoClient
 import os
+from pymongo import MongoClient
 
 def lambda_handler(event, context):
-    userId = event['queryStringParameters']['userId']
-    host = os.environ.get("ATLAS_URI")
-
-    return get_subscriptions(host, userId)
-
+    try:
+        userId = event['queryStringParameters']['userId']
+        host = os.environ.get("ATLAS_URI")
+        return get_subscriptions(host, userId)
+    except Exception as e:
+        print(f"Error in lambda_handler: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
+            'body': json.dumps({'error': str(e)})
+        }
 
 def get_subscriptions(host, userId):
-    client = MongoClient(host)
+    client = MongoClient(host=host)
     db = client['padeltid']
-    collection = db['users']
-    result = collection.find_one({"_id": userId})
-    subscriptions = result['subscriptions']
+    result = db['users'].find_one({'_id': userId})
+    
+    # Handle case where user doesn't exist or has no subscriptions
+    if not result:
+        print(f"No user found for ID: {userId}")
+        return format_response([])
+        
+    subscriptions = result.get('subscriptions', [])
+    print(f"Found subscriptions for user {userId}: {subscriptions}")
+    
+    return format_response(subscriptions)
 
-    return subscriptions
+def format_response(subscriptions):
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+        },
+        'body': json.dumps(subscriptions)
+    }
 
 if __name__ == "__main__":
     userId = "2NRANwKZwJU85rrwoQtlIOGNau82"
