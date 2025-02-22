@@ -157,13 +157,18 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            widget.document.time,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          // Time and SubscribingIcon
+                          Row(
+                            children: [
+                              Text(
+                                widget.document.time,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                           // Weather metrics
                           Row(
@@ -251,6 +256,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
+                          SubscribingIcon(document: widget.document),
                         ],
                       ),
                     ],

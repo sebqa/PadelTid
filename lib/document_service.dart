@@ -18,12 +18,14 @@ class DocumentService {
       subscribedDocs = await getSubscribedDocs();
     }
     
+    final user = FirebaseAuth.instance.currentUser;
     final queryParams = {
       'wind_speed_threshold': windSpeed.toString(),
       'precipitation_probability_threshold': precipitationProbability.toString(),
       'temperature_threshold': temperature.toString(),
       'showUnavailableSlots': showUnavailableSlots.toString(),
       'locations': selectedLocations.join(','),
+      if (user != null) 'user_id': user.uid,
     };
     
     final url = Uri.parse(

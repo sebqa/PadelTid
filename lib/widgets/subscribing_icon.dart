@@ -4,13 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/model/document.dart';
+import 'package:flutter_application_1/login_page.dart';
 
 class SubscribingIcon extends StatefulWidget {
-  const SubscribingIcon({Key? key, required this.document, required this.user})
-      : super(key: key);
+  const SubscribingIcon({Key? key, required this.document}) : super(key: key);
 
   final Document document;
-  final User user;
 
   @override
   State<SubscribingIcon> createState() => _SubscribingIconState();
@@ -50,7 +49,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
     print(jwt);
 
     String url =
-        "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic?date=${document.date}&time=${document.time}:00&subscribe=$subscribe&device_token=${token}&userId=${widget.user.uid}";
+        "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic?date=${document.date}&time=${document.time}:00&subscribe=$subscribe&device_token=${token}&userId=${user.uid}";
 
     final response = await http.get(Uri.parse(url));
 
@@ -73,6 +72,36 @@ class _SubscribingIconState extends State<SubscribingIcon> {
     }
   }
 
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Login Required'),
+          content: const Text('Please login to subscribe to timeslots'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Login'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AuthGate()),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return IconButton(
@@ -81,13 +110,20 @@ class _SubscribingIconState extends State<SubscribingIcon> {
         color: Theme.of(context).colorScheme.primary,
       ),
       onPressed: () {
+        final user = FirebaseAuth.instance.currentUser;
+        
+        if (user == null) {
+          _showLoginDialog();
+          return;
+        }
+
         setState(() {
           subscribing = !subscribing;
         });
 
-        final fcmToken = getFCMToken(widget.user.uid);
+        final fcmToken = getFCMToken(user.uid);
         subscribeToTopic(widget.document, fcmToken,
-            subscribing ? 'true' : 'false', widget.user);
+            subscribing ? 'true' : 'false', user);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

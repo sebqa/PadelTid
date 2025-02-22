@@ -12,19 +12,6 @@ def getCourts(date):
     times_collection = db['times']
     clubs_collection = db['clubs']
 
-    # Get the club information for HPK
-    club = clubs_collection.find_one({"name": "Holbæk Padel Klub"})
-    if not club:
-        # Insert HPK if it doesn't exist
-        club = {
-            "name": "Holbæk Padel Klub",
-            "url": "https://holbaekpadel.dk",
-            "latitude": "55.697596",
-            "longitude": "11.68873",
-            "total_courts": 8
-        }
-        clubs_collection.insert_one(club)
-
     # Your HTML content
     request = requests.get("https://holbaekpadel.dk/web/api/group/2431/v2/bookings/overview?date="+date+"&type=weekly")
 

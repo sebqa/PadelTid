@@ -4,9 +4,15 @@ import json,os
 
 # Set up MongoDB connection
 client = MongoClient(host=os.environ.get("ATLAS_URI"))
-db = client['padelTimes']
-collection = db['times']
+db_padel_times = client['padelTimes']
+db_padeltid = client['padeltid']
+collection = db_padel_times['times']
 
+def get_user_subscriptions(user_id):
+    if not user_id:
+        return set()
+    user = db_padeltid['users'].find_one({"_id": user_id})
+    return set(user.get('subscriptions', [])) if user else set()
 
 def lambda_handler(event,context):
     try:
@@ -16,6 +22,10 @@ def lambda_handler(event,context):
         showUnavailableSlots = event['queryStringParameters']['showUnavailableSlots']
         locations = event['queryStringParameters'].get('locations', '').split(',')
         locations = [loc for loc in locations if loc]
+        
+        # Get user_id if provided
+        user_id = event['queryStringParameters'].get('user_id')
+        user_subscriptions = get_user_subscriptions(user_id)
         
         current_time = datetime.now()
         current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -35,7 +45,7 @@ def lambda_handler(event,context):
         }
         
         # Determine which clubs to include
-        clubs_to_check = locations if locations else db['clubs'].distinct('name')
+        clubs_to_check = locations if locations else db_padel_times['clubs'].distinct('name')
         
         # Add weather and location conditions
         club_conditions = []
@@ -87,10 +97,13 @@ def lambda_handler(event,context):
                     filtered_clubs[name] = data
             
             if filtered_clubs:  # Only include document if it has valid clubs
+                # Format date and time for subscription check
+                subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
                 cleaned_doc = {
                     'date': doc['date'],
                     'time': doc['time'],
-                    'clubs': filtered_clubs
+                    'clubs': filtered_clubs,
+                    'subscribed': subscription_id in user_subscriptions if user_id else False
                 }
                 cleaned_results.append(cleaned_doc)
 
