@@ -28,6 +28,7 @@ def getCourts(date):
         "22:00:00"
     ]
 
+    club = clubs_collection.find_one({"name": "Holbæk Padel Klub"})
     # Get the current date and time
     current_datetime = datetime.now()
 
@@ -43,7 +44,7 @@ def getCourts(date):
 
     # Find and list available slots
     has_available_slots = []
-    total_courts = 8  # Get total courts from club document
+    total_courts = club['total_courts']  # Get total courts from club document
 
     for date, from_counts in date_from_counts.items():
         for from_time, count in from_counts.items():
