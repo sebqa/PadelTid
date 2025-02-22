@@ -30,9 +30,10 @@ def lambda_handler(event, context):
         device_token = event["queryStringParameters"]["device_token"]
         subscribe = event["queryStringParameters"]["subscribe"]
         userId = event["queryStringParameters"]["userId"]
+        preferences = event["queryStringParameters"].get("preferences", "{}")  # Get preferences
 
         initialize_firebase()
-        return subscribe_to_topic(date, time, subscribe, userId, device_token)
+        return subscribe_to_topic(date, time, subscribe, userId, device_token, preferences)
     except Exception as e:
         print(f"Error in lambda_handler: {str(e)}")
         return {
@@ -45,7 +46,7 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': str(e)})
         }
 
-def subscribe_to_topic(date, time, subscribe, userId, device_token):
+def subscribe_to_topic(date, time, subscribe, userId, device_token, preferences_str):
     try:
         # Set up MongoDB connection
         client = MongoClient(os.environ.get("ATLAS_URI"))
@@ -57,8 +58,8 @@ def subscribe_to_topic(date, time, subscribe, userId, device_token):
         date_time = date + time
 
         if subscribe == "true":
-            # Get preferences from query parameters
-            preferences = json.loads(event["queryStringParameters"].get("preferences", "{}"))
+            # Parse preferences from string
+            preferences = json.loads(preferences_str)
             
             # Update user's subscriptions with preferences
             collection.update_one(
@@ -88,13 +89,16 @@ def subscribe_to_topic(date, time, subscribe, userId, device_token):
             # Remove from user's subscriptions
             collection.update_one(
                 {"_id": userId}, 
-                {"$pull": {"subscriptions": date_time}}
+                {"$pull": {"subscriptions": {"id": date_time}}}  # Updated to match new structure
             )
             
             # Remove user from subscription document
             db.subscriptions.update_one(
                 {"_id": date_time},
-                {"$pull": {"users": userId}}
+                {
+                    "$pull": {"users": userId},
+                    "$unset": {f"preferences.{userId}": ""}  # Remove user preferences
+                }
             )
             
             # Clean up empty subscription documents
@@ -130,4 +134,4 @@ def subscribe_to_topic(date, time, subscribe, userId, device_token):
         }
 
 if __name__ == "__main__":
-    print(subscribe_to_topic("2024-08-12", "14:00", "false", "bx5jFmFYtRW8v3O8y8EUuuahRho1", "d1bcZ1-ZqgbjBiggC4WLwr:APA91bH25d1DSgYmfS_maO5A-Ft6E3pE-Fp0y89T31SX46j_XR7Ow8I8bCn4eJIsBtl_dvmI4f_uAswGLMrY26RhIQDYmxc6l8ajuII9c-RRGUubLUqt5Z3qcdfua40gPWvBlYr-C4Ol"))
+    print(subscribe_to_topic("2024-08-12", "14:00", "false", "bx5jFmFYtRW8v3O8y8EUuuahRho1", "d1bcZ1-ZqgbjBiggC4WLwr:APA91bH25d1DSgYmfS_maO5A-Ft6E3pE-Fp0y89T31SX46j_XR7Ow8I8bCn4eJIsBtl_dvmI4f_uAswGLMrY26RhIQDYmxc6l8ajuII9c-RRGUubLUqt5Z3qcdfua40gPWvBlYr-C4Ol", "{}"))
