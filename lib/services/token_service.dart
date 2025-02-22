@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 class TokenService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final String _apiUrl = 'https://t3mjld53ki.execute-api.eu-north-1.amazonaws.com/default/manageTokens'; // Create new Lambda endpoint
+  final String _apiUrl = 'https://kgzbg5117d.execute-api.eu-north-1.amazonaws.com/default/manageTokens'; // Create new Lambda endpoint
 
   // Save or update token
   Future<void> saveToken() async {
