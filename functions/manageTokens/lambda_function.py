@@ -6,23 +6,38 @@ from datetime import datetime, timedelta
 def lambda_handler(event, context):
     try:
         print("Received event:", event)  # Debug log
+        
+        # Handle CORS preflight request
+        if event.get('requestContext', {}).get('http', {}).get('method') == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+                },
+                'body': json.dumps({'message': 'OK'})
+            }
+
         client = MongoClient(os.environ.get("ATLAS_URI"))
         db = client['padeltid']
         collection = db['users']
 
-        # Check if this is an API Gateway request
-        if 'httpMethod' in event:
-            # Handle API Gateway request
-            if event['httpMethod'] == 'GET':
+        # Check if this is an API Gateway v2 request
+        if 'requestContext' in event and 'http' in event['requestContext']:
+            http_method = event['requestContext']['http']['method']
+            if http_method == 'GET':
                 user_id = event.get('queryStringParameters', {}).get('userId')
                 if not user_id:
                     raise ValueError("Missing userId in GET request")
                 return get_user_tokens(collection, user_id)
-            elif event['httpMethod'] == 'POST':
-                body = json.loads(event.get('body', '{}'))
+            elif http_method == 'POST':
+                if not event.get('body'):
+                    raise ValueError("Missing request body")
+                body = json.loads(event['body'])
                 print("Request body:", body)
             else:
-                raise ValueError(f"Unsupported HTTP method: {event.get('httpMethod')}")
+                raise ValueError(f"Unsupported HTTP method: {http_method}")
         else:
             # Handle direct Lambda invocation
             body = event
