@@ -152,7 +152,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
   Widget build(BuildContext context) {
     return IconButton(
       icon: Icon(
-        subscribing ? Icons.star : Icons.star_border,
+        subscribing ? Icons.notifications : Icons.notifications_outlined,
         color: Theme.of(context).colorScheme.primary,
       ),
       onPressed: () {
