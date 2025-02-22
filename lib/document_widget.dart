@@ -137,106 +137,114 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                   ),
                 ),
               ),
-              // Time - vertically centered
-              Center(
-                child: Text(
-                  widget.document.time,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              Spacer(),
-              // Right-aligned content
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Top row: Court info
-                  Text(
-                    '${widget.document.totalClubs} location • ${widget.document.totalAvailableSlots} courts',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
+              // Content column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Top row: Time and weather metrics
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          widget.document.time,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        // Weather metrics
+                        Row(
+                          children: [
+                            // Temperature
+                            Row(
+                              children: [
+                                Icon(Icons.thermostat, 
+                                  size: 16, 
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant
+                                ),
+                                SizedBox(width: 2),
+                                Text(
+                                  '${widget.document.airTemperature}°C',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              ' | ',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            // Wind
+                            Row(
+                              children: [
+                                Icon(Icons.air, 
+                                  size: 16, 
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant
+                                ),
+                                SizedBox(width: 2),
+                                Text(
+                                  '${widget.document.windSpeed}m/s',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              ' | ',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            // Precipitation
+                            Row(
+                              children: [
+                                Icon(Icons.water_drop, 
+                                  size: 16, 
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant
+                                ),
+                                SizedBox(width: 2),
+                                Text(
+                                  '${widget.document.precipitationProbability}%',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                  SizedBox(height: 6),
-                  // Bottom row: Weather metrics
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Temperature
-                      Row(
-                        children: [
-                          Icon(Icons.thermostat, 
-                            size: 16, 
-                            color: Theme.of(context).colorScheme.onSurfaceVariant
+                    SizedBox(height: 6),
+                    // Bottom row: Location info
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${widget.document.totalClubs} location | ${widget.document.totalAvailableSlots} courts',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
                           ),
-                          SizedBox(width: 2),
-                          Text(
-                            '${widget.document.airTemperature}°C',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        ' • ',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
-                      ),
-                      // Wind
-                      Row(
-                        children: [
-                          Icon(Icons.air, 
-                            size: 16, 
-                            color: Theme.of(context).colorScheme.onSurfaceVariant
-                          ),
-                          SizedBox(width: 2),
-                          Text(
-                            '${widget.document.windSpeed}m/s',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        ' • ',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      // Precipitation
-                      Row(
-                        children: [
-                          Icon(Icons.water_drop, 
-                            size: 16, 
-                            color: Theme.of(context).colorScheme.onSurfaceVariant
-                          ),
-                          SizedBox(width: 2),
-                          Text(
-                            '${widget.document.precipitationProbability}%',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
