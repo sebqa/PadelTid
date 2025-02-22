@@ -9,7 +9,7 @@ def lambda_handler(event, context):
         print("HTTP Method:", event.get('requestContext', {}).get('http', {}).get('method'))
         
         headers = {
-            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Headers': '*',  # More permissive during development
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
             'Content-Type': 'application/json'

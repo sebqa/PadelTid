@@ -18,9 +18,13 @@ class TokenService {
       final token = await _messaging.getToken();
       if (token == null) return;
 
+      print("Making POST request to save token"); // Debug log
+
       final response = await http.post(
         Uri.parse(_apiUrl),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: json.encode({
           'userId': user.uid,
           'token': token,
@@ -29,8 +33,11 @@ class TokenService {
         }),
       );
 
+      print("Response status: ${response.statusCode}"); // Debug log
+      print("Response body: ${response.body}"); // Debug log
+
       if (response.statusCode != 200) {
-        throw Exception('Failed to save token');
+        throw Exception('Failed to save token: ${response.body}');
       }
     } catch (e) {
       print('Error saving token: $e');
