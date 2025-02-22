@@ -19,11 +19,13 @@ class TokenService {
       if (token == null) return;
 
       print("Making POST request to save token"); // Debug log
+      print("URL: $_apiUrl"); // Debug log
 
       final response = await http.post(
         Uri.parse(_apiUrl),
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: json.encode({
           'userId': user.uid,
@@ -35,12 +37,14 @@ class TokenService {
 
       print("Response status: ${response.statusCode}"); // Debug log
       print("Response body: ${response.body}"); // Debug log
+      print("Response headers: ${response.headers}"); // Debug log
 
       if (response.statusCode != 200) {
         throw Exception('Failed to save token: ${response.body}');
       }
     } catch (e) {
       print('Error saving token: $e');
+      print('Stack trace: ${StackTrace.current}');
     }
   }
 
@@ -73,7 +77,13 @@ class TokenService {
 
       final response = await http.post(
         Uri.parse(_apiUrl),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
         body: json.encode({
           'userId': user.uid,
           'token': token,
@@ -81,11 +91,14 @@ class TokenService {
         }),
       );
 
+      print("Remove token response: ${response.statusCode} - ${response.body}");
+
       if (response.statusCode != 200) {
-        throw Exception('Failed to remove token');
+        throw Exception('Failed to remove token: ${response.body}');
       }
     } catch (e) {
       print('Error removing token: $e');
+      print('Stack trace: ${StackTrace.current}');
     }
   }
 
@@ -96,7 +109,13 @@ class TokenService {
         try {
           final response = await http.post(
             Uri.parse(_apiUrl),
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'POST, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            },
             body: json.encode({
               'userId': user.uid,
               'token': token,
@@ -105,11 +124,14 @@ class TokenService {
             }),
           );
 
+          print("Token refresh response: ${response.statusCode} - ${response.body}");
+
           if (response.statusCode != 200) {
-            throw Exception('Failed to save refreshed token');
+            throw Exception('Failed to save refreshed token: ${response.body}');
           }
         } catch (e) {
           print('Error saving refreshed token: $e');
+          print('Stack trace: ${StackTrace.current}');
         }
       }
     });

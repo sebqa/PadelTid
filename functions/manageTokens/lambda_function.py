@@ -9,9 +9,10 @@ def lambda_handler(event, context):
         print("HTTP Method:", event.get('requestContext', {}).get('http', {}).get('method'))
         
         headers = {
-            'Access-Control-Allow-Headers': '*',  # More permissive during development
             'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Accept',
             'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+            'Access-Control-Expose-Headers': '*',
             'Content-Type': 'application/json'
         }
         
@@ -85,9 +86,10 @@ def lambda_handler(event, context):
 def error_response(message, status_code=400, headers=None):
     if headers is None:
         headers = {
-            'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Accept',
             'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+            'Access-Control-Expose-Headers': '*',
             'Content-Type': 'application/json'
         }
     return {
@@ -126,21 +128,36 @@ def save_token(collection, user_id, token, platform, headers):
         current_time = datetime.utcnow().isoformat()
         print(f"Saving token for user {user_id}")
         
+        # First, try to find and update existing token
         result = collection.update_one(
-            {'_id': user_id},
             {
-                '$pull': {'tokens': {'token': token}},
-                '$push': {
-                    'tokens': {
-                        'token': token,
-                        'platform': platform,
-                        'createdAt': current_time,
-                        'lastUsedAt': current_time
-                    }
-                }
+                '_id': user_id,
+                'tokens.token': token
             },
-            upsert=True
+            {
+                '$set': {
+                    'tokens.$.platform': platform,
+                    'tokens.$.lastUsedAt': current_time
+                }
+            }
         )
+        
+        # If token wasn't found, add it as a new token
+        if result.modified_count == 0:
+            result = collection.update_one(
+                {'_id': user_id},
+                {
+                    '$push': {
+                        'tokens': {
+                            'token': token,
+                            'platform': platform,
+                            'createdAt': current_time,
+                            'lastUsedAt': current_time
+                        }
+                    }
+                },
+                upsert=True  # Create document if it doesn't exist
+            )
         
         print(f"MongoDB update result: {result.modified_count} documents modified")
 
@@ -158,7 +175,13 @@ def remove_token(collection, user_id, token, headers):
         print(f"Removing token for user {user_id}")
         result = collection.update_one(
             {'_id': user_id},
-            {'$pull': {'tokens': {'token': token}}}
+            {
+                '$pull': {
+                    'tokens': {
+                        'token': token
+                    }
+                }
+            }
         )
         
         print(f"MongoDB remove result: {result.modified_count} documents modified")
