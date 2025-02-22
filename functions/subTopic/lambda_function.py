@@ -57,17 +57,28 @@ def subscribe_to_topic(date, time, subscribe, userId, device_token):
         date_time = date + time
 
         if subscribe == "true":
-            # Update user's subscriptions
+            # Get preferences from query parameters
+            preferences = json.loads(event["queryStringParameters"].get("preferences", "{}"))
+            
+            # Update user's subscriptions with preferences
             collection.update_one(
                 {"_id": userId}, 
-                {"$addToSet": {"subscriptions": date_time}}, 
+                {"$addToSet": {
+                    "subscriptions": {
+                        "id": date_time,
+                        "preferences": preferences
+                    }
+                }}, 
                 upsert=True
             )
             
             # Update or create subscription document
             db.subscriptions.update_one(
                 {"_id": date_time},
-                {"$addToSet": {"users": userId}},
+                {
+                    "$addToSet": {"users": userId},
+                    "$set": {f"preferences.{userId}": preferences}
+                },
                 upsert=True
             )
             

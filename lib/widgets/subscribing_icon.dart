@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/login_page.dart';
+import 'notification_preferences_dialog.dart';
 
 class SubscribingIcon extends StatefulWidget {
   const SubscribingIcon({Key? key, required this.document}) : super(key: key);
@@ -41,37 +42,6 @@ class _SubscribingIconState extends State<SubscribingIcon> {
     return fcmToken!;
   }
 
-  subscribeToTopic(Document document, Future<String> fcmToken, String subscribe,
-      User user) async {
-    String token = await fcmToken;
-    print(token);
-    String? jwt = await user.getIdToken();
-    print(jwt);
-
-    String url =
-        "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic?date=${document.date}&time=${document.time}:00&subscribe=$subscribe&device_token=${token}&userId=${user.uid}";
-
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      String subscribed = response.body;
-      Map<String, dynamic> jsonData = json.decode(subscribed);
-      if (jsonData['subscribe'] == 'true') {
-        print('Subscribed to topic ' +
-            document.date.replaceAll("-", "") +
-            document.time.replaceAll(":", "") +
-            '00');
-      } else {
-        print("Unsubscribed from topic " +
-            document.date.replaceAll("-", "") +
-            document.time.replaceAll(":", "") +
-            '00');
-      }
-    } else {
-      throw Exception('Failed to subscribe to topic');
-    }
-  }
-
   void _showLoginDialog() {
     showDialog(
       context: context,
@@ -102,6 +72,82 @@ class _SubscribingIconState extends State<SubscribingIcon> {
     );
   }
 
+  void _showSubscriptionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return NotificationPreferencesDialog(
+          initialPreferences: NotificationPreferences(),
+          onSave: (preferences) {
+            setState(() {
+              subscribing = true;
+            });
+
+            final user = FirebaseAuth.instance.currentUser!;
+            final fcmToken = getFCMToken(user.uid);
+            subscribeToTopic(
+              widget.document, 
+              fcmToken,
+              'true', 
+              user,
+              preferences,
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                duration: Duration(seconds: 1),
+                content: Text('Subscribed to timeslot'),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  subscribeToTopic(
+      Document document, 
+      Future<String> fcmToken, 
+      String subscribe,
+      User user,
+      [NotificationPreferences? preferences]) async {
+    String token = await fcmToken;
+    String? jwt = await user.getIdToken();
+
+    final queryParams = {
+      'date': document.date,
+      'time': '${document.time}:00',
+      'subscribe': subscribe,
+      'device_token': token,
+      'userId': user.uid,
+      if (preferences != null) 'preferences': json.encode(preferences.toJson()),
+    };
+
+    final url = Uri.parse(
+        "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic")
+        .replace(queryParameters: queryParams);
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      String subscribed = response.body;
+      Map<String, dynamic> jsonData = json.decode(subscribed);
+      if (jsonData['subscribe'] == 'true') {
+        print('Subscribed to topic ' +
+            document.date.replaceAll("-", "") +
+            document.time.replaceAll(":", "") +
+            '00');
+      } else {
+        print("Unsubscribed from topic " +
+            document.date.replaceAll("-", "") +
+            document.time.replaceAll(":", "") +
+            '00');
+      }
+    } else {
+      throw Exception('Failed to subscribe to topic');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return IconButton(
@@ -117,24 +163,22 @@ class _SubscribingIconState extends State<SubscribingIcon> {
           return;
         }
 
-        setState(() {
-          subscribing = !subscribing;
-        });
-
-        final fcmToken = getFCMToken(user.uid);
-        subscribeToTopic(widget.document, fcmToken,
-            subscribing ? 'true' : 'false', user);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: Duration(seconds: 1),
-            content: Text(
-              subscribing
-                  ? 'Subscribed to timeslot'
-                  : 'No longer subscribed to timeslot',
+        if (subscribing) {
+          setState(() {
+            subscribing = false;
+          });
+          final fcmToken = getFCMToken(user.uid);
+          subscribeToTopic(widget.document, fcmToken, 'false', user);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              duration: Duration(seconds: 1),
+              content: Text('No longer subscribed to timeslot'),
             ),
-          ),
-        );
+          );
+        } else {
+          _showSubscriptionDialog();
+        }
       },
     );
   }
