@@ -11,12 +11,36 @@ collection = db_padel_times['times']
 def get_user_subscriptions(user_id):
     if not user_id:
         return set()
-    user = db_padeltid['users'].find_one({"_id": user_id})
-    if not user or 'subscriptions' not in user:
+    try:
+        user = db_padeltid['users'].find_one({"_id": user_id})
+        if not user:
+            print(f"No user found for ID: {user_id}")
+            return set()
+            
+        subscriptions = user.get('subscriptions', [])
+        if not subscriptions:
+            print(f"No subscriptions found for user: {user_id}")
+            return set()
+            
+        print(f"Raw subscriptions: {subscriptions}")
+        
+        # Handle both old and new subscription formats
+        subscription_ids = set()
+        for sub in subscriptions:
+            if isinstance(sub, dict):
+                # New format: {"id": "...", "preferences": {...}}
+                if 'id' in sub:
+                    subscription_ids.add(sub['id'])
+            else:
+                # Old format: direct string ID
+                subscription_ids.add(sub)
+                
+        print(f"Extracted subscription IDs: {subscription_ids}")
+        return subscription_ids
+        
+    except Exception as e:
+        print(f"Error in get_user_subscriptions: {str(e)}")
         return set()
-    
-    # Extract just the IDs from the subscription objects
-    return {sub['id'] for sub in user.get('subscriptions', [])}
 
 def lambda_handler(event,context):
     try:
