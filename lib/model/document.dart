@@ -1,6 +1,7 @@
 class ClubAvailability {
   final String clubId;
   final String clubName;
+  final String clubUrl;
   final int availableSlots;
   final int totalCourts;
   final Weather weather;
@@ -8,6 +9,7 @@ class ClubAvailability {
   ClubAvailability({
     required this.clubId,
     required this.clubName,
+    required this.clubUrl,
     required this.availableSlots,
     required this.totalCourts,
     required this.weather,
@@ -17,6 +19,7 @@ class ClubAvailability {
     return ClubAvailability(
       clubId: json['club_id'],
       clubName: json['club_name'],
+      clubUrl: json['club_url'] ?? '',
       availableSlots: json['available_slots'],
       totalCourts: json['total_courts'],
       weather: Weather.fromJson(json['weather']),

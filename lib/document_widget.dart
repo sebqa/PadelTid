@@ -5,6 +5,7 @@ import 'package:flutter_application_1/login_page.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'document_page.dart';
 import 'widgets/subscribing_icon.dart';
+import 'pages/document_details_page.dart';
 
 class DocumentWidget extends StatefulWidget {
   final Document document;
@@ -111,142 +112,152 @@ class _DocumentWidgetState extends State<DocumentWidget> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(8),
-          child: Row(
-            children: [
-              // Large weather symbol on the left
-              Container(
-                width: 65,
-                height: 65,
-                margin: EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: SvgPicture.asset(
-                    'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(widget.document.symbolCode)}.svg',
-                    width: 48,
-                    height: 48,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DocumentDetailsPage(document: widget.document),
+            ),
+          );
+        },
+        child: Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(8),
+            child: Row(
+              children: [
+                // Large weather symbol on the left
+                Container(
+                  width: 65,
+                  height: 65,
+                  margin: EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(widget.document.symbolCode)}.svg',
+                      width: 48,
+                      height: 48,
+                    ),
                   ),
                 ),
-              ),
-              // Content column
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Top row: Time and weather metrics
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          widget.document.time,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
+                // Content column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Top row: Time and weather metrics
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            widget.document.time,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                        // Weather metrics
-                        Row(
-                          children: [
-                            // Temperature
-                            Row(
-                              children: [
-                                Icon(Icons.thermostat, 
-                                  size: 16, 
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant
-                                ),
-                                SizedBox(width: 2),
-                                Text(
-                                  '${widget.document.airTemperature}°C',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
+                          // Weather metrics
+                          Row(
+                            children: [
+                              // Temperature
+                              Row(
+                                children: [
+                                  Icon(Icons.thermostat, 
+                                    size: 16, 
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
                                   ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              ' | ',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  SizedBox(width: 2),
+                                  Text(
+                                    '${widget.document.airTemperature}°C',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            // Wind
-                            Row(
-                              children: [
-                                Icon(Icons.air, 
-                                  size: 16, 
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant
+                              Text(
+                                ' | ',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
-                                SizedBox(width: 2),
-                                Text(
-                                  '${widget.document.windSpeed}m/s',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              ' | ',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
-                            ),
-                            // Precipitation
-                            Row(
-                              children: [
-                                Icon(Icons.water_drop, 
-                                  size: 16, 
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant
-                                ),
-                                SizedBox(width: 2),
-                                Text(
-                                  '${widget.document.precipitationProbability}%',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
+                              // Wind
+                              Row(
+                                children: [
+                                  Icon(Icons.air, 
+                                    size: 16, 
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
                                   ),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    '${widget.document.windSpeed}m/s',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                ' | ',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 6),
-                    // Bottom row: Location info
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${widget.document.totalClubs} location | ${widget.document.totalAvailableSlots} courts',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
+                              ),
+                              // Precipitation
+                              Row(
+                                children: [
+                                  Icon(Icons.water_drop, 
+                                    size: 16, 
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                                  ),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    '${widget.document.precipitationProbability}%',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      SizedBox(height: 6),
+                      // Bottom row: Location info
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${widget.document.totalClubs} location | ${widget.document.totalAvailableSlots} courts',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -77,6 +77,7 @@ def getCourts(date):
         club_availability = {
             'club_id': str(club['_id']),
             'club_name': club['name'],
+            'club_url': club['url'],
             'available_slots': available_slots,
             'total_courts': total_courts
         }
