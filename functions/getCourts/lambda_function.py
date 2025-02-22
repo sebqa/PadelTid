@@ -11,6 +11,7 @@ def getCourts(date):
     db = client['padelTimes']
     times_collection = db['times']
     clubs_collection = db['clubs']
+    
 
     # Your HTML content
     request = requests.get("https://holbaekpadel.dk/web/api/group/2431/v2/bookings/overview?date="+date+"&type=weekly")
@@ -42,7 +43,7 @@ def getCourts(date):
 
     # Find and list available slots
     has_available_slots = []
-    total_courts = club["total_courts"]  # Get total courts from club document
+    total_courts = 8  # Get total courts from club document
 
     for date, from_counts in date_from_counts.items():
         for from_time, count in from_counts.items():
