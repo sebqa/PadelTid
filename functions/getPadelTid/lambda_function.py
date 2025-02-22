@@ -65,7 +65,8 @@ def lambda_handler(event,context):
             projection[f'clubs.{club}'] = 1
 
         print("Query:", query)
-        results = list(collection.find(query, projection))
+        # Add sort to the query - sort by date and time
+        results = list(collection.find(query, projection).sort([("date", 1), ("time", 1)]))
         
         # Clean up results to remove empty clubs and handle available slots
         cleaned_results = []
