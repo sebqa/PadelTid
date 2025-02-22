@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'firebase_options.dart';
 import 'home_page.dart';
 import 'splash_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/token_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +21,14 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-//Ask permission for notifications
+
+  // Initialize token service and save token on app launch
+  if (FirebaseAuth.instance.currentUser != null) {
+    final tokenService = TokenService();
+    await tokenService.saveToken();
+  }
+
+  //Ask permission for notifications
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   messaging.onTokenRefresh.listen((fcmToken) {

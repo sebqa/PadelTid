@@ -6,6 +6,7 @@ import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/home_page.dart';
 import 'package:flutter_application_1/secrets/secrets.dart';
+import 'package:flutter_application_1/services/token_service.dart';
 
 
 class AuthGate extends StatefulWidget {
@@ -295,4 +296,16 @@ class ToggleSettingsList extends StatelessWidget {
       children: settings,
     );
   }
+}
+
+void _handleSignIn(UserCredential credential) async {
+  final tokenService = TokenService();
+  await tokenService.saveToken();
+  // ... rest of sign in handling
+}
+
+void _handleSignOut() async {
+  final tokenService = TokenService();
+  await tokenService.removeToken();
+  await FirebaseAuth.instance.signOut();
 }

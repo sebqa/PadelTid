@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/login_page.dart';
 import 'notification_preferences_dialog.dart';
+import 'package:flutter_application_1/services/token_service.dart';
 
 class SubscribingIcon extends StatefulWidget {
   const SubscribingIcon({Key? key, required this.document}) : super(key: key);
@@ -19,6 +20,7 @@ class SubscribingIcon extends StatefulWidget {
 class _SubscribingIconState extends State<SubscribingIcon> {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   bool subscribing = false;
+  final TokenService _tokenService = TokenService();
 
   @override
   void initState() {
@@ -87,7 +89,6 @@ class _SubscribingIconState extends State<SubscribingIcon> {
             final fcmToken = getFCMToken(user.uid);
             subscribeToTopic(
               widget.document, 
-              fcmToken,
               'true', 
               user,
               preferences,
@@ -105,46 +106,55 @@ class _SubscribingIconState extends State<SubscribingIcon> {
     );
   }
 
-  subscribeToTopic(
+  Future<void> subscribeToTopic(
       Document document, 
-      Future<String> fcmToken, 
       String subscribe,
       User user,
       [NotificationPreferences? preferences]) async {
-    String token = await fcmToken;
-    String? jwt = await user.getIdToken();
-
-    final queryParams = {
-      'date': document.date,
-      'time': '${document.time}:00',
-      'subscribe': subscribe,
-      'device_token': token,
-      'userId': user.uid,
-      if (preferences != null) 'preferences': json.encode(preferences.toJson()),
-    };
-
-    final url = Uri.parse(
-        "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic")
-        .replace(queryParameters: queryParams);
-
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      String subscribed = response.body;
-      Map<String, dynamic> jsonData = json.decode(subscribed);
-      if (jsonData['subscribe'] == 'true') {
-        print('Subscribed to topic ' +
-            document.date.replaceAll("-", "") +
-            document.time.replaceAll(":", "") +
-            '00');
-      } else {
-        print("Unsubscribed from topic " +
-            document.date.replaceAll("-", "") +
-            document.time.replaceAll(":", "") +
-            '00');
+    try {
+      // Get all user tokens
+      final tokens = await _tokenService.getUserTokens(user.uid);
+      if (tokens.isEmpty) {
+        // If no tokens, save current token
+        await _tokenService.saveToken();
+        tokens.add(await FirebaseMessaging.instance.getToken() ?? '');
       }
-    } else {
-      throw Exception('Failed to subscribe to topic');
+
+      final queryParams = {
+        'date': document.date,
+        'time': '${document.time}:00',
+        'subscribe': subscribe,
+        'device_tokens': json.encode(tokens), // Send all tokens
+        'userId': user.uid,
+        if (preferences != null) 'preferences': json.encode(preferences.toJson()),
+      };
+
+      final url = Uri.parse(
+          "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic")
+          .replace(queryParameters: queryParams);
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        String subscribed = response.body;
+        Map<String, dynamic> jsonData = json.decode(subscribed);
+        if (jsonData['subscribe'] == 'true') {
+          print('Subscribed to topic ' +
+              document.date.replaceAll("-", "") +
+              document.time.replaceAll(":", "") +
+              '00');
+        } else {
+          print("Unsubscribed from topic " +
+              document.date.replaceAll("-", "") +
+              document.time.replaceAll(":", "") +
+              '00');
+        }
+      } else {
+        throw Exception('Failed to subscribe to topic');
+      }
+    } catch (e) {
+      print('Error in subscribeToTopic: $e');
+      throw e;
     }
   }
 
@@ -167,8 +177,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
           setState(() {
             subscribing = false;
           });
-          final fcmToken = getFCMToken(user.uid);
-          subscribeToTopic(widget.document, fcmToken, 'false', user);
+          subscribeToTopic(widget.document, 'false', user);
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

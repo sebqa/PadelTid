@@ -44,13 +44,13 @@ def lambda_handler(event, context):
     try:
         date = event["queryStringParameters"]["date"]
         time = event["queryStringParameters"]["time"]
-        device_token = event["queryStringParameters"]["device_token"]
+        device_tokens = event["queryStringParameters"]["device_tokens"]
         subscribe = event["queryStringParameters"]["subscribe"]
         userId = event["queryStringParameters"]["userId"]
         preferences = event["queryStringParameters"].get("preferences", "{}")  # Get preferences
 
         initialize_firebase()
-        return subscribe_to_topic(date, time, subscribe, userId, device_token, preferences)
+        return subscribe_to_topic(date, time, subscribe, userId, device_tokens, preferences)
     except Exception as e:
         print(f"Error in lambda_handler: {str(e)}")
         return {
@@ -63,8 +63,11 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': str(e)})
         }
 
-def subscribe_to_topic(date, time, subscribe, userId, device_token, preferences_str):
+def subscribe_to_topic(date, time, subscribe, userId, device_tokens_str, preferences_str):
     try:
+        # Parse device tokens
+        device_tokens = json.loads(device_tokens_str)
+        
         # Set up MongoDB connection
         client = MongoClient(os.environ.get("ATLAS_URI"))
         db = client['padeltid']
@@ -100,8 +103,8 @@ def subscribe_to_topic(date, time, subscribe, userId, device_token, preferences_
                 upsert=True
             )
             
-            # Subscribe to Firebase topic
-            response = messaging.subscribe_to_topic([device_token], date_time)
+            # Subscribe all tokens to Firebase topic
+            response = messaging.subscribe_to_topic(device_tokens, date_time)
         else:
             # Remove from user's subscriptions
             collection.update_one(
@@ -123,8 +126,8 @@ def subscribe_to_topic(date, time, subscribe, userId, device_token, preferences_
                 {"_id": date_time, "users": {"$size": 0}}
             )
             
-            # Unsubscribe from Firebase topic
-            response = messaging.unsubscribe_from_topic([device_token], date_time)
+            # Unsubscribe all tokens from Firebase topic
+            response = messaging.unsubscribe_from_topic(device_tokens, date_time)
 
         return {
             'statusCode': 200,

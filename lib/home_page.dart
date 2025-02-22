@@ -16,6 +16,8 @@ import 'RecommendedDocumentWidget.dart';
 import 'package:flutter/services.dart';
 import 'onboarding_screen.dart';
 import 'location_selector.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_application_1/services/token_service.dart';
 
 class Location {
   final String name;
@@ -33,7 +35,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   double windSpeedThreshold = 50.0;
   double precipitationProbabilityThreshold = 100.0;
   double temperatureThreshold = 0.0;
@@ -48,10 +50,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  final TokenService _tokenService = TokenService();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = AnimationController(
       duration: Duration(milliseconds: 800),
       vsync: this,
@@ -73,6 +77,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _controller.forward();
     _checkOnboardingStatus();
     _initializePreferences();
+    _tokenService.initTokenRefreshListener();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (FirebaseAuth.instance.currentUser != null) {
+        _tokenService.saveToken();
+      }
+    }
   }
 
   Future<void> _checkOnboardingStatus() async {
@@ -471,12 +492,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       ),
       iconTheme: IconThemeData(color: colorScheme.primary),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }
 
