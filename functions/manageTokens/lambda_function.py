@@ -10,33 +10,37 @@ def lambda_handler(event, context):
         db = client['padeltid']
         collection = db['users']
 
-        # Handle GET request (get tokens)
-        if event.get('httpMethod') == 'GET':
-            user_id = event.get('queryStringParameters', {}).get('userId')
-            if not user_id:
-                raise ValueError("Missing userId in GET request")
-            return get_user_tokens(collection, user_id)
-
-        # Handle POST request (save/remove token)
-        if event.get('httpMethod') == 'POST':
-            body = json.loads(event.get('body', '{}'))
-            print("Request body:", body)  # Debug log
-            
-            user_id = body.get('userId')
-            token = body.get('token')
-            action = body.get('action')
-            
-            if not all([user_id, token, action]):
-                raise ValueError(f"Missing required fields. Got: {body}")
-            
-            if action == 'save':
-                return save_token(collection, user_id, token, body.get('platform'))
-            elif action == 'remove':
-                return remove_token(collection, user_id, token)
+        # Check if this is an API Gateway request
+        if 'httpMethod' in event:
+            # Handle API Gateway request
+            if event['httpMethod'] == 'GET':
+                user_id = event.get('queryStringParameters', {}).get('userId')
+                if not user_id:
+                    raise ValueError("Missing userId in GET request")
+                return get_user_tokens(collection, user_id)
+            elif event['httpMethod'] == 'POST':
+                body = json.loads(event.get('body', '{}'))
+                print("Request body:", body)
             else:
-                raise ValueError(f"Invalid action: {action}")
+                raise ValueError(f"Unsupported HTTP method: {event.get('httpMethod')}")
+        else:
+            # Handle direct Lambda invocation
+            body = event
 
-        raise ValueError(f"Unsupported HTTP method: {event.get('httpMethod')}")
+        # Process the request body (either from API Gateway or direct invocation)
+        user_id = body.get('userId')
+        token = body.get('token')
+        action = body.get('action')
+        
+        if not all([user_id, token, action]):
+            raise ValueError(f"Missing required fields. Got: {body}")
+        
+        if action == 'save':
+            return save_token(collection, user_id, token, body.get('platform'))
+        elif action == 'remove':
+            return remove_token(collection, user_id, token)
+        else:
+            raise ValueError(f"Invalid action: {action}")
 
     except Exception as e:
         print(f"Error in lambda_handler: {str(e)}")  # Debug log
