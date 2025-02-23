@@ -2,7 +2,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 
 class TokenService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -30,7 +29,6 @@ class TokenService {
         body: json.encode({
           'userId': user.uid,
           'token': token,
-          'platform': defaultTargetPlatform.toString(),
           'action': 'save'
         }),
       );
@@ -119,7 +117,6 @@ class TokenService {
             body: json.encode({
               'userId': user.uid,
               'token': token,
-              'platform': defaultTargetPlatform.toString(),
               'action': 'save'
             }),
           );

@@ -73,7 +73,7 @@ def lambda_handler(event, context):
             )
         
         if action == 'save':
-            return save_token(collection, user_id, token, body.get('platform'), headers)
+            return save_token(collection, user_id, token, headers)
         elif action == 'remove':
             return remove_token(collection, user_id, token, headers)
         else:
@@ -123,7 +123,7 @@ def get_user_tokens(collection, user_id, headers):
         print(f"Error in get_user_tokens: {str(e)}")
         return error_response(f"Failed to get user tokens: {str(e)}", 500, headers)
 
-def save_token(collection, user_id, token, platform, headers):
+def save_token(collection, user_id, token, headers):
     try:
         current_time = datetime.utcnow().isoformat()
         print(f"Saving token for user {user_id}")
@@ -136,7 +136,6 @@ def save_token(collection, user_id, token, platform, headers):
             },
             {
                 '$set': {
-                    'tokens.$.platform': platform,
                     'tokens.$.lastUsedAt': current_time
                 }
             }
@@ -150,7 +149,6 @@ def save_token(collection, user_id, token, platform, headers):
                     '$push': {
                         'tokens': {
                             'token': token,
-                            'platform': platform,
                             'createdAt': current_time,
                             'lastUsedAt': current_time
                         }
