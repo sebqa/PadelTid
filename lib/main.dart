@@ -7,20 +7,26 @@ import 'home_page.dart';
 import 'splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'services/token_service.dart';
+import 'services/notifications_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Update status bar style to use primary color
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: const Color(0xFF00875A), // Use primary color
-    statusBarIconBrightness: Brightness.light, // White icons for dark background
+    statusBarIconBrightness:
+        Brightness.light, // White icons for dark background
     statusBarBrightness: Brightness.dark, // Dark status bar for light icons
   ));
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
 
   // Initialize token service and save token on app launch
   if (FirebaseAuth.instance.currentUser != null) {
@@ -30,6 +36,11 @@ void main() async {
 
   //Ask permission for notifications
   FirebaseMessaging messaging = FirebaseMessaging.instance;
+  await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
 
   messaging.onTokenRefresh.listen((fcmToken) {
     // TODO: If necessary send token to application server.
@@ -38,17 +49,7 @@ void main() async {
     // Error getting token.
     print(err);
   });
-  //listen for notifications
 
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print('Got a message whilst in the foreground!');
-    print('Message data: ${message.data}');
-
-    if (message.notification != null) {
-      print(
-          'Message also contained a notification: ${message.notification?.body}');
-    }
-  });
   runApp(MaterialApp(
     home: HomePage(),
     debugShowCheckedModeBanner: false,
