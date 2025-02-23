@@ -3,6 +3,7 @@
     "short_name": "PADELTID",
     "start_url": ".",
     "display": "minimal-ui",
+    "background_color": "#00875A",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -16,18 +16,11 @@
   -->
   <base href="$FLUTTER_BASE_HREF">
 
-  <!-- Performance hints -->
-  <link rel="dns-prefetch" href="https://www.gstatic.com">
-  <link rel="preconnect" href="https://www.gstatic.com">
-
-  <!-- Preload critical resources -->
-  <link rel="preload" href="main.dart.js" as="script">
-  <link rel="preload" href="flutter.js" as="script">
-  <link rel="preload" href="assets/icon/logo.svg" as="image">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="PADELTID">
+  <meta name="theme-color" content="#00875A">
 
   <!-- iOS meta tags & icons -->
   <!-- iOS meta tags & icons -->
@@ -49,38 +42,52 @@
   <link rel="manifest" href="manifest.json">
   
   <!-- Firebase Scripts -->
-  <script type="module" async>
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-analytics.js";
     import { getMessaging } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-messaging.js";
   </script>
   
   <!-- Flutter initialization -->
-  <script src="flutter.js"></script>
+  <script src="flutter.js" defer></script>
 </head>
 <body>
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      var loading = document.createElement('div');
-      loading.style.display = 'none';
-      document.body.appendChild(loading);
-      
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: '{{flutter_service_worker_version}}',
-        },
-        onEntrypointLoaded: async function(engineInitializer) {
-          loading.remove();
-          let appRunner = await engineInitializer.initializeEngine({
-            // Optimize initial load
-            useColorEmoji: false,
-            renderer: "html"
-          });
-          await appRunner.runApp();
-        }
-      });
-    });
-  </script>
+  <style>
+    .initial-loader {
+      position: fixed;
+      inset: 0;
+      background: #00875A;
+      opacity: 0;
+      animation: fade-in 0.2s ease-in forwards;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    @keyframes fade-in {
+      to { opacity: 1; }
+    }
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      margin: 0 4px;
+      background: white;
+      border-radius: 50%;
+      animation: dot-fade 1s infinite;
+    }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dot-fade {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+  </style>
+  <div class="initial-loader">
+    <div style="display: flex;">
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+    </div>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
