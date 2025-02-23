@@ -16,6 +16,14 @@
   -->
   <base href="$FLUTTER_BASE_HREF">
 
+  <!-- Performance hints -->
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  <link rel="preconnect" href="https://www.gstatic.com">
+
+  <!-- Preload critical resources -->
+  <link rel="preload" href="main.dart.js" as="script">
+  <link rel="preload" href="flutter.js" as="script">
+  <link rel="preload" href="assets/icon/logo.svg" as="image">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -41,16 +49,38 @@
   <link rel="manifest" href="manifest.json">
   
   <!-- Firebase Scripts -->
-  <script type="module">
+  <script type="module" async>
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-analytics.js";
     import { getMessaging } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-messaging.js";
   </script>
   
   <!-- Flutter initialization -->
-  <script src="flutter.js" defer></script>
+  <script src="flutter.js"></script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Download main.dart.js
+      var loading = document.createElement('div');
+      loading.style.display = 'none';
+      document.body.appendChild(loading);
+      
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: '{{flutter_service_worker_version}}',
+        },
+        onEntrypointLoaded: async function(engineInitializer) {
+          loading.remove();
+          let appRunner = await engineInitializer.initializeEngine({
+            // Optimize initial load
+            useColorEmoji: false,
+            renderer: "html"
+          });
+          await appRunner.runApp();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
