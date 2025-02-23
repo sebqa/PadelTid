@@ -1,3 +1,5 @@
+import 'package:flutter_application_1/widgets/notification_preferences_dialog.dart';
+
 class ClubAvailability {
   final String clubId;
   final String clubName;
@@ -54,7 +56,8 @@ class Document {
   final String date;
   final String time;
   final Map<String, ClubAvailability> clubs;
-  final bool? subscribed;
+  bool? _subscribed;
+  NotificationPreferences? notificationPreferences;
   final List<String> selectedLocations;
 
   Document({
@@ -62,8 +65,12 @@ class Document {
     required this.time,
     required this.clubs,
     required this.selectedLocations,
-    this.subscribed,
-  });
+    bool? subscribed,
+    this.notificationPreferences,
+  }) : _subscribed = subscribed;
+
+  bool? get subscribed => _subscribed;
+  set subscribed(bool? value) => _subscribed = value;
 
   // Get weather from first available selected location or first available club
   Weather? get weather {
@@ -95,22 +102,42 @@ class Document {
     Map<String, ClubAvailability> clubs = {};
     if (json.containsKey('clubs')) {
       (json['clubs'] as Map<String, dynamic>).forEach((key, value) {
-        if (value != null) {  // Only add non-null club data
+        if (value != null) {
           clubs[key] = ClubAvailability.fromJson(value);
         }
       });
+    }
+
+    // Create document ID in the format YYYYMMDDHHMMSS
+    final docId = json['date'].replaceAll('-', '') + 
+                 json['time'].substring(0, 5).replaceAll(':', '') + 
+                 "00";
+
+    // Find subscription data for this document
+    final subscriptionData = subscribedDocs.firstWhere(
+      (sub) => sub['id'] == docId,
+      orElse: () => null,
+    );
+
+    // Get preferences from subscription data if it exists
+    NotificationPreferences? preferences;
+    if (subscriptionData != null && subscriptionData['preferences'] != null) {
+      final prefsJson = subscriptionData['preferences'] as Map<String, dynamic>;
+      preferences = NotificationPreferences(
+        notifyOnWeatherChange: prefsJson['notifyOnWeatherChange'] ?? true,
+        notifyWhenAvailable: prefsJson['notifyWhenAvailable'] ?? true,
+        notifyWhenOneLeft: prefsJson['notifyWhenOneLeft'] ?? false,
+        notifyWhenFull: prefsJson['notifyWhenFull'] ?? false,
+      );
     }
 
     return Document(
       date: json['date'],
       time: json['time'].substring(0, 5),
       clubs: clubs,
-      subscribed: subscribedDocs.contains(json['date'].replaceAll('-', '') + json['time'].replaceAll(':', '')) ? true : false,
+      subscribed: subscriptionData != null,
+      notificationPreferences: preferences,
       selectedLocations: selectedLocations,
     );
-  }
-
-  set subscribed(bool? value) {
-    subscribed = value;
   }
 }

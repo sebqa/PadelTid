@@ -60,11 +60,11 @@ class DocumentService {
       if (response.statusCode == 200) {
         List<dynamic> subscriptions = json.decode(response.body);
         
-        // Transform subscriptions to list of IDs where any preference is true
+        // Return full subscription objects instead of just IDs
         return subscriptions.where((sub) {
           final preferences = sub['preferences'] as Map<String, dynamic>;
           return preferences.values.any((value) => value == true);
-        }).map((sub) => sub['id']).toList();
+        }).toList();
       } else {
         throw Exception('Failed to load documents');
       }

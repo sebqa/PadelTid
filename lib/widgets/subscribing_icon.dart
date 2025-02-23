@@ -5,7 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/login_page.dart';
-import 'notification_preferences_dialog.dart';
+import 'package:flutter_application_1/widgets/notification_preferences_dialog.dart';
 import 'package:flutter_application_1/services/token_service.dart';
 
 class SubscribingIcon extends StatefulWidget {
@@ -19,13 +19,23 @@ class SubscribingIcon extends StatefulWidget {
 
 class _SubscribingIconState extends State<SubscribingIcon> {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
-  bool subscribing = false;
+  late bool subscribing;
   final TokenService _tokenService = TokenService();
 
   @override
   void initState() {
     super.initState();
     subscribing = widget.document.subscribed ?? false;
+  }
+
+  @override
+  void didUpdateWidget(SubscribingIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.document.subscribed != widget.document.subscribed) {
+      setState(() {
+        subscribing = widget.document.subscribed ?? false;
+      });
+    }
   }
 
   Future<String> getFCMToken(userId) async {
@@ -79,7 +89,13 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       context: context,
       builder: (BuildContext context) {
         return NotificationPreferencesDialog(
-          initialPreferences: NotificationPreferences(),
+          initialPreferences: widget.document.notificationPreferences ?? 
+              NotificationPreferences(
+                notifyOnWeatherChange: true,
+                notifyWhenAvailable: true,
+                notifyWhenOneLeft: false,
+                notifyWhenFull: false,
+              ),
           onSave: (preferences) {
             final hasAnyPreference = preferences.notifyOnWeatherChange ||
                                    preferences.notifyWhenAvailable ||
@@ -88,12 +104,14 @@ class _SubscribingIconState extends State<SubscribingIcon> {
 
             setState(() {
               subscribing = hasAnyPreference;
+              widget.document.notificationPreferences = preferences;
+              widget.document.subscribed = hasAnyPreference;
             });
 
             final user = FirebaseAuth.instance.currentUser!;
             subscribeToTopic(
               widget.document, 
-              hasAnyPreference ? 'true' : 'false',  // Subscribe if any preference is true
+              hasAnyPreference ? 'true' : 'false',
               user,
               preferences,
             );
@@ -117,7 +135,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       Document document, 
       String subscribe,
       User user,
-      [NotificationPreferences? preferences]) async {
+      NotificationPreferences preferences) async {
     try {
       // Get all user tokens
       final tokens = await _tokenService.getUserTokens(user.uid);
@@ -180,7 +198,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
           return;
         }
 
-        _showSubscriptionDialog();  // Always show dialog, whether subscribing or not
+        _showSubscriptionDialog();
       },
     );
   }
