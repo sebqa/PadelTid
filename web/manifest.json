@@ -5,20 +5,20 @@
     "display": "standalone",
     "background_color": "#00875A",
     "theme_color": "#00875A",
-    "description": "PADELTID",
+    "description": "Find your perfect padel court",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
         {
-            "src": "assets/icon/logo.svg",
-            "sizes": "any",
-            "type": "image/svg+xml",
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "assets/icon/maskable_logo.svg",
-            "sizes": "any",
-            "type": "image/svg+xml",
+            "src": "icons/maskable_icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
             "purpose": "maskable"
         }
     ]
