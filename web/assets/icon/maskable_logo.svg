@@ -1,0 +1,44 @@
+    <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Safe zone background -->
+    <rect width="1024" height="1024" fill="#00875A"/>
+    
+    <!-- Centered content in safe zone (about 66% of total size) -->
+    <g transform="translate(171, 171) scale(0.66)">
+        <!-- Padel Racket -->
+        <path d="M490 180
+                 L400 260
+                 C340 300 300 350 300 420
+                 C300 540 360 600 440 630
+                 L512 660
+                 L584 630
+                 C664 600 724 540 724 420
+                 C724 350 684 300 624 260
+                 L534 180Z" 
+              stroke="#ffffff" stroke-width="32" fill="#ffffff"/>
+        
+        <!-- Handle Grip Lines -->
+        <line x1="486" y1="720" x2="538" y2="710" stroke="#ffffff" stroke-width="20"/>
+        <line x1="486" y1="760" x2="538" y2="750" stroke="#ffffff" stroke-width="20"/>
+        <line x1="486" y1="800" x2="538" y2="790" stroke="#ffffff" stroke-width="20"/>
+        <line x1="486" y1="840" x2="538" y2="830" stroke="#ffffff" stroke-width="20"/>
+        <line x1="486" y1="880" x2="538" y2="870" stroke="#ffffff" stroke-width="20"/>
+        
+        <!-- Racket Holes Pattern -->
+        <circle cx="412" cy="320" r="20" fill="#00875A"/>
+        <circle cx="612" cy="320" r="20" fill="#00875A"/>
+        
+        <circle cx="362" cy="420" r="20" fill="#00875A"/>
+        <circle cx="462" cy="420" r="20" fill="#00875A"/>
+        <circle cx="662" cy="420" r="20" fill="#00875A"/>
+        
+        <circle cx="412" cy="520" r="20" fill="#00875A"/>
+        <circle cx="512" cy="520" r="20" fill="#00875A"/>
+        <circle cx="612" cy="520" r="20" fill="#00875A"/>
+
+        <circle cx="512" cy="600" r="20" fill="#00875A"/>
+
+        <!-- Clock Hands -->
+        <line x1="512" y1="420" x2="512" y2="250" stroke="#00875A" stroke-width="36" stroke-linecap="round"/>
+        <line x1="512" y1="420" x2="620" y2="420" stroke="#00875A" stroke-width="36" stroke-linecap="round"/>
+    </g>
+    </svg> 
