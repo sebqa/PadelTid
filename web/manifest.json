@@ -2,9 +2,7 @@
     "name": "PADELTID",
     "short_name": "PADELTID",
     "start_url": ".",
-    "display": "standalone",
-    "background_color": "#00875A",
-    "theme_color": "#00875A",
+    "display": "minimal-ui",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
