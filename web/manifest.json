@@ -3,7 +3,7 @@
     "short_name": "PADELTID",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#00875A",
+    "background_color": "#F8F8F8",
     "theme_color": "#00875A",
     "description": "Find your perfect padel court",
     "orientation": "portrait-primary",
