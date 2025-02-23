@@ -19,12 +19,12 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Find your perfect padel court">
-  <meta name="theme-color" content="#00875A">
+  <meta name="description" content="PADELTID">
+  <meta name="mobile-web-app-capable" content="yes">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="PADELTID">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -37,154 +37,20 @@
   <link rel="mask-icon" href="assets/icon/logo.svg" color="#00875A">
   <link rel="apple-touch-icon" href="assets/icon/logo.svg">
 
-  <!-- iOS Splash Screen Images -->
-  <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Pro_Max_portrait.png">
-  <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Pro_portrait.png">
-  <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Plus__iPhone_13_Pro_Max__iPhone_12_Pro_Max_portrait.png">
-  <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14__iPhone_13_Pro__iPhone_13__iPhone_12_Pro__iPhone_12_portrait.png">
-  <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_13_mini__iPhone_12_mini__iPhone_11_Pro__iPhone_XS__iPhone_X_portrait.png">
-
   <title>PADELTID</title>
   <link rel="manifest" href="manifest.json">
-
-  <style>
-    html {
-      background-color: #F8F8F8;
-    }
-
-    body {
-      margin: 0;
-    }
-
-    .loading {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #F8F8F8;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      opacity: 1;
-      transition: opacity 0.4s ease-out;
-    }
-
-    .loading.remove {
-      opacity: 0;
-    }
-
-    .loader {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transform: scale(0.8);
-    }
-
-    .icon {
-      width: 80px;
-      height: 80px;
-      margin-bottom: 24px;
-    }
-
-    .title {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      font-size: 32px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      color: #1D1D1D;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      font-size: 16px;
-      letter-spacing: 0.5px;
-      color: rgba(29, 29, 29, 0.7);
-    }
-  </style>
-
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = null;
+  
+  <!-- Firebase Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-analytics.js";
+    import { getMessaging } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-messaging.js";
   </script>
-  <!-- This script adds the flutter initialization JS code -->
+  
+  <!-- Flutter initialization -->
   <script src="flutter.js" defer></script>
 </head>
 <body>
-  <div id="loading" class="loading">
-    <div class="loader">
-      <svg class="icon" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Safe zone background -->
-        <rect width="1024" height="1024" fill="#00875A"/>
-        
-        <!-- Centered content in safe zone (about 66% of total size) -->
-        <g transform="translate(171, 171) scale(0.66)">
-            <!-- Padel Racket -->
-            <path d="M490 180
-                     L400 260
-                     C340 300 300 350 300 420
-                     C300 540 360 600 440 630
-                     L512 660
-                     L584 630
-                     C664 600 724 540 724 420
-                     C724 350 684 300 624 260
-                     L534 180Z" 
-                  stroke="#ffffff" stroke-width="32" fill="#ffffff"/>
-            
-            <!-- Handle Grip Lines -->
-            <line x1="486" y1="720" x2="538" y2="710" stroke="#ffffff" stroke-width="20"/>
-            <line x1="486" y1="760" x2="538" y2="750" stroke="#ffffff" stroke-width="20"/>
-            <line x1="486" y1="800" x2="538" y2="790" stroke="#ffffff" stroke-width="20"/>
-            <line x1="486" y1="840" x2="538" y2="830" stroke="#ffffff" stroke-width="20"/>
-            <line x1="486" y1="880" x2="538" y2="870" stroke="#ffffff" stroke-width="20"/>
-            
-            <!-- Racket Holes Pattern -->
-            <circle cx="412" cy="320" r="20" fill="#00875A"/>
-            <circle cx="612" cy="320" r="20" fill="#00875A"/>
-            
-            <circle cx="362" cy="420" r="20" fill="#00875A"/>
-            <circle cx="462" cy="420" r="20" fill="#00875A"/>
-            <circle cx="662" cy="420" r="20" fill="#00875A"/>
-            
-            <circle cx="412" cy="520" r="20" fill="#00875A"/>
-            <circle cx="512" cy="520" r="20" fill="#00875A"/>
-            <circle cx="612" cy="520" r="20" fill="#00875A"/>
-
-            <circle cx="512" cy="600" r="20" fill="#00875A"/>
-
-            <!-- Clock Hands -->
-            <line x1="512" y1="420" x2="512" y2="250" stroke="#00875A" stroke-width="36" stroke-linecap="round"/>
-            <line x1="512" y1="420" x2="620" y2="420" stroke="#00875A" stroke-width="36" stroke-linecap="round"/>
-        </g>
-      </svg>
-      <div class="title">PADELTID</div>
-      <div class="subtitle">Find your perfect court</div>
-    </div>
-  </div>
-
-  <script>
-    window.addEventListener('load', function() {
-      // Add a small delay to ensure smooth transition from system splash screen
-      setTimeout(() => {
-        _flutter.loader.loadEntrypoint({
-          serviceWorker: {
-            serviceWorkerVersion: serviceWorkerVersion,
-          },
-          onEntrypointLoaded: async function(engineInitializer) {
-            const appRunner = await engineInitializer.initializeEngine();
-            await appRunner.runApp();
-            
-            // Remove loading screen with fade
-            const loading = document.querySelector('#loading');
-            loading.classList.add('remove');
-            setTimeout(() => {
-              loading.remove();
-            }, 400);
-          }
-        });
-      }, 200);
-    });
-  </script>
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
