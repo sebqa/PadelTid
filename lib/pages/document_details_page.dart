@@ -6,7 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 class DocumentDetailsPage extends StatelessWidget {
   final Document document;
 
-  const DocumentDetailsPage({Key? key, required this.document}) : super(key: key);
+  const DocumentDetailsPage({Key? key, required this.document})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +16,8 @@ class DocumentDetailsPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -71,13 +73,15 @@ class DocumentDetailsPage extends StatelessWidget {
           ),
           SizedBox(height: 16),
           // List of clubs
-          ...document.clubs.entries.map((entry) => _buildClubCard(context, entry.key, entry.value)),
+          ...document.clubs.entries
+              .map((entry) => _buildClubCard(context, entry.key, entry.value)),
         ],
       ),
     );
   }
 
-  Widget _buildClubCard(BuildContext context, String clubName, ClubAvailability club) {
+  Widget _buildClubCard(
+      BuildContext context, String clubName, ClubAvailability club) {
     return Card(
       elevation: 0,
       margin: EdgeInsets.only(bottom: 12),
@@ -98,14 +102,15 @@ class DocumentDetailsPage extends StatelessWidget {
                   child: Text(
                     clubName,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
@@ -154,7 +159,7 @@ class DocumentDetailsPage extends StatelessWidget {
                       await launchUrl(url);
                     }
                   },
-                  icon: Icon(Icons.sports_tennis),
+                  icon: Icon(Icons.open_in_new),
                   label: Text('Book Court'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
@@ -172,7 +177,8 @@ class DocumentDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildWeatherInfo(BuildContext context, IconData icon, String value, String label) {
+  Widget _buildWeatherInfo(
+      BuildContext context, IconData icon, String value, String label) {
     return Column(
       children: [
         Icon(
@@ -197,4 +203,4 @@ class DocumentDetailsPage extends StatelessWidget {
       ],
     );
   }
-} 
+}
