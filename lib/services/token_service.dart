@@ -2,17 +2,31 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter/material.dart';
 
 class TokenService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final String _apiUrl = 'https://kgzbg5117d.execute-api.eu-north-1.amazonaws.com/default/manageTokens'; // Create new Lambda endpoint
+  final String _apiUrl =
+      'https://kgzbg5117d.execute-api.eu-north-1.amazonaws.com/default/manageTokens'; // Create new Lambda endpoint
 
   // Save or update token
   Future<void> saveToken() async {
     try {
       final user = _auth.currentUser;
       if (user == null) return;
+
+      // Check notification permission
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+        print('User declined notification permissions');
+        return;
+      }
 
       final token = await _messaging.getToken();
       if (token == null) return;
@@ -26,11 +40,8 @@ class TokenService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: json.encode({
-          'userId': user.uid,
-          'token': token,
-          'action': 'save'
-        }),
+        body:
+            json.encode({'userId': user.uid, 'token': token, 'action': 'save'}),
       );
 
       print("Response status: ${response.statusCode}"); // Debug log
@@ -82,11 +93,8 @@ class TokenService {
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
-        body: json.encode({
-          'userId': user.uid,
-          'token': token,
-          'action': 'remove'
-        }),
+        body: json
+            .encode({'userId': user.uid, 'token': token, 'action': 'remove'}),
       );
 
       print("Remove token response: ${response.statusCode} - ${response.body}");
@@ -105,6 +113,13 @@ class TokenService {
       final user = _auth.currentUser;
       if (user != null) {
         try {
+          // Check notification permission
+          final settings = await _messaging.getNotificationSettings();
+          if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+            print('No notification permissions for token refresh');
+            return;
+          }
+
           final response = await http.post(
             Uri.parse(_apiUrl),
             headers: {
@@ -114,14 +129,12 @@ class TokenService {
               'Access-Control-Allow-Methods': 'POST, OPTIONS',
               'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             },
-            body: json.encode({
-              'userId': user.uid,
-              'token': token,
-              'action': 'save'
-            }),
+            body: json
+                .encode({'userId': user.uid, 'token': token, 'action': 'save'}),
           );
 
-          print("Token refresh response: ${response.statusCode} - ${response.body}");
+          print(
+              "Token refresh response: ${response.statusCode} - ${response.body}");
 
           if (response.statusCode != 200) {
             throw Exception('Failed to save refreshed token: ${response.body}');
@@ -133,4 +146,4 @@ class TokenService {
       }
     });
   }
-} 
+}
