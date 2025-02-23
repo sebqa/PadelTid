@@ -44,19 +44,35 @@ def subscribe_to_topic(date, time, subscribe, userId, device_tokens_str, prefere
             # Parse preferences from string
             preferences = json.loads(preferences_str)
             
-            # Update user's subscriptions with preferences
+            # Update user's subscriptions - using $set instead of $addToSet
             collection.update_one(
-                {"_id": userId}, 
-                {"$addToSet": {
-                    "subscriptions": {
-                        "id": date_time,
-                        "preferences": preferences
+                {
+                    "_id": userId,
+                    "subscriptions.id": date_time  # Look for existing subscription
+                },
+                {
+                    "$set": {
+                        "subscriptions.$.preferences": preferences  # Update existing subscription
                     }
-                }}, 
-                upsert=True
+                }
             )
             
-            # Update or create subscription document
+            # If no existing subscription was updated, create a new one
+            if collection.find_one({"_id": userId, "subscriptions.id": date_time}) is None:
+                collection.update_one(
+                    {"_id": userId},
+                    {
+                        "$push": {
+                            "subscriptions": {
+                                "id": date_time,
+                                "preferences": preferences
+                            }
+                        }
+                    },
+                    upsert=True
+                )
+            
+            # Update subscription document
             db.subscriptions.update_one(
                 {"_id": date_time},
                 {
