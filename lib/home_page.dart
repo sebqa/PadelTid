@@ -35,7 +35,8 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   double windSpeedThreshold = 50.0;
   double precipitationProbabilityThreshold = 100.0;
   double temperatureThreshold = 0.0;
@@ -99,7 +100,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _checkOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-    
+
     setState(() {
       _selectedLocations = prefs.getStringList('selected_locations') ?? [];
       _showOnboarding = !hasSeenOnboarding;
@@ -113,13 +114,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     // Initialize recommended documents with selected locations
     recommendedDocuments = documentService.fetchDocuments(
-      windSpeedThreshold,
-      precipitationProbabilityThreshold,
-      temperatureThreshold,
-      false,
-      true,
-      _selectedLocations
-    );
+        windSpeedThreshold,
+        precipitationProbabilityThreshold,
+        temperatureThreshold,
+        false,
+        true,
+        _selectedLocations);
   }
 
   Future<void> _initializePreferences() async {
@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           sharedPreferences.getDouble('temperature_threshold') ?? 0.0;
       showUnavailableSlots =
           sharedPreferences.getBool('show_unavailable_courts') ?? true;
-      _selectedLocations = 
+      _selectedLocations =
           sharedPreferences.getStringList('selected_locations') ?? [];
     });
     _fetchDocuments();
@@ -260,7 +260,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                         ),
                         child: Text('Apply'),
@@ -294,7 +295,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           children: [
             Row(
               children: [
-                Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
+                Icon(icon,
+                    color: Theme.of(context).colorScheme.primary, size: 20),
                 SizedBox(width: 8),
                 Text(label, style: Theme.of(context).textTheme.bodyLarge),
               ],
@@ -309,9 +311,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         SliderTheme(
           data: SliderThemeData(
             activeTrackColor: Theme.of(context).colorScheme.primary,
-            inactiveTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            inactiveTrackColor:
+                Theme.of(context).colorScheme.primary.withOpacity(0.2),
             thumbColor: Theme.of(context).colorScheme.primary,
-            overlayColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            overlayColor:
+                Theme.of(context).colorScheme.primary.withOpacity(0.1),
           ),
           child: Slider(
             value: value,
@@ -346,7 +350,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   height: 300,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.05),
                   ),
                 ),
                 // Curved lines
@@ -360,7 +365,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ],
             ),
           ),
-          
+
           // Main content
           CustomScrollView(
             slivers: [
@@ -406,17 +411,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
               if (_selectedLocations.isNotEmpty) ...[
                 if (recommendedDocuments != null)
-                  SliverRecommendedLV(recommendedDocuments: recommendedDocuments),
+                  SliverRecommendedLV(
+                      recommendedDocuments: recommendedDocuments),
                 SliverToBoxAdapter(
                   child: FutureBuilder<List<Document>>(
                     future: futureDocuments,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
+                        return Padding(
+                          padding: EdgeInsets.only(top: 32.0),
+                          child:
+                              const Center(child: CircularProgressIndicator()),
+                        );
                       } else if (snapshot.hasError) {
                         return Center(child: Text('Error: ${snapshot.error}'));
                       } else if (snapshot.hasData) {
-                        final groupedDocuments = _groupDocuments(snapshot.data!);
+                        final groupedDocuments =
+                            _groupDocuments(snapshot.data!);
                         if (!consentShown) {
                           showConsentSnackbar(context, onlyShowIfNotSet: true);
                           consentShown = true;
@@ -424,6 +435,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         return MainListView(
                           groupedDocuments: groupedDocuments,
                           onFilterTap: showSettingsDialog,
+                          onRefresh: _refreshData,
                         );
                       } else {
                         return const Center(child: Text('No data'));
@@ -439,7 +451,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       child: Text(
                         'Select clubs to see available time slots',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.6),
                           fontSize: 16,
                         ),
                       ),
@@ -492,6 +507,29 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       ),
       iconTheme: IconThemeData(color: colorScheme.primary),
     );
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      futureDocuments = documentService.fetchDocuments(
+        windSpeedThreshold,
+        precipitationProbabilityThreshold,
+        temperatureThreshold,
+        showUnavailableSlots,
+        false,
+        _selectedLocations,
+      );
+
+      if (_selectedLocations.isNotEmpty) {
+        recommendedDocuments = documentService.fetchDocuments(
+            windSpeedThreshold,
+            precipitationProbabilityThreshold,
+            temperatureThreshold,
+            false,
+            true,
+            _selectedLocations);
+      }
+    });
   }
 }
 
