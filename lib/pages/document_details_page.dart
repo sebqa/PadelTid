@@ -152,15 +152,13 @@ class DocumentDetailsPage extends StatelessWidget {
             // Add book button
             if (club.clubUrl.isNotEmpty)
               Center(
-                child: ElevatedButton.icon(
+                child: ElevatedButton(
                   onPressed: () async {
                     final url = Uri.parse(club.clubUrl);
                     if (await canLaunchUrl(url)) {
                       await launchUrl(url);
                     }
                   },
-                  icon: Icon(Icons.open_in_new),
-                  label: Text('Book Court'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -169,6 +167,7 @@ class DocumentDetailsPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  child: Text('Book Court'),
                 ),
               ),
           ],
