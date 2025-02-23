@@ -6,22 +6,20 @@
     <g transform="translate(171, 171) scale(0.66)">
         <!-- Padel Racket -->
         <path d="M490 180
-                 L400 260
-                 C340 300 300 350 300 420
+                 C400 180 300 260 300 420
                  C300 540 360 600 440 630
                  L512 660
                  L584 630
                  C664 600 724 540 724 420
-                 C724 350 684 300 624 260
-                 L534 180Z" 
+                 C724 260 624 180 512 180Z" 
               stroke="#ffffff" stroke-width="32" fill="#ffffff"/>
         
         <!-- Handle Grip Lines -->
-        <line x1="486" y1="720" x2="538" y2="710" stroke="#ffffff" stroke-width="20"/>
-        <line x1="486" y1="760" x2="538" y2="750" stroke="#ffffff" stroke-width="20"/>
-        <line x1="486" y1="800" x2="538" y2="790" stroke="#ffffff" stroke-width="20"/>
-        <line x1="486" y1="840" x2="538" y2="830" stroke="#ffffff" stroke-width="20"/>
-        <line x1="486" y1="880" x2="538" y2="870" stroke="#ffffff" stroke-width="20"/>
+        <line x1="476" y1="720" x2="548" y2="710" stroke="#ffffff" stroke-width="30"/>
+        <line x1="476" y1="760" x2="548" y2="750" stroke="#ffffff" stroke-width="30"/>
+        <line x1="476" y1="800" x2="548" y2="790" stroke="#ffffff" stroke-width="30"/>
+        <line x1="476" y1="840" x2="548" y2="830" stroke="#ffffff" stroke-width="30"/>
+        <line x1="476" y1="880" x2="548" y2="870" stroke="#ffffff" stroke-width="30"/>
         
         <!-- Racket Holes Pattern -->
         <circle cx="412" cy="320" r="20" fill="#00875A"/>

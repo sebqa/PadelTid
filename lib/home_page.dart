@@ -435,7 +435,6 @@ class _HomePageState extends State<HomePage>
                         return MainListView(
                           groupedDocuments: groupedDocuments,
                           onFilterTap: showSettingsDialog,
-                          onRefresh: _refreshData,
                         );
                       } else {
                         return const Center(child: Text('No data'));
