@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'firebase_options.dart';
 import 'home_page.dart';
-import 'splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'services/token_service.dart';
 import 'services/notifications_services.dart';

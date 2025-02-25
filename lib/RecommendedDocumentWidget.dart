@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/document_page.dart';
 import 'package:flutter_application_1/model/document.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 class RecommendedDocumentWidget extends StatelessWidget {

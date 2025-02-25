@@ -1,9 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_application_1/login_page.dart';
 import 'package:flutter_application_1/model/document.dart';
-import 'document_page.dart';
 import 'widgets/subscribing_icon.dart';
 import 'pages/document_details_page.dart';
 
@@ -117,7 +114,8 @@ class _DocumentWidgetState extends State<DocumentWidget> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DocumentDetailsPage(document: widget.document),
+              builder: (context) =>
+                  DocumentDetailsPage(document: widget.document),
             ),
           );
         },
@@ -136,7 +134,8 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                   height: 65,
                   margin: EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -164,7 +163,9 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                                 widget.document.time,
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -176,16 +177,19 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                               // Temperature
                               Row(
                                 children: [
-                                  Icon(Icons.thermostat, 
-                                    size: 16, 
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant
-                                  ),
+                                  Icon(Icons.thermostat,
+                                      size: 16,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
                                   SizedBox(width: 2),
                                   Text(
                                     '${widget.document.airTemperature}°C',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -194,22 +198,27 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                               Text(
                                 ' | ',
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                               ),
                               // Wind
                               Row(
                                 children: [
-                                  Icon(Icons.air, 
-                                    size: 16, 
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant
-                                  ),
+                                  Icon(Icons.air,
+                                      size: 16,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
                                   SizedBox(width: 2),
                                   Text(
                                     '${widget.document.windSpeed}m/s',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -218,22 +227,27 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                               Text(
                                 ' | ',
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                               ),
                               // Precipitation
                               Row(
                                 children: [
-                                  Icon(Icons.water_drop, 
-                                    size: 16, 
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant
-                                  ),
+                                  Icon(Icons.water_drop,
+                                      size: 16,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
                                   SizedBox(width: 2),
                                   Text(
                                     '${widget.document.precipitationProbability}%',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -252,7 +266,9 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                             '${widget.document.totalClubs} location | ${widget.document.totalAvailableSlots} courts',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -270,5 +286,3 @@ class _DocumentWidgetState extends State<DocumentWidget> {
     );
   }
 }
-
-

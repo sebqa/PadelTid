@@ -85,5 +85,4 @@ class DefaultFirebaseOptions {
     projectId: 'padeltid-85e2b',
     storageBucket: 'padeltid-85e2b.appspot.com',
   );
-
 }

@@ -3,18 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/consent_snackbar.dart';
 import 'package:flutter_application_1/document_service.dart';
 import 'package:flutter_application_1/model/document.dart';
-import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_application_1/painters/tennis_ball_painter.dart';
 
 import 'login_page.dart';
 import 'document_widget.dart';
 import 'main_list_view.dart';
 import 'recommended_lv_holder.dart';
-import 'RecommendedDocumentWidget.dart';
-import 'package:flutter/services.dart';
-import 'onboarding_screen.dart';
 import 'location_selector.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/services/token_service.dart';
