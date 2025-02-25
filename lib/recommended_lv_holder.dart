@@ -25,7 +25,7 @@ class recommended_lv_holder extends StatelessWidget {
     final listViewHeight = screenHeight * 0.13;
 
     return Container(
-      margin: EdgeInsets.only(top: 16),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -34,32 +34,11 @@ class recommended_lv_holder extends StatelessWidget {
           ),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-            child: Row(
-              children: [
-                Text(
-                  'Recommended',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                    height: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: listViewHeight,
-            child: RecommendedDocumentsListView(
-              recommendedDocuments: documents,
-            ),
-          ),
-        ],
+      child: SizedBox(
+        height: listViewHeight,
+        child: RecommendedDocumentsListView(
+          recommendedDocuments: documents,
+        ),
       ),
     );
   }

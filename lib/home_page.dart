@@ -405,19 +405,76 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
               if (_selectedLocations.isNotEmpty) ...[
+                // Show Recommended section header and content
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                    child: Text(
+                      'Recommended',
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                height: 1.2,
+                              ),
+                    ),
+                  ),
+                ),
+                // Show loading state or content
                 if (recommendedDocuments != null)
-                  SliverRecommendedLV(
-                      recommendedDocuments: recommendedDocuments),
+                  SliverToBoxAdapter(
+                    child: FutureBuilder<List<Document>>(
+                      future: recommendedDocuments,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.13,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        return recommended_lv_holder(
+                            documents: snapshot.data ?? []);
+                      },
+                    ),
+                  ),
+
+                // Show All Timeslots section header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'All timeslots',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                height: 1.2,
+                              ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.tune, color: Colors.black),
+                          onPressed: showSettingsDialog,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Show loading state or content for All Timeslots
                 SliverToBoxAdapter(
                   child: FutureBuilder<List<Document>>(
                     future: futureDocuments,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Padding(
-                          padding: EdgeInsets.only(top: 32.0),
-                          child:
-                              const Center(child: CircularProgressIndicator()),
-                        );
+                        return Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
                         return Center(child: Text('Error: ${snapshot.error}'));
                       } else if (snapshot.hasData) {
@@ -431,9 +488,8 @@ class _HomePageState extends State<HomePage>
                           groupedDocuments: groupedDocuments,
                           onFilterTap: showSettingsDialog,
                         );
-                      } else {
-                        return const Center(child: Text('No data'));
                       }
+                      return const Center(child: Text('No data'));
                     },
                   ),
                 ),
