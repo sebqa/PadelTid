@@ -140,7 +140,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                   ),
                   child: Center(
                     child: SvgPicture.asset(
-                      'assets/weather_symbols/lightmode/${getWeatherSymbolFromKey(widget.document.symbolCode)}.svg',
+                      'assets/weather_symbols/darkmode/${getWeatherSymbolFromKey(widget.document.symbolCode)}.svg',
                       width: 48,
                       height: 48,
                     ),
