@@ -76,9 +76,18 @@
   
 
   <script>
-    // Prevent browser back button from reloading the page
+    let isAtHomePage = true;
+
+    // Listen for Flutter's custom events to track navigation
+    window.addEventListener('flutterInAppRouteChange', function(event) {
+      isAtHomePage = event.detail === '/';
+    });
+
+    // Handle browser back button
     window.addEventListener('popstate', function(event) {
-      window.history.forward();
+      if (isAtHomePage) {
+        window.history.forward();
+      }
     });
   </script>
 
