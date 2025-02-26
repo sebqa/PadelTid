@@ -5,6 +5,7 @@ import 'package:flutter_application_1/document_service.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/painters/tennis_ball_painter.dart';
+import 'widgets/skeleton_widgets.dart';
 
 import 'login_page.dart';
 import 'document_widget.dart';
@@ -429,10 +430,7 @@ class _HomePageState extends State<HomePage>
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.13,
-                            child: Center(child: CircularProgressIndicator()),
-                          );
+                          return RecommendedListSkeleton();
                         }
                         return recommended_lv_holder(
                             documents: snapshot.data ?? []);
@@ -474,7 +472,7 @@ class _HomePageState extends State<HomePage>
                     future: futureDocuments,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
+                        return MainListSkeleton();
                       } else if (snapshot.hasError) {
                         return Center(child: Text('Error: ${snapshot.error}'));
                       } else if (snapshot.hasData) {
@@ -596,13 +594,7 @@ class SliverRecommendedLV extends StatelessWidget {
         future: recommendedDocuments,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: SizedBox(
-                height: 50,
-                width: 50,
-                child: CircularProgressIndicator(color: Colors.transparent),
-              ),
-            );
+            return RecommendedListSkeleton();
           } else if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
           } else {

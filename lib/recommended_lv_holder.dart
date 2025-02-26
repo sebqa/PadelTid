@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/recommended_documents_lv.dart';
+import 'widgets/skeleton_widgets.dart';
 
 class recommended_lv_holder extends StatelessWidget {
   const recommended_lv_holder({
