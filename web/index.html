@@ -54,12 +54,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      transition: opacity 0.3s ease-out;
-    }
-
-    .initial-loader.hidden {
-      opacity: 0;
-      pointer-events: none;
     }
 
     .loading-dot {
@@ -80,28 +74,6 @@
     }
   </style>
   
-
-  <script>
-    // Prevent going back past the initial page
-    if (window.history.scrollRestoration) {
-      window.history.scrollRestoration = 'manual';
-    }
-    
-    let initialPage = window.location.href;
-    
-    window.addEventListener('load', function() {
-      // Push initial state
-      window.history.pushState({ initial: true }, '', initialPage);
-    });
-
-    window.addEventListener('popstate', function(event) {
-      // If trying to go back from initial page, prevent it
-      if (window.location.href === initialPage) {
-        window.history.pushState(null, '', initialPage);
-      }
-    });
-  </script>
-
   <!-- Flutter initialization -->
   <script src="flutter.js" defer></script>
 </head>
@@ -113,28 +85,6 @@
       <div class="loading-dot"></div>
     </div>
   </div>
-  <script>
-    window.addEventListener('load', function() {
-      // Get the loader element
-      const loader = document.querySelector('.initial-loader');
-      
-      // Initialize Flutter
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: async function(engineInitializer) {
-          const appRunner = await engineInitializer.initializeEngine();
-          await appRunner.runApp();
-          
-          // Hide loader after Flutter is initialized
-          loader.classList.add('hidden');
-          // Remove loader from DOM after transition
-          setTimeout(() => loader.remove(), 300);
-        }
-      });
-    });
-  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

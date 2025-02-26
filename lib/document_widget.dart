@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'widgets/subscribing_icon.dart';
 import 'pages/document_details_page.dart';
+import 'package:flutter/cupertino.dart';
 
 class DocumentWidget extends StatefulWidget {
   final Document document;
@@ -113,12 +114,9 @@ class _DocumentWidgetState extends State<DocumentWidget> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
+            CupertinoPageRoute(
               builder: (context) =>
                   DocumentDetailsPage(document: widget.document),
-              fullscreenDialog: false,
-              maintainState: true,
-              settings: RouteSettings(name: '/details'),
             ),
           );
         },

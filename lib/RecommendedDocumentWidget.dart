@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:intl/intl.dart';
 import 'pages/document_details_page.dart';
+import 'package:flutter/cupertino.dart';
 
 class RecommendedDocumentWidget extends StatelessWidget {
   final Document document;
@@ -121,11 +122,8 @@ class RecommendedDocumentWidget extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          CupertinoPageRoute(
             builder: (context) => DocumentDetailsPage(document: document),
-            fullscreenDialog: false,
-            maintainState: true,
-            settings: RouteSettings(name: '/details'),
           ),
         );
       },
