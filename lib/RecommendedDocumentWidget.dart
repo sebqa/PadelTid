@@ -124,6 +124,8 @@ class RecommendedDocumentWidget extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => DocumentDetailsPage(document: document),
             fullscreenDialog: false,
+            maintainState: true,
+            settings: RouteSettings(name: '/details'),
           ),
         );
       },

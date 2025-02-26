@@ -117,6 +117,8 @@ class _DocumentWidgetState extends State<DocumentWidget> {
               builder: (context) =>
                   DocumentDetailsPage(document: widget.document),
               fullscreenDialog: false,
+              maintainState: true,
+              settings: RouteSettings(name: '/details'),
             ),
           );
         },
