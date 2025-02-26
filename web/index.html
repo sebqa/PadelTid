@@ -54,6 +54,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .initial-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .loading-dot {
@@ -108,8 +114,11 @@
     </div>
   </div>
   <script>
-    // Initialize Flutter web
     window.addEventListener('load', function() {
+      // Get the loader element
+      const loader = document.querySelector('.initial-loader');
+      
+      // Initialize Flutter
       _flutter.loader.loadEntrypoint({
         serviceWorker: {
           serviceWorkerVersion: serviceWorkerVersion,
@@ -117,6 +126,11 @@
         onEntrypointLoaded: async function(engineInitializer) {
           const appRunner = await engineInitializer.initializeEngine();
           await appRunner.runApp();
+          
+          // Hide loader after Flutter is initialized
+          loader.classList.add('hidden');
+          // Remove loader from DOM after transition
+          setTimeout(() => loader.remove(), 300);
         }
       });
     });
