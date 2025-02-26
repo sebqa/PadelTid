@@ -76,17 +76,22 @@
   
 
   <script>
-    let isAtHomePage = true;
-
-    // Listen for Flutter's custom events to track navigation
-    window.addEventListener('flutterInAppRouteChange', function(event) {
-      isAtHomePage = event.detail === '/';
+    // Prevent going back past the initial page
+    if (window.history.scrollRestoration) {
+      window.history.scrollRestoration = 'manual';
+    }
+    
+    let initialPage = window.location.href;
+    
+    window.addEventListener('load', function() {
+      // Push initial state
+      window.history.pushState({ initial: true }, '', initialPage);
     });
 
-    // Handle browser back button
     window.addEventListener('popstate', function(event) {
-      if (isAtHomePage) {
-        window.history.forward();
+      // If trying to go back from initial page, prevent it
+      if (window.location.href === initialPage) {
+        window.history.pushState(null, '', initialPage);
       }
     });
   </script>
