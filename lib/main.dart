@@ -7,6 +7,7 @@ import 'home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'services/token_service.dart';
 import 'services/notifications_services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -108,5 +109,6 @@ void main() async {
         ),
       ),
     ),
+    navigatorObservers: [NavigationHelper.routeObserver],
   ));
 }

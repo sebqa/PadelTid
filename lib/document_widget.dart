@@ -4,6 +4,7 @@ import 'package:flutter_application_1/model/document.dart';
 import 'widgets/subscribing_icon.dart';
 import 'pages/document_details_page.dart';
 import 'package:flutter/cupertino.dart';
+import 'navigation/route_manager.dart';
 
 class DocumentWidget extends StatefulWidget {
   final Document document;
@@ -112,13 +113,8 @@ class _DocumentWidgetState extends State<DocumentWidget> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            CupertinoPageRoute(
-              builder: (context) =>
-                  DocumentDetailsPage(document: widget.document),
-            ),
-          );
+          NavigationHelper.navigateToPage(
+              context, DocumentDetailsPage(document: widget.document));
         },
         child: Card(
           elevation: 0,

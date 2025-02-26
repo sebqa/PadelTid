@@ -3,6 +3,7 @@ import 'package:flutter_application_1/model/document.dart';
 import 'package:intl/intl.dart';
 import 'pages/document_details_page.dart';
 import 'package:flutter/cupertino.dart';
+import 'navigation/route_manager.dart';
 
 class RecommendedDocumentWidget extends StatelessWidget {
   final Document document;
@@ -120,12 +121,8 @@ class RecommendedDocumentWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          CupertinoPageRoute(
-            builder: (context) => DocumentDetailsPage(document: document),
-          ),
-        );
+        NavigationHelper.navigateToPage(
+            context, DocumentDetailsPage(document: document));
       },
       child: Card(
         margin: EdgeInsets.symmetric(horizontal: 8),
