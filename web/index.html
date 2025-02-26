@@ -75,6 +75,13 @@
   </style>
   
 
+  <script>
+    // Prevent browser back button from reloading the page
+    window.addEventListener('popstate', function(event) {
+      window.history.forward();
+    });
+  </script>
+
   <!-- Flutter initialization -->
   <script src="flutter.js" defer></script>
 </head>
@@ -86,6 +93,20 @@
       <div class="loading-dot"></div>
     </div>
   </div>
+  <script>
+    // Initialize Flutter web
+    window.addEventListener('load', function() {
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: async function(engineInitializer) {
+          const appRunner = await engineInitializer.initializeEngine();
+          await appRunner.runApp();
+        }
+      });
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
