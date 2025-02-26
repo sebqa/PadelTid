@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../model/document.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html;
 
 class DocumentDetailsPage extends StatelessWidget {
   final Document document;
@@ -11,72 +13,91 @@ class DocumentDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if running on iOS web
+    final isIOSWeb = kIsWeb &&
+        (html.window.navigator.userAgent.toLowerCase().contains('iphone') ||
+            html.window.navigator.userAgent.toLowerCase().contains('ipad'));
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // Use custom back action for iOS web
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
               color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           '${document.date} at ${document.time}',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
-      body: ListView(
-        padding: EdgeInsets.all(16),
-        children: [
-          // Summary card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-              ),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Overview',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on_outlined),
-                      SizedBox(width: 8),
-                      Text('${document.totalClubs} locations available'),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.sports_tennis_outlined),
-                      SizedBox(width: 8),
-                      Text('${document.totalAvailableSlots} courts available'),
-                    ],
-                  ),
-                ],
-              ),
+      // Disable swipe gestures for iOS web only
+      body: isIOSWeb
+          ? WillPopScope(
+              onWillPop: () async {
+                Navigator.of(context).pop();
+                return false;
+              },
+              child: _buildBody(context),
+            )
+          : _buildBody(context),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.all(16),
+      children: [
+        // Summary card
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
             ),
           ),
-          SizedBox(height: 24),
-          Text(
-            'Available Locations',
-            style: Theme.of(context).textTheme.titleLarge,
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Overview',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.location_on_outlined),
+                    SizedBox(width: 8),
+                    Text('${document.totalClubs} locations available'),
+                  ],
+                ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.sports_tennis_outlined),
+                    SizedBox(width: 8),
+                    Text('${document.totalAvailableSlots} courts available'),
+                  ],
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 16),
-          // List of clubs
-          ...document.clubs.entries
-              .map((entry) => _buildClubCard(context, entry.key, entry.value)),
-        ],
-      ),
+        ),
+        SizedBox(height: 24),
+        Text(
+          'Available Locations',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        SizedBox(height: 16),
+        // List of clubs
+        ...document.clubs.entries
+            .map((entry) => _buildClubCard(context, entry.key, entry.value)),
+      ],
     );
   }
 

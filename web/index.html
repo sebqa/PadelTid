@@ -86,5 +86,18 @@
     </div>
   </div>
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Special handling for iOS devices
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+      window.addEventListener('load', function() {
+        // Prevent default iOS swipe back
+        document.addEventListener('touchmove', function(e) {
+          if (e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+      });
+    }
+  </script>
 </body>
 </html>
