@@ -13,6 +13,9 @@ class DocumentDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
+        if (Navigator.of(context).userGestureInProgress) {
+          return false;
+        }
         Navigator.of(context).pop();
         return false;
       },

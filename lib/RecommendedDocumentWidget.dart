@@ -121,10 +121,23 @@ class RecommendedDocumentWidget extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => DocumentDetailsPage(document: document),
-            fullscreenDialog: false,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                DocumentDetailsPage(document: document),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              var tween =
+                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+              var offsetAnimation = animation.drive(tween);
+              return SlideTransition(position: offsetAnimation, child: child);
+            },
             maintainState: true,
+            opaque: true,
+            transitionDuration: const Duration(milliseconds: 300),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
           ),
         );
       },
