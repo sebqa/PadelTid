@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html;
 
 // Create a custom RouteObserver that manages history
 class RouteHistoryObserver extends RouteObserver<PageRoute<dynamic>> {
@@ -53,7 +55,7 @@ class NavigationHelper {
       return Platform.isIOS;
     } catch (e) {
       // In web, check for iOS using user agent
-      final userAgent = window.navigator.userAgent.toLowerCase();
+      final userAgent = html.window.navigator.userAgent.toLowerCase();
       return userAgent.contains('iphone') || userAgent.contains('ipad');
     }
   }

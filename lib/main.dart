@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'services/token_service.dart';
 import 'services/notifications_services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'navigation/route_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
