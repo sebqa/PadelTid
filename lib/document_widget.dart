@@ -116,6 +116,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
             MaterialPageRoute(
               builder: (context) =>
                   DocumentDetailsPage(document: widget.document),
+              fullscreenDialog: false,
             ),
           );
         },
