@@ -9,8 +9,9 @@ import 'services/token_service.dart';
 import 'services/notifications_services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'navigation/route_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Update status bar style to use primary color
@@ -21,36 +22,35 @@ void main() async {
     statusBarBrightness: Brightness.dark, // Dark status bar for light icons
   ));
 
-  await Firebase.initializeApp(
+  // Initialize Firebase in parallel with app loading
+  final firebaseInitialization = Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize notification service
-  final notificationService = NotificationService();
-  await notificationService.initialize();
+  // Pre-initialize other services in parallel
+  final notificationServiceInit = NotificationService().initialize();
+  final prefsInit = SharedPreferences.getInstance();
 
-  // Initialize token service and save token on app launch
+  // Show minimal UI initially while waiting for data
+  runApp(LoadingApp());
+
+  // Wait for critical initializations
+  await firebaseInitialization;
+
+  // Perform user auth check and token operations
   if (FirebaseAuth.instance.currentUser != null) {
-    final tokenService = TokenService();
-    await tokenService.saveToken();
+    TokenService().saveToken();
   }
 
-  //Ask permission for notifications
+  // Request notification permissions in parallel with app startup
   FirebaseMessaging messaging = FirebaseMessaging.instance;
-  await messaging.requestPermission(
+  messaging.requestPermission(
     alert: true,
     badge: true,
     sound: true,
   );
 
-  messaging.onTokenRefresh.listen((fcmToken) {
-    // TODO: If necessary send token to application server.
-    print(fcmToken);
-  }).onError((err) {
-    // Error getting token.
-    print(err);
-  });
-
+  // Now launch the full app when ready
   runApp(MaterialApp(
     home: HomePage(),
     debugShowCheckedModeBanner: false,
@@ -112,4 +112,77 @@ void main() async {
     ),
     navigatorObservers: [NavigationHelper.routeObserver],
   ));
+}
+
+// Minimal loading app that renders immediately
+class LoadingApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        backgroundColor: Color(0xFF00875A),
+        body: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              LoadingDot(delay: 0),
+              SizedBox(width: 8),
+              LoadingDot(delay: 0.2),
+              SizedBox(width: 8),
+              LoadingDot(delay: 0.4),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LoadingDot extends StatefulWidget {
+  final double delay;
+  LoadingDot({required this.delay});
+
+  @override
+  _LoadingDotState createState() => _LoadingDotState();
+}
+
+class _LoadingDotState extends State<LoadingDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
+    Future.delayed(Duration(milliseconds: (widget.delay * 1000).toInt()), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween(begin: 0.3, end: 1.0).animate(_controller),
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 }

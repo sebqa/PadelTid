@@ -34,27 +34,37 @@ class RouteHistoryObserver extends RouteObserver<PageRoute<dynamic>> {
 // Create a navigation helper
 class NavigationHelper {
   static final RouteHistoryObserver routeObserver = RouteHistoryObserver();
+  // Cache for performance optimization
+  static final Map<String, PageRoute> _routeCache = {};
 
   static void navigateToPage(BuildContext context, Widget page) {
+    // Use a cached route for better performance on repeat navigations
+    final String routeKey = page.runtimeType.toString();
+    PageRoute route;
+
     if (kIsWeb && _isIOS()) {
       // For iOS web: use a controlled navigation without animation
-      Navigator.of(context).push(
-        PageRouteBuilder(
+      if (!_routeCache.containsKey(routeKey)) {
+        _routeCache[routeKey] = PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => page,
           transitionDuration: Duration.zero,
           reverseTransitionDuration: Duration.zero,
           opaque: true,
           barrierDismissible: false,
-        ),
-      );
+        );
+      }
+      route = _routeCache[routeKey]!;
     } else {
       // For others: use the platform's default navigation
-      Navigator.of(context).push(
-        CupertinoPageRoute(
+      if (!_routeCache.containsKey(routeKey)) {
+        _routeCache[routeKey] = CupertinoPageRoute(
           builder: (context) => page,
-        ),
-      );
+        );
+      }
+      route = _routeCache[routeKey]!;
     }
+
+    Navigator.of(context).push(route);
   }
 
   static bool _isIOS() {
@@ -65,5 +75,10 @@ class NavigationHelper {
       final userAgent = html.window.navigator.userAgent.toLowerCase();
       return userAgent.contains('iphone') || userAgent.contains('ipad');
     }
+  }
+
+  // Clear cache when needed (e.g., on low memory)
+  static void clearRouteCache() {
+    _routeCache.clear();
   }
 }

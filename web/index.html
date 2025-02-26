@@ -121,5 +121,23 @@
       });
     }
   </script>
+  <script>
+    // Add this to your existing script in index.html
+    // Preconnect to your API domains
+    let links = [
+      {rel: 'preconnect', href: 'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com'},
+      {rel: 'preconnect', href: 'https://rvhxwa55v5.execute-api.eu-north-1.amazonaws.com'},
+      {rel: 'preconnect', href: 'https://kgzbg5117d.execute-api.eu-north-1.amazonaws.com'}
+    ];
+    
+    links.forEach(attributes => {
+      let link = document.createElement('link');
+      Object.keys(attributes).forEach(key => link.setAttribute(key, attributes[key]));
+      document.head.appendChild(link);
+    });
+    
+    // Implement critical path CSS inline to avoid render blocking
+    // and move non-critical CSS to be loaded asynchronously
+  </script>
 </body>
 </html>
