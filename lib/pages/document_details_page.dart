@@ -11,71 +11,78 @@ class DocumentDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back,
-              color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop();
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            '${document.date} at ${document.time}',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
         ),
-        title: Text(
-          '${document.date} at ${document.time}',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-        ),
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(16),
-        children: [
-          // Summary card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+        body: ListView(
+          padding: EdgeInsets.all(16),
+          children: [
+            // Summary card
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Overview',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined),
+                        SizedBox(width: 8),
+                        Text('${document.totalClubs} locations available'),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.sports_tennis_outlined),
+                        SizedBox(width: 8),
+                        Text(
+                            '${document.totalAvailableSlots} courts available'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Overview',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on_outlined),
-                      SizedBox(width: 8),
-                      Text('${document.totalClubs} locations available'),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.sports_tennis_outlined),
-                      SizedBox(width: 8),
-                      Text('${document.totalAvailableSlots} courts available'),
-                    ],
-                  ),
-                ],
-              ),
+            SizedBox(height: 24),
+            Text(
+              'Available Locations',
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-          ),
-          SizedBox(height: 24),
-          Text(
-            'Available Locations',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          SizedBox(height: 16),
-          // List of clubs
-          ...document.clubs.entries
-              .map((entry) => _buildClubCard(context, entry.key, entry.value)),
-        ],
+            SizedBox(height: 16),
+            // List of clubs
+            ...document.clubs.entries.map(
+                (entry) => _buildClubCard(context, entry.key, entry.value)),
+          ],
+        ),
       ),
     );
   }
