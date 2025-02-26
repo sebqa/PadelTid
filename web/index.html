@@ -74,6 +74,19 @@
     }
   </style>
   
+  <script>
+    // iOS Safari history fix
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+      // Create a fixed history state
+      history.pushState(null, document.title, location.href);
+      
+      // Block all attempts to use the back button
+      window.addEventListener('popstate', function() {
+        history.pushState(null, document.title, location.href);
+      });
+    }
+  </script>
+  
   <!-- Flutter initialization -->
   <script src="flutter.js" defer></script>
 </head>
@@ -87,15 +100,24 @@
   </div>
   <script src="flutter_bootstrap.js" async></script>
   <script>
-    // Special handling for iOS devices
+    // More aggressive iOS handling
     if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
       window.addEventListener('load', function() {
-        // Prevent default iOS swipe back
-        document.addEventListener('touchmove', function(e) {
-          if (e.touches.length > 1) {
+        // Prevent all touch events that could trigger back gesture
+        document.addEventListener('touchstart', function(e) {
+          if (e.touches.length === 1 && e.touches[0].clientX < 50) {
             e.preventDefault();
           }
         }, { passive: false });
+        
+        document.addEventListener('touchmove', function(e) {
+          if (e.touches.length === 1 && e.touches[0].clientX < 50) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        
+        // Fix for iOS Safari history
+        window.history.scrollRestoration = 'manual';
       });
     }
   </script>

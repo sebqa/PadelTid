@@ -36,18 +36,25 @@ class NavigationHelper {
   static final RouteHistoryObserver routeObserver = RouteHistoryObserver();
 
   static void navigateToPage(BuildContext context, Widget page) {
-    // Use CupertinoPageRoute for Android and a variation for iOS
-    final route = kIsWeb && _isIOS()
-        ? MaterialPageRoute(
-            builder: (context) => page,
-            maintainState: true,
-            fullscreenDialog: false,
-          )
-        : CupertinoPageRoute(
-            builder: (context) => page,
-          );
-
-    Navigator.of(context).push(route);
+    if (kIsWeb && _isIOS()) {
+      // For iOS web: use a controlled navigation without animation
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => page,
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+          opaque: true,
+          barrierDismissible: false,
+        ),
+      );
+    } else {
+      // For others: use the platform's default navigation
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (context) => page,
+        ),
+      );
+    }
   }
 
   static bool _isIOS() {
