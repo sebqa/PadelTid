@@ -16,8 +16,9 @@ class SkeletonContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
-      highlightColor: Theme.of(context).colorScheme.surface,
+      baseColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+      highlightColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+      period: const Duration(milliseconds: 1200),
       child: Container(
         width: width,
         height: height,
@@ -39,8 +40,9 @@ class MainListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
-      highlightColor: Theme.of(context).colorScheme.surface,
+      baseColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+      highlightColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+      period: const Duration(milliseconds: 1200),
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -154,9 +156,9 @@ class RecommendedListSkeleton extends StatelessWidget {
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.13,
       child: Shimmer.fromColors(
-        baseColor:
-            Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.4),
-        highlightColor: Theme.of(context).colorScheme.surface,
+        baseColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+        highlightColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+        period: const Duration(milliseconds: 1200),
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: 4,
