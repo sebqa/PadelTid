@@ -121,8 +121,11 @@ class RecommendedDocumentWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        NavigationHelper.navigateToPage(
-            context, DocumentDetailsPage(document: document));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => DocumentDetailsPage(document: document),
+          ),
+        );
       },
       child: Card(
         margin: EdgeInsets.symmetric(horizontal: 8),

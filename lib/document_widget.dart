@@ -113,8 +113,12 @@ class _DocumentWidgetState extends State<DocumentWidget> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: InkWell(
         onTap: () {
-          NavigationHelper.navigateToPage(
-              context, DocumentDetailsPage(document: widget.document));
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) =>
+                  DocumentDetailsPage(document: widget.document),
+            ),
+          );
         },
         child: Card(
           elevation: 0,
