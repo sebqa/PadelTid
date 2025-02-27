@@ -33,14 +33,9 @@ class AppLocalizations {
   Future<bool> load() async {
     if (_initialized) return true;
 
-    print('Loading translations for locale: ${locale.languageCode}');
-
     try {
-      // CHANGE THIS: Remove the leading slash
       String jsonString = await rootBundle
           .loadString('assets/l10n/app_${locale.languageCode}.json');
-
-      print('Successfully loaded JSON file: $jsonString');
 
       Map<String, dynamic> jsonMap = json.decode(jsonString);
       _localizedStrings = jsonMap.map((key, value) {
@@ -51,18 +46,14 @@ class AppLocalizations {
       if (_localizedStrings.isEmpty) {
         _localizedStrings =
             TranslationHelper.getTranslations(locale.languageCode);
-        print('Using fallback translations');
       }
 
       _initialized = true;
       return true;
     } catch (e) {
-      print('Error loading translations: $e');
-
-      // Fall back to our reliable TranslationHelper
+      // Use fallback translations silently without debug prints
       _localizedStrings =
           TranslationHelper.getTranslations(locale.languageCode);
-      print('Using fallback translations after error');
 
       _initialized = true;
       return true;
@@ -126,13 +117,9 @@ class AppLocalizations {
   }
 
   Future<void> forceReload() async {
-    print('Force reloading translations for ${locale.languageCode}...');
     _initialized = false;
     _localizedStrings.clear();
     await load();
-    print('Translations after reload: ${_localizedStrings.length} entries');
-    // Debug: Print all keys to verify they're loaded
-    print('All loaded keys: ${_localizedStrings.keys.toList()}');
   }
 
   int get translationCount {

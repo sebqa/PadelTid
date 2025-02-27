@@ -100,13 +100,8 @@ class _AuthGateState extends State<AuthGate> {
                         ],
                         headerBuilder: (context, constraints, shrinkOffset) {
                           return Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: SvgPicture.asset(
-                              'assets/images/maskable_logo.svg',
-                              width: 80,
-                              height: 80,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                            padding: const EdgeInsets.only(top: 20),
+                            child: Container(),
                           );
                         },
                         styles: const {
@@ -128,23 +123,6 @@ class _AuthGateState extends State<AuthGate> {
                                 color:
                                     Theme.of(context).colorScheme.onBackground,
                               ),
-                            ),
-                          );
-                        },
-                        footerBuilder: (context, action) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: Text(
-                              TranslationHelper.translate(
-                                  'terms_agreement', languageCode),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.6),
-                              ),
-                              textAlign: TextAlign.center,
                             ),
                           );
                         },
@@ -291,15 +269,6 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App logo
-                  Icon(
-                    Icons.sports_tennis,
-                    size: 80,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-
-                  const SizedBox(height: 24),
-
                   // App title
                   Text(
                     TranslationHelper.translate('app_title', languageCode),
@@ -444,22 +413,6 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Terms agreement text
-                  Text(
-                    TranslationHelper.translate(
-                        'terms_agreement', languageCode),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onBackground
-                          .withOpacity(0.6),
                     ),
                   ),
 

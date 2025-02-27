@@ -12,17 +12,6 @@ class SimpleLanguageSelector extends StatelessWidget {
     final localeProvider = Provider.of<LocaleProvider>(context);
     final currentLocale = localeProvider.locale.languageCode;
 
-    // Debug
-    print('=== SIMPLE LANGUAGE SELECTOR ===');
-    print('Current locale: $currentLocale');
-
-    // Test if translations are working
-    final testKeys = ['monday', 'tuesday', 'slots', 'jan', 'feb'];
-    for (final key in testKeys) {
-      final value = TranslationHelper.translate(key, currentLocale);
-      print('Key: $key -> "$value"');
-    }
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

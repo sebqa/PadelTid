@@ -3,7 +3,7 @@
     <rect width="1024" height="1024" fill="#00875A"/>
     
     <!-- Centered content in safe zone (about 66% of total size) -->
-    <g transform="translate(171, 171) scale()">
+    <g transform="translate(171, 171) scale(1,1)">
         <!-- Padel Racket -->
         <path d="M490 180
                  C400 180 300 260 300 420
