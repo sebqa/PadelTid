@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/translations.dart';
 
 class SimpleLanguageSelector extends StatelessWidget {
   const SimpleLanguageSelector({super.key});
@@ -15,19 +16,16 @@ class SimpleLanguageSelector extends StatelessWidget {
     print('=== SIMPLE LANGUAGE SELECTOR ===');
     print('Current locale: $currentLocale');
 
-    // Test if AppLocalizations is working
+    // Test if translations are working
     final testKeys = ['monday', 'tuesday', 'slots', 'jan', 'feb'];
     for (final key in testKeys) {
-      final value = AppLocalizations.of(context).translate(key);
+      final value = TranslationHelper.translate(key, currentLocale);
       print('Key: $key -> "$value"');
     }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-            'Current language: ${currentLocale == 'en' ? 'English' : 'Danish'}'),
-
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
@@ -60,17 +58,6 @@ class SimpleLanguageSelector extends StatelessWidget {
             ],
           ),
         ),
-
-        // Debug info
-        const Divider(),
-        const Text('Debug info:',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        Text(
-            'Raw translation of "language": ${AppLocalizations.of(context).translate("language")}'),
-        Text(
-            'Raw translation of "english": ${AppLocalizations.of(context).translate("english")}'),
-        Text(
-            'Raw translation of "danish": ${AppLocalizations.of(context).translate("danish")}'),
       ],
     );
   }

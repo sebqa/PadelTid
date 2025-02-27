@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application_1/utils/translations.dart';
 
 class AppLocalizations {
   final Locale locale;
@@ -35,56 +36,37 @@ class AppLocalizations {
     print('Loading translations for locale: ${locale.languageCode}');
 
     try {
-      // Try loading from assets/l10n/
+      // CHANGE THIS: Remove the leading slash
       String jsonString = await rootBundle
           .loadString('assets/l10n/app_${locale.languageCode}.json');
-      _loadFromString(jsonString);
+
+      print('Successfully loaded JSON file: $jsonString');
+
+      Map<String, dynamic> jsonMap = json.decode(jsonString);
+      _localizedStrings = jsonMap.map((key, value) {
+        return MapEntry(key, value.toString());
+      });
+
+      // Fall back if empty
+      if (_localizedStrings.isEmpty) {
+        _localizedStrings =
+            TranslationHelper.getTranslations(locale.languageCode);
+        print('Using fallback translations');
+      }
+
       _initialized = true;
       return true;
-    } catch (e1) {
-      print('Error loading from assets/l10n/: $e1');
+    } catch (e) {
+      print('Error loading translations: $e');
 
-      // Fallback attempt: try loading from just assets/
-      try {
-        String jsonString = await rootBundle
-            .loadString('assets/app_${locale.languageCode}.json');
-        _loadFromString(jsonString);
-        _initialized = true;
-        return true;
-      } catch (e2) {
-        print('Error loading from assets/: $e2');
-        print(
-            '⚠️ Failed to load translations for ${locale.languageCode}. Using hardcoded fallbacks.');
+      // Fall back to our reliable TranslationHelper
+      _localizedStrings =
+          TranslationHelper.getTranslations(locale.languageCode);
+      print('Using fallback translations after error');
 
-        // Load hardcoded fallbacks
-        if (locale.languageCode == 'da') {
-          _loadFallbackDanish();
-        } else {
-          _loadFallbackEnglish();
-        }
-
-        _initialized = true;
-        return false;
-      }
+      _initialized = true;
+      return true;
     }
-  }
-
-  void _loadFromString(String jsonString) {
-    Map<String, dynamic> jsonMap = json.decode(jsonString);
-    _localizedStrings = jsonMap.map((key, value) {
-      return MapEntry(key, value.toString());
-    });
-
-    print(
-        'Translations loaded successfully (${_localizedStrings.length} entries)');
-    print('Sample entries:');
-    int count = 0;
-    _localizedStrings.forEach((key, value) {
-      if (count < 5) {
-        print('  $key: $value');
-        count++;
-      }
-    });
   }
 
   void _loadFallbackEnglish() {
@@ -134,18 +116,13 @@ class AppLocalizations {
   }
 
   String translate(String key) {
-    if (!_initialized) {
-      print('⚠️ Attempting to translate "$key" before initialization');
-      load(); // Try to load asynchronously, won't help for this call but might help later ones
-      return key;
+    // First try our loaded JSON translations
+    if (_initialized && _localizedStrings.containsKey(key)) {
+      return _localizedStrings[key]!;
     }
 
-    final value = _localizedStrings[key];
-    if (value == null) {
-      print('⚠️ Translation missing for key: "$key"');
-      return key;
-    }
-    return value;
+    // Fall back to TranslationHelper if key not found or not initialized
+    return TranslationHelper.translate(key, locale.languageCode);
   }
 
   Future<void> forceReload() async {

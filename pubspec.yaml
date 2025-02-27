@@ -36,7 +36,7 @@ dependencies:
   http: 1.2.2
   shared_preferences: ^2.0.10
   provider: ^6.0.5
-  flutter_svg: ^2.0.10+1
+  flutter_svg: ^2.0.7
   animated_custom_dropdown: 3.1.1
   firebase_auth: ^5.1.3
   google_sign_in: ^6.2.1
@@ -100,6 +100,7 @@ flutter:
     - assets/
     - assets/weather_symbols/darkmode/
     - assets/l10n/
+    - assets/images/
 
   fonts:
   - family: SocialIcons

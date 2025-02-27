@@ -4,6 +4,9 @@ import '../model/document.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:html' as html;
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/providers/locale_provider.dart';
+import 'package:flutter_application_1/utils/translations.dart';
 
 class DocumentDetailsPage extends StatelessWidget {
   final Document document;
@@ -13,6 +16,9 @@ class DocumentDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -23,7 +29,7 @@ class DocumentDetailsPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          '${document.date} at ${document.time}',
+          '${_formatDate(document.date, context)} ${TranslationHelper.translate('at', languageCode)} ${document.time}',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
@@ -45,7 +51,7 @@ class DocumentDetailsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Overview',
+                    TranslationHelper.translate('overview', languageCode),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   SizedBox(height: 8),
@@ -53,7 +59,8 @@ class DocumentDetailsPage extends StatelessWidget {
                     children: [
                       Icon(Icons.location_on_outlined),
                       SizedBox(width: 8),
-                      Text('${document.totalClubs} locations available'),
+                      Text(
+                          '${document.totalClubs} ${document.totalClubs == 1 ? TranslationHelper.translate('location', languageCode) : TranslationHelper.translate('locations', languageCode)} ${TranslationHelper.translate('available', languageCode)}'),
                     ],
                   ),
                   SizedBox(height: 4),
@@ -61,7 +68,8 @@ class DocumentDetailsPage extends StatelessWidget {
                     children: [
                       Icon(Icons.sports_tennis_outlined),
                       SizedBox(width: 8),
-                      Text('${document.totalAvailableSlots} courts available'),
+                      Text(
+                          '${document.totalAvailableSlots} ${document.totalAvailableSlots == 1 ? TranslationHelper.translate('court', languageCode) : TranslationHelper.translate('courts', languageCode)} ${TranslationHelper.translate('available', languageCode)}'),
                     ],
                   ),
                 ],
@@ -70,7 +78,7 @@ class DocumentDetailsPage extends StatelessWidget {
           ),
           SizedBox(height: 24),
           Text(
-            'Available Locations',
+            TranslationHelper.translate('available_locations', languageCode),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           SizedBox(height: 16),
@@ -82,8 +90,61 @@ class DocumentDetailsPage extends StatelessWidget {
     );
   }
 
+  String _formatDate(String date, BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    final documentDate = DateTime.parse(date);
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+
+    if (documentDate.year == now.year &&
+        documentDate.month == now.month &&
+        documentDate.day == now.day) {
+      return TranslationHelper.translate('today', languageCode);
+    } else if (documentDate.year == tomorrow.year &&
+        documentDate.month == tomorrow.month &&
+        documentDate.day == tomorrow.day) {
+      return TranslationHelper.translate('tomorrow', languageCode);
+    } else {
+      final weekday = TranslationHelper.translate(
+          [
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+            'sunday'
+          ][documentDate.weekday - 1],
+          languageCode);
+
+      final month = TranslationHelper.translate(
+          [
+            'jan',
+            'feb',
+            'mar',
+            'apr',
+            'may',
+            'jun',
+            'jul',
+            'aug',
+            'sep',
+            'oct',
+            'nov',
+            'dec'
+          ][documentDate.month - 1],
+          languageCode);
+
+      return '$weekday, $month ${documentDate.day}';
+    }
+  }
+
   Widget _buildClubCard(
       BuildContext context, String clubName, ClubAvailability club) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
     return Card(
       elevation: 0,
       margin: EdgeInsets.only(bottom: 12),
@@ -116,7 +177,7 @@ class DocumentDetailsPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    '${club.availableSlots}/${club.totalCourts} courts',
+                    '${club.availableSlots}/${club.totalCourts} ${TranslationHelper.translate('courts', languageCode)}',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w500,
@@ -133,20 +194,20 @@ class DocumentDetailsPage extends StatelessWidget {
                 _buildWeatherInfo(
                   context,
                   Icons.thermostat,
-                  '${club.weather.airTemperature}°C',
-                  'Temperature',
+                  '${club.weather.airTemperature}${TranslationHelper.translate('temperature_unit', languageCode)}',
+                  TranslationHelper.translate('temperature', languageCode),
                 ),
                 _buildWeatherInfo(
                   context,
                   Icons.air,
-                  '${club.weather.windSpeed}m/s',
-                  'Wind Speed',
+                  '${club.weather.windSpeed}${TranslationHelper.translate('meters_per_second', languageCode)}',
+                  TranslationHelper.translate('wind_speed', languageCode),
                 ),
                 _buildWeatherInfo(
                   context,
                   Icons.water_drop,
-                  '${club.weather.precipitationProbability}%',
-                  'Precipitation',
+                  '${club.weather.precipitationProbability}${TranslationHelper.translate('percent', languageCode)}',
+                  TranslationHelper.translate('precipitation', languageCode),
                 ),
               ],
             ),
@@ -169,7 +230,8 @@ class DocumentDetailsPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: Text('Book Court'),
+                  child: Text(
+                      TranslationHelper.translate('book_court', languageCode)),
                 ),
               ),
           ],

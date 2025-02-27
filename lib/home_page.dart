@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/providers/locale_provider.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/widgets/simple_language_selector.dart';
+import 'package:flutter_application_1/utils/translations.dart';
 
 class Location {
   final String name;
@@ -53,6 +54,7 @@ class _HomePageState extends State<HomePage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   final TokenService _tokenService = TokenService();
+  late LocaleProvider localeProvider;
 
   @override
   void initState() {
@@ -80,6 +82,7 @@ class _HomePageState extends State<HomePage>
     _checkOnboardingStatus();
     _initializePreferences();
     _tokenService.initTokenRefreshListener();
+    localeProvider = Provider.of<LocaleProvider>(context, listen: false);
   }
 
   @override
@@ -187,58 +190,62 @@ class _HomePageState extends State<HomePage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppLocalizations.of(context)
-                        .translate('weather_preferences'),
+                    TranslationHelper.translate('weather_preferences',
+                        localeProvider.locale.languageCode),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   SizedBox(height: 24),
                   _buildSliderWithLabel(
                     context: context,
                     icon: Icons.air,
-                    label: AppLocalizations.of(context).translate('wind_speed'),
+                    label: TranslationHelper.translate(
+                        'wind_speed', localeProvider.locale.languageCode),
                     value: windSpeedThreshold,
                     onChanged: (value) {
                       setState(() => windSpeedThreshold = value);
                     },
                     min: 0,
                     max: 20,
-                    unit: AppLocalizations.of(context).translate('m_per_s'),
+                    unit: TranslationHelper.translate(
+                        'm_per_s', localeProvider.locale.languageCode),
                   ),
                   SizedBox(height: 24),
                   _buildSliderWithLabel(
                     context: context,
                     icon: Icons.umbrella,
-                    label:
-                        AppLocalizations.of(context).translate('precipitation'),
+                    label: TranslationHelper.translate(
+                        'precipitation', localeProvider.locale.languageCode),
                     value: precipitationProbabilityThreshold,
                     onChanged: (value) {
                       setState(() => precipitationProbabilityThreshold = value);
                     },
                     min: 0,
                     max: 100,
-                    unit: AppLocalizations.of(context).translate('percentage'),
+                    unit: TranslationHelper.translate(
+                        'percentage', localeProvider.locale.languageCode),
                   ),
                   SizedBox(height: 24),
                   _buildSliderWithLabel(
                     context: context,
                     icon: Icons.thermostat,
-                    label:
-                        AppLocalizations.of(context).translate('temperature'),
+                    label: TranslationHelper.translate(
+                        'temperature', localeProvider.locale.languageCode),
                     value: temperatureThreshold,
                     onChanged: (value) {
                       setState(() => temperatureThreshold = value);
                     },
                     min: -10,
                     max: 30,
-                    unit: AppLocalizations.of(context).translate('celsius'),
+                    unit: TranslationHelper.translate(
+                        'celsius', localeProvider.locale.languageCode),
                   ),
                   SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        AppLocalizations.of(context)
-                            .translate('show_unavailable'),
+                        TranslationHelper.translate('show_unavailable',
+                            localeProvider.locale.languageCode),
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       Switch(
@@ -256,8 +263,8 @@ class _HomePageState extends State<HomePage>
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text(
-                            AppLocalizations.of(context).translate('cancel')),
+                        child: Text(TranslationHelper.translate(
+                            'cancel', localeProvider.locale.languageCode)),
                       ),
                       SizedBox(width: 16),
                       ElevatedButton(
@@ -270,8 +277,8 @@ class _HomePageState extends State<HomePage>
                               Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                         ),
-                        child: Text(
-                            AppLocalizations.of(context).translate('apply')),
+                        child: Text(TranslationHelper.translate(
+                            'apply', localeProvider.locale.languageCode)),
                       ),
                     ],
                   ),
@@ -383,7 +390,8 @@ class _HomePageState extends State<HomePage>
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 title: Text(
-                  AppLocalizations.of(context).translate('app_title'),
+                  TranslationHelper.translate(
+                      'app_title', localeProvider.locale.languageCode),
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 22,
@@ -422,7 +430,8 @@ class _HomePageState extends State<HomePage>
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                     child: Text(
-                      AppLocalizations.of(context).translate('recommended'),
+                      TranslationHelper.translate(
+                          'recommended', localeProvider.locale.languageCode),
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontSize: 24,
@@ -460,8 +469,8 @@ class _HomePageState extends State<HomePage>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          AppLocalizations.of(context)
-                              .translate('all_timeslots'),
+                          TranslationHelper.translate('all_timeslots',
+                              localeProvider.locale.languageCode),
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -491,7 +500,7 @@ class _HomePageState extends State<HomePage>
                       } else if (snapshot.hasError) {
                         return Center(
                             child: Text(
-                                '${AppLocalizations.of(context).translate('error_prefix')} ${snapshot.error}'));
+                                '${TranslationHelper.translate('error_prefix', localeProvider.locale.languageCode)} ${snapshot.error}'));
                       } else if (snapshot.hasData) {
                         final groupedDocuments =
                             _groupDocuments(snapshot.data!);
@@ -514,7 +523,8 @@ class _HomePageState extends State<HomePage>
                     child: Padding(
                       padding: EdgeInsets.all(32),
                       child: Text(
-                        AppLocalizations.of(context).translate('select_clubs'),
+                        TranslationHelper.translate(
+                            'select_clubs', localeProvider.locale.languageCode),
                         style: TextStyle(
                           color: Theme.of(context)
                               .colorScheme
