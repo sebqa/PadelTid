@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/document_widget.dart';
 import 'widgets/skeleton_widgets.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
+import 'package:flutter_application_1/utils/translations.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/providers/locale_provider.dart';
 
 class MainListView extends StatefulWidget {
   const MainListView({
@@ -32,6 +36,8 @@ class _MainListViewState extends State<MainListView> {
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+
     return ListView(
       // This makes the ListView take only the space it needs
       shrinkWrap: true,
@@ -99,7 +105,7 @@ class _MainListViewState extends State<MainListView> {
                               ),
                             ),
                             Text(
-                              _getShortMonthName(parsedDate.month),
+                              _getShortMonthName(parsedDate.month, context),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -118,7 +124,7 @@ class _MainListViewState extends State<MainListView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _getWeekdayName(parsedDate.weekday),
+                              _getWeekdayName(parsedDate.weekday, context),
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -135,7 +141,7 @@ class _MainListViewState extends State<MainListView> {
                                 ),
                                 SizedBox(width: 4),
                                 Text(
-                                  '${documentsForDate.length} slots',
+                                  '${documentsForDate.length} ${TranslationHelper.translate('slots', localeProvider.locale.languageCode)}',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color:
@@ -175,51 +181,56 @@ class _MainListViewState extends State<MainListView> {
     );
   }
 
-  String _getDisplayDate(DateTime date) {
+  String _getDisplayDate(DateTime date, BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     final now = DateTime.now();
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
 
     if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day) {
-      return 'Today';
+      return localizations.translate('today');
     } else if (date.year == tomorrow.year &&
         date.month == tomorrow.month &&
         date.day == tomorrow.day) {
-      return 'Tomorrow';
+      return localizations.translate('tomorrow');
     } else {
-      return '${_getWeekdayName(date.weekday)}, ${date.day}/${date.month}';
+      return '${_getWeekdayName(date.weekday, context)}, ${date.day}/${date.month}';
     }
   }
 
-  String _getWeekdayName(int weekday) {
-    const weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday'
+  String _getWeekdayName(int weekday, BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+    const weekdayKeys = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday'
     ];
-    return weekdays[weekday - 1];
+    return TranslationHelper.translate(weekdayKeys[weekday - 1], languageCode);
   }
 
-  String _getShortMonthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+  String _getShortMonthName(int month, BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+    const monthKeys = [
+      'jan',
+      'feb',
+      'mar',
+      'apr',
+      'may',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'oct',
+      'nov',
+      'dec'
     ];
-    return months[month - 1];
+    return TranslationHelper.translate(monthKeys[month - 1], languageCode);
   }
 }

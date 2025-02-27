@@ -5,6 +5,9 @@ import 'widgets/subscribing_icon.dart';
 import 'pages/document_details_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'navigation/route_manager.dart';
+import 'package:flutter_application_1/utils/translations.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/providers/locale_provider.dart';
 
 class DocumentWidget extends StatefulWidget {
   final Document document;
@@ -109,6 +112,9 @@ class _DocumentWidgetState extends State<DocumentWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: InkWell(
@@ -185,7 +191,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                                           .onSurfaceVariant),
                                   SizedBox(width: 2),
                                   Text(
-                                    '${widget.document.airTemperature}°C',
+                                    '${widget.document.airTemperature}${TranslationHelper.translate('temperature_unit', languageCode)}',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Theme.of(context)
@@ -214,7 +220,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                                           .onSurfaceVariant),
                                   SizedBox(width: 2),
                                   Text(
-                                    '${widget.document.windSpeed}m/s',
+                                    '${widget.document.windSpeed}${TranslationHelper.translate('meters_per_second', languageCode)}',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Theme.of(context)
@@ -243,7 +249,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                                           .onSurfaceVariant),
                                   SizedBox(width: 2),
                                   Text(
-                                    '${widget.document.precipitationProbability}%',
+                                    '${widget.document.precipitationProbability}${TranslationHelper.translate('percent', languageCode)}',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Theme.of(context)
@@ -264,7 +270,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text(
-                            '${widget.document.totalClubs} location | ${widget.document.totalAvailableSlots} courts',
+                            '${widget.document.totalClubs} ${widget.document.totalClubs == 1 ? TranslationHelper.translate('location', languageCode) : TranslationHelper.translate('locations', languageCode)} | ${widget.document.totalAvailableSlots} ${widget.document.totalAvailableSlots == 1 ? TranslationHelper.translate('court', languageCode) : TranslationHelper.translate('courts', languageCode)}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context)

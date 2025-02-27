@@ -4,6 +4,10 @@ import 'package:intl/intl.dart';
 import 'pages/document_details_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'navigation/route_manager.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/providers/locale_provider.dart';
+import 'package:flutter_application_1/utils/translations.dart';
 
 class RecommendedDocumentWidget extends StatelessWidget {
   final Document document;
@@ -99,7 +103,10 @@ class RecommendedDocumentWidget extends StatelessWidget {
 
   RecommendedDocumentWidget(this.document);
 
-  String _getDisplayDate(String date) {
+  String _getDisplayDate(String date, BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
     final now = DateTime.now();
     final documentDate = DateTime.parse(date);
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
@@ -107,18 +114,50 @@ class RecommendedDocumentWidget extends StatelessWidget {
     if (documentDate.year == now.year &&
         documentDate.month == now.month &&
         documentDate.day == now.day) {
-      return 'Today';
+      return TranslationHelper.translate('today', languageCode);
     } else if (documentDate.year == tomorrow.year &&
         documentDate.month == tomorrow.month &&
         documentDate.day == tomorrow.day) {
-      return 'Tomorrow';
+      return TranslationHelper.translate('tomorrow', languageCode);
     } else {
-      return DateFormat('EEE, MMM d').format(documentDate);
+      final weekday = TranslationHelper.translate(
+          [
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+            'sunday'
+          ][documentDate.weekday - 1],
+          languageCode);
+
+      final month = TranslationHelper.translate(
+          [
+            'jan',
+            'feb',
+            'mar',
+            'apr',
+            'may',
+            'jun',
+            'jul',
+            'aug',
+            'sep',
+            'oct',
+            'nov',
+            'dec'
+          ][documentDate.month - 1],
+          languageCode);
+
+      return '$weekday, $month ${documentDate.day}';
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -144,7 +183,7 @@ class RecommendedDocumentWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _getDisplayDate(document.date),
+                _getDisplayDate(document.date, context),
                 style: TextStyle(
                   fontSize: 13,
                   color: Theme.of(context).colorScheme.primary,
@@ -195,7 +234,7 @@ class RecommendedDocumentWidget extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         Text(
-                          '${document.windSpeed}m/s',
+                          '${document.windSpeed}${TranslationHelper.translate('meters_per_second', languageCode)}',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,

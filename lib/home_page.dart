@@ -14,6 +14,11 @@ import 'recommended_lv_holder.dart';
 import 'location_selector.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/services/token_service.dart';
+import 'package:flutter_application_1/widgets/language_selector.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/providers/locale_provider.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
+import 'package:flutter_application_1/widgets/simple_language_selector.dart';
 
 class Location {
   final String name;
@@ -182,54 +187,58 @@ class _HomePageState extends State<HomePage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Weather Preferences',
+                    AppLocalizations.of(context)
+                        .translate('weather_preferences'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   SizedBox(height: 24),
                   _buildSliderWithLabel(
                     context: context,
                     icon: Icons.air,
-                    label: 'Wind Speed',
+                    label: AppLocalizations.of(context).translate('wind_speed'),
                     value: windSpeedThreshold,
                     onChanged: (value) {
                       setState(() => windSpeedThreshold = value);
                     },
                     min: 0,
                     max: 20,
-                    unit: 'm/s',
+                    unit: AppLocalizations.of(context).translate('m_per_s'),
                   ),
                   SizedBox(height: 24),
                   _buildSliderWithLabel(
                     context: context,
                     icon: Icons.umbrella,
-                    label: 'Precipitation',
+                    label:
+                        AppLocalizations.of(context).translate('precipitation'),
                     value: precipitationProbabilityThreshold,
                     onChanged: (value) {
                       setState(() => precipitationProbabilityThreshold = value);
                     },
                     min: 0,
                     max: 100,
-                    unit: '%',
+                    unit: AppLocalizations.of(context).translate('percentage'),
                   ),
                   SizedBox(height: 24),
                   _buildSliderWithLabel(
                     context: context,
                     icon: Icons.thermostat,
-                    label: 'Temperature',
+                    label:
+                        AppLocalizations.of(context).translate('temperature'),
                     value: temperatureThreshold,
                     onChanged: (value) {
                       setState(() => temperatureThreshold = value);
                     },
                     min: -10,
                     max: 30,
-                    unit: '°C',
+                    unit: AppLocalizations.of(context).translate('celsius'),
                   ),
                   SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Show unavailable',
+                        AppLocalizations.of(context)
+                            .translate('show_unavailable'),
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       Switch(
@@ -247,7 +256,8 @@ class _HomePageState extends State<HomePage>
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text('Cancel'),
+                        child: Text(
+                            AppLocalizations.of(context).translate('cancel')),
                       ),
                       SizedBox(width: 16),
                       ElevatedButton(
@@ -260,7 +270,8 @@ class _HomePageState extends State<HomePage>
                               Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                         ),
-                        child: Text('Apply'),
+                        child: Text(
+                            AppLocalizations.of(context).translate('apply')),
                       ),
                     ],
                   ),
@@ -372,7 +383,7 @@ class _HomePageState extends State<HomePage>
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 title: Text(
-                  'PADELTID',
+                  AppLocalizations.of(context).translate('app_title'),
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 22,
@@ -411,7 +422,7 @@ class _HomePageState extends State<HomePage>
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                     child: Text(
-                      'Recommended',
+                      AppLocalizations.of(context).translate('recommended'),
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontSize: 24,
@@ -431,9 +442,12 @@ class _HomePageState extends State<HomePage>
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return RecommendedListSkeleton();
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          return recommended_lv_holder(
+                              documents: snapshot.data ?? []);
                         }
-                        return recommended_lv_holder(
-                            documents: snapshot.data ?? []);
                       },
                     ),
                   ),
@@ -446,7 +460,8 @@ class _HomePageState extends State<HomePage>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'All timeslots',
+                          AppLocalizations.of(context)
+                              .translate('all_timeslots'),
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -474,7 +489,9 @@ class _HomePageState extends State<HomePage>
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return MainListSkeleton();
                       } else if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
+                        return Center(
+                            child: Text(
+                                '${AppLocalizations.of(context).translate('error_prefix')} ${snapshot.error}'));
                       } else if (snapshot.hasData) {
                         final groupedDocuments =
                             _groupDocuments(snapshot.data!);
@@ -497,7 +514,7 @@ class _HomePageState extends State<HomePage>
                     child: Padding(
                       padding: EdgeInsets.all(32),
                       child: Text(
-                        'Select clubs to see available time slots',
+                        AppLocalizations.of(context).translate('select_clubs'),
                         style: TextStyle(
                           color: Theme.of(context)
                               .colorScheme

@@ -5,6 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
+import 'package:flutter_application_1/utils/translations.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/providers/locale_provider.dart';
 
 class Club {
   final String name;
@@ -134,6 +138,9 @@ class _LocationSelectorState extends State<LocationSelector>
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
     print(
         'Building LocationSelector - Clubs: ${clubs.length}, Filtered: ${filteredClubs.length}, Loading: $isLoading');
 
@@ -166,8 +173,15 @@ class _LocationSelectorState extends State<LocationSelector>
                     SizedBox(width: 8),
                     Text(
                       selectedLocations.isEmpty
-                          ? 'Select clubs'
-                          : '${selectedLocations.length} club${selectedLocations.length != 1 ? 's' : ''} selected',
+                          ? TranslationHelper.translate(
+                              'select_clubs', languageCode)
+                          : selectedLocations.length == 1
+                              ? TranslationHelper.translate(
+                                  'club_selected', languageCode)
+                              : TranslationHelper.translate(
+                                      'clubs_selected', languageCode)
+                                  .replaceAll('{count}',
+                                      selectedLocations.length.toString()),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 16,
@@ -189,7 +203,8 @@ class _LocationSelectorState extends State<LocationSelector>
                 controller: _searchController,
                 onChanged: _filterClubs,
                 decoration: InputDecoration(
-                  hintText: 'Search clubs...',
+                  hintText:
+                      TranslationHelper.translate('search_clubs', languageCode),
                   hintStyle: TextStyle(color: Colors.grey),
                   prefixIcon: Icon(Icons.search,
                       color: Theme.of(context).colorScheme.primary),
