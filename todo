@@ -1,0 +1,11 @@
+Premium features
+- detailed weather forecast for each timeslot
+    - basic weather during the next two hours
+    - additional weather parameters like pressure, humidity, wind speed, wind direction, etc.
+    - estimation of ball bounciness based on weather parameters
+- detailed court information
+- additional filter based notifications
+
+notifications
+- club specific notifications
+    - specify clubs in notifcation preferences
