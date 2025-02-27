@@ -7,6 +7,8 @@ class ClubAvailability {
   final int availableSlots;
   final int totalCourts;
   final Weather weather;
+  final String latitude;
+  final String longitude;
 
   ClubAvailability({
     required this.clubId,
@@ -15,6 +17,8 @@ class ClubAvailability {
     required this.availableSlots,
     required this.totalCourts,
     required this.weather,
+    this.latitude = '',
+    this.longitude = '',
   });
 
   factory ClubAvailability.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,8 @@ class ClubAvailability {
       availableSlots: json['available_slots'],
       totalCourts: json['total_courts'],
       weather: Weather.fromJson(json['weather']),
+      latitude: json['latitude'] ?? '',
+      longitude: json['longitude'] ?? '',
     );
   }
 }
@@ -75,7 +81,7 @@ class Document {
   // Get weather from first available selected location or first available club
   Weather? get weather {
     if (clubs.isEmpty) return null;
-    
+
     if (selectedLocations.isNotEmpty) {
       for (var location in selectedLocations) {
         if (clubs.containsKey(location)) {
@@ -87,18 +93,21 @@ class Document {
   }
 
   double get airTemperature => weather?.airTemperature ?? 0.0;
-  double get precipitationProbability => weather?.precipitationProbability ?? 0.0;
+  double get precipitationProbability =>
+      weather?.precipitationProbability ?? 0.0;
   double get windSpeed => weather?.windSpeed ?? 0.0;
   String get symbolCode => weather?.symbolCode ?? 'clearsky_day';
 
-  int get totalAvailableSlots => 
-    clubs.values.fold(0, (sum, club) => sum + club.availableSlots);
+  int get totalAvailableSlots =>
+      clubs.values.fold(0, (sum, club) => sum + club.availableSlots);
 
-  int get totalClubs => selectedLocations.isEmpty 
-    ? clubs.length 
-    : clubs.keys.where((club) => selectedLocations.contains(club)).length;
+  int get totalClubs => selectedLocations.isEmpty
+      ? clubs.length
+      : clubs.keys.where((club) => selectedLocations.contains(club)).length;
 
-  factory Document.fromJson(Map<String, dynamic> json, List<dynamic> subscribedDocs, {List<String> selectedLocations = const []}) {
+  factory Document.fromJson(
+      Map<String, dynamic> json, List<dynamic> subscribedDocs,
+      {List<String> selectedLocations = const []}) {
     Map<String, ClubAvailability> clubs = {};
     if (json.containsKey('clubs')) {
       (json['clubs'] as Map<String, dynamic>).forEach((key, value) {
@@ -109,9 +118,9 @@ class Document {
     }
 
     // Create document ID in the format YYYYMMDDHHMMSS
-    final docId = json['date'].replaceAll('-', '') + 
-                 json['time'].substring(0, 5).replaceAll(':', '') + 
-                 "00";
+    final docId = json['date'].replaceAll('-', '') +
+        json['time'].substring(0, 5).replaceAll(':', '') +
+        "00";
 
     // Find subscription data for this document
     final subscriptionData = subscribedDocs.firstWhere(

@@ -14,11 +14,8 @@ import 'recommended_lv_holder.dart';
 import 'location_selector.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/services/token_service.dart';
-import 'package:flutter_application_1/widgets/language_selector.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/providers/locale_provider.dart';
-import 'package:flutter_application_1/l10n/app_localizations.dart';
-import 'package:flutter_application_1/widgets/simple_language_selector.dart';
 import 'package:flutter_application_1/utils/translations.dart';
 
 class Location {

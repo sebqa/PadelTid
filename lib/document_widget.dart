@@ -4,7 +4,6 @@ import 'package:flutter_application_1/model/document.dart';
 import 'widgets/subscribing_icon.dart';
 import 'pages/document_details_page.dart';
 import 'package:flutter/cupertino.dart';
-import 'navigation/route_manager.dart';
 import 'package:flutter_application_1/utils/translations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/providers/locale_provider.dart';
