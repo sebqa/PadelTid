@@ -17,64 +17,77 @@ class PadelBallBehavior {
     required this.recommendedBallType,
   });
 
-  factory PadelBallBehavior.calculate(
-      double airPressure, double humidity, double temperature) {
+  factory PadelBallBehavior.calculate(double airPressure, double humidity,
+      double temperature, double windSpeed) {
     // Base reference values
     const standardPressure = 1013.25; // hPa (standard sea level pressure)
     const standardHumidity = 50.0; // %
-    const standardTemp = 20.0; // °C
+    const standardTemp = 8.3; // °C
+    const standardWindSpeed = 2.0; // m/s - light breeze
+
+    // Calculate relative pressure (ratio of standard to actual)
+    // Lower external air pressure = higher internal-to-external pressure difference
+    final pressureDifferential = standardPressure / airPressure;
 
     // Calculate moisture absorption factor (increases with humidity)
+    // Higher humidity = heavier, slower ball
     final moistureAbsorptionFactor =
         1 + ((humidity - standardHumidity) * 0.003);
 
-    // Air density calculation factors
-    final temperatureKelvin = temperature + 273.15;
-    final vaporPressure = _calculateVaporPressure(temperature, humidity);
-    final dryAirPressure = airPressure - vaporPressure;
+    // Calculate ball behaviors with bounds checking
 
-    // Simplified air density calculation (kg/m³)
-    final airDensity = (dryAirPressure * 0.0289652 + vaporPressure * 0.018016) /
-        (8.31447 * temperatureKelvin);
-
-    // Reference air density at standard conditions
-    const standardAirDensity = 1.225; // kg/m³
-
-    // Calculate relative air density (compared to standard)
-    final airDensityRatio = airDensity / standardAirDensity;
-
-    // Calculate ball behaviors
     // Ball weight (100 = standard, higher means heavier)
-    final ballWeight = 100 * moistureAbsorptionFactor;
+    // Weight increases with humidity as ball absorbs moisture
+    double ballWeight = 100 * moistureAbsorptionFactor;
+    ballWeight = _boundValue(ballWeight, 80, 120);
 
     // Ball speed (100 = standard, higher means faster)
-    final ballSpeed =
-        100 * (1 / (airDensityRatio * sqrt(moistureAbsorptionFactor)));
+    // Speed increases with lower air pressure (higher pressure differential)
+    // Speed decreases with higher humidity (heavier ball)
+    // Speed increases slightly with higher temperature (less air resistance)
+    double tempFactor = min(temperature / standardTemp, 1.2);
+    double ballSpeed =
+        100 * (pressureDifferential * tempFactor / moistureAbsorptionFactor);
+    ballSpeed = _boundValue(ballSpeed, 80, 120);
 
     // Ball bounce (100 = standard, higher means higher bounce)
-    final pressureDifferential = airPressure / standardPressure;
-    final ballBounce = 100 *
-        ((1 / moistureAbsorptionFactor) * 0.7 + pressureDifferential * 0.3);
+    // Bounce increases with lower air pressure (higher pressure differential)
+    // Bounce decreases with higher humidity (softer, less elastic ball)
+    double ballBounce = 100 *
+        (pressureDifferential * 0.6 + (1 / moistureAbsorptionFactor) * 0.4);
+    ballBounce = _boundValue(ballBounce, 80, 120);
 
     // Ball control (100 = standard, higher is better control)
+    // Control is better when conditions are close to standard
+    // Control is significantly reduced by high wind speeds
     final humidityDeviation = (humidity - standardHumidity).abs() / 50;
     final pressureDeviation =
         (airPressure - standardPressure).abs() / standardPressure;
     final tempDeviation = (temperature - standardTemp).abs() / 20;
-    final ballControl = 100 *
+
+    // Wind factor: exponential decrease in control as wind increases beyond standard
+    final windFactor = windSpeed <= standardWindSpeed
+        ? 0.0
+        : min(pow(windSpeed / standardWindSpeed - 1, 1.5) * 0.5, 0.6);
+
+    double ballControl = 100 *
         (1 -
-            (humidityDeviation * 0.4 +
-                pressureDeviation * 0.3 +
-                tempDeviation * 0.3));
+            (humidityDeviation * 0.2 +
+                pressureDeviation * 0.2 +
+                tempDeviation * 0.1 +
+                windFactor));
+
+    ballControl = _boundValue(ballControl, 80, 120);
 
     return PadelBallBehavior(
       ballWeight: ballWeight,
       ballSpeed: ballSpeed,
       ballBounce: ballBounce,
       ballControl: ballControl,
-      playingStrategy: _determineStrategy(ballWeight, ballSpeed, ballBounce),
+      playingStrategy:
+          _determineStrategy(ballWeight, ballSpeed, ballBounce, windSpeed),
       recommendedBallType:
-          _recommendBallType(airPressure, humidity, temperature),
+          _recommendBallType(airPressure, humidity, temperature, windSpeed),
     );
   }
 
@@ -85,8 +98,13 @@ class PadelBallBehavior {
     return (humidity / 100) * saturationVaporPressure;
   }
 
-  static String _determineStrategy(
-      double ballWeight, double ballSpeed, double ballBounce) {
+  static String _determineStrategy(double ballWeight, double ballSpeed,
+      double ballBounce, double windSpeed) {
+    // Prioritize wind-based strategy if wind is high
+    if (windSpeed > 5.0) {
+      return 'strategy_windy';
+    }
+
     if (ballWeight > 110 && ballSpeed < 90 && ballBounce < 90) {
       return 'strategy_aggressive';
     } else if (ballWeight < 95 && ballSpeed > 110 && ballBounce > 110) {
@@ -98,8 +116,8 @@ class PadelBallBehavior {
     }
   }
 
-  static String _recommendBallType(
-      double airPressure, double humidity, double temperature) {
+  static String _recommendBallType(double airPressure, double humidity,
+      double temperature, double windSpeed) {
     if (airPressure < 900) {
       return 'ball_high_altitude';
     } else if (humidity > 70) {
@@ -110,6 +128,8 @@ class PadelBallBehavior {
       return 'ball_heat_resistant';
     } else if (temperature < 10) {
       return 'ball_cold_weather';
+    } else if (windSpeed > 5.0) {
+      return 'ball_wind_resistant';
     } else {
       return 'ball_standard_tournament';
     }
@@ -137,5 +157,12 @@ class PadelBallBehavior {
     if (ballControl > 95) return 'ball_control_normal';
     if (ballControl > 90) return 'ball_control_challenging';
     return 'ball_control_difficult';
+  }
+
+  // Helper function to keep values within desired range
+  static double _boundValue(double value, double min, double max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
   }
 }

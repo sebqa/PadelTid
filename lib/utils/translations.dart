@@ -122,6 +122,11 @@ class TranslationHelper {
       'ball_heat_resistant': 'Heat-Resistant Ball',
       'ball_cold_weather': 'Cold-Weather Ball',
       'ball_standard_tournament': 'Standard Tournament Ball',
+      'score_scale': 'Score scale',
+      'normal': 'normal',
+      'strategy_windy':
+          'Anticipate ball drift, play more defensively, reduce lobs',
+      'ball_wind_resistant': 'Wind-Resistant Ball',
     },
     'da': {
       'monday': 'Mandag',
@@ -246,6 +251,11 @@ class TranslationHelper {
       'ball_heat_resistant': 'Varmebestandig Bold',
       'ball_cold_weather': 'Kuldebestandig Bold',
       'ball_standard_tournament': 'Standard Turneringsbold',
+      'score_scale': 'Score skala',
+      'normal': 'normal',
+      'strategy_windy':
+          'Forvent drift af bolden, spil mere defensivt, reducer lobs',
+      'ball_wind_resistant': 'Vindresistent Bold',
     }
   };
 

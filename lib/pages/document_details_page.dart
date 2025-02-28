@@ -78,8 +78,8 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           final forecastTime = DateTime.parse(item['time']);
           // Filter to get -1h, 0h, +1h, +2h relative to document time
           return forecastTime
-                  .isAfter(docDateTime.subtract(Duration(hours: 1))) &&
-              forecastTime.isBefore(docDateTime.add(Duration(hours: 4)));
+                  .isAfter(docDateTime.subtract(Duration(hours: 2))) &&
+              forecastTime.isBefore(docDateTime.add(Duration(hours: 3)));
         }).toList();
 
         // Sort by time to ensure correct order
@@ -112,12 +112,12 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final localeProvider = Provider.of<LocaleProvider>(context);
     final languageCode = localeProvider.locale.languageCode;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
@@ -130,119 +130,112 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
         ),
       ),
       body: ListView(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(vertical: 8),
         children: [
-          // Summary card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-              ),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    TranslationHelper.translate('overview', languageCode),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on_outlined),
-                      SizedBox(width: 8),
-                      Text(
-                          '${widget.document.totalClubs} ${widget.document.totalClubs == 1 ? TranslationHelper.translate('location', languageCode) : TranslationHelper.translate('locations', languageCode)} ${TranslationHelper.translate('available', languageCode)}'),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.sports_tennis_outlined),
-                      SizedBox(width: 8),
-                      Text(
-                          '${widget.document.totalAvailableSlots} ${widget.document.totalAvailableSlots == 1 ? TranslationHelper.translate('court', languageCode) : TranslationHelper.translate('courts', languageCode)} ${TranslationHelper.translate('available', languageCode)}'),
-                    ],
-                  ),
-                ],
-              ),
+          // Overview section
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  TranslationHelper.translate('overview', languageCode),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.location_on_outlined,
+                        color: Theme.of(context).colorScheme.primary, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      '${widget.document.totalClubs} ${widget.document.totalClubs == 1 ? TranslationHelper.translate('location', languageCode) : TranslationHelper.translate('locations', languageCode)} ${TranslationHelper.translate('available', languageCode)}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.sports_tennis_outlined,
+                        color: Theme.of(context).colorScheme.primary, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      '${widget.document.totalAvailableSlots} ${TranslationHelper.translate('courts', languageCode)} ${TranslationHelper.translate('available', languageCode)}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 
-          SizedBox(height: 24),
+          Divider(),
 
-          // List of clubs
-          Text(
-            TranslationHelper.translate('available_locations', languageCode),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          SizedBox(height: 16),
-
-          // List of clubs with their detailed weather
-          ...widget.document.clubs.entries
-              .map((entry) => _buildClubCard(context, entry.key, entry.value)),
+          // Club sections
+          ...widget.document.clubs.entries.map((entry) {
+            return _buildClubSection(context, entry.key, entry.value);
+          }).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildClubCard(
+  Widget _buildClubSection(
       BuildContext context, String clubName, ClubAvailability club) {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final localeProvider = Provider.of<LocaleProvider>(context);
     final languageCode = localeProvider.locale.languageCode;
     final hasDetailedWeather =
         club.latitude.isNotEmpty && club.longitude.isNotEmpty;
     final isExpanded = _expandedClubs[clubName] ?? false;
 
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-        ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    clubName,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Club header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  clubName,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  '${club.availableSlots}/${club.totalCourts} ${TranslationHelper.translate('courts', languageCode)}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    '${club.availableSlots}/${club.totalCourts} ${TranslationHelper.translate('courts', languageCode)}',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
+              ),
+            ],
+          ),
 
-            // Basic weather information
-            Row(
+          SizedBox(height: 16),
+
+          // Basic weather information
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildWeatherInfo(
@@ -265,113 +258,135 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
                 ),
               ],
             ),
+          ),
 
-            // Book Court button
-            if (club.clubUrl.isNotEmpty) ...[
-              SizedBox(height: 16),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final url = Uri.parse(club.clubUrl);
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+          // Detailed weather forecast if available
+          if (hasDetailedWeather) ...[
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Expandable header
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _expandedClubs[clubName] = !isExpanded;
+                      });
+                    },
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.wb_sunny,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          TranslationHelper.translate(
+                              'detailed_weather', languageCode),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Spacer(),
+                        Icon(
+                          isExpanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ],
                     ),
                   ),
-                  child: Text(
-                      TranslationHelper.translate('book_court', languageCode)),
-                ),
-              ),
-            ],
 
-            // Detailed weather forecast if available
-            if (hasDetailedWeather) ...[
-              SizedBox(height: 16),
-              Divider(),
-              // Expandable section with arrow
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    _expandedClubs[clubName] = !isExpanded;
-                  });
+                  // Only show details if expanded
+                  if (isExpanded) ...[
+                    SizedBox(height: 16),
+                    if (_clubLoadingStates[clubName] == true)
+                      Center(
+                          child: SizedBox(
+                        height: 100,
+                        child: Center(child: CircularProgressIndicator()),
+                      ))
+                    else if (_clubErrorMessages.containsKey(clubName))
+                      Center(child: Text(_clubErrorMessages[clubName]!))
+                    else if (_clubWeatherForecasts[clubName]?.isEmpty ?? true)
+                      Center(
+                          child: Text(TranslationHelper.translate(
+                              'no_forecast', languageCode)))
+                    else
+                      _buildWeatherForClub(
+                          context, _clubWeatherForecasts[clubName]!),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
+          // Book Court button - moved below weather details
+          if (club.clubUrl.isNotEmpty) ...[
+            SizedBox(height: 16),
+            Center(
+              child: ElevatedButton.icon(
+                icon: Icon(Icons.sports_tennis),
+                label: Text(
+                    TranslationHelper.translate('book_court', languageCode)),
+                onPressed: () async {
+                  final url = Uri.parse(club.clubUrl);
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
                 },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Text(
-                        TranslationHelper.translate(
-                            'detailed_weather', languageCode),
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      Spacer(),
-                      Icon(
-                        isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ],
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
-
-              // Only show details if expanded
-              if (isExpanded) ...[
-                SizedBox(height: 12),
-                if (_clubLoadingStates[clubName] == true)
-                  Center(
-                      child: SizedBox(
-                    height: 100,
-                    child: Center(child: CircularProgressIndicator()),
-                  ))
-                else if (_clubErrorMessages.containsKey(clubName))
-                  Center(child: Text(_clubErrorMessages[clubName]!))
-                else if (_clubWeatherForecasts[clubName]?.isEmpty ?? true)
-                  Center(
-                      child: Text(TranslationHelper.translate(
-                          'no_forecast', languageCode)))
-                else
-                  _buildWeatherForClub(
-                      context, _clubWeatherForecasts[clubName]!),
-              ],
-            ],
+            ),
           ],
-        ),
+
+          Divider(height: 24),
+        ],
       ),
     );
   }
 
   Widget _buildWeatherForClub(
       BuildContext context, List<DetailedWeather> forecasts) {
+    final languageCode =
+        Provider.of<LocaleProvider>(context).locale.languageCode;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Weather time slots
-        Text(
-          TranslationHelper.translate(
-              'hourly_forecast',
-              Provider.of<LocaleProvider>(context, listen: false)
-                  .locale
-                  .languageCode),
-          style: TextStyle(fontWeight: FontWeight.bold),
+        Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            TranslationHelper.translate('hourly_forecast', languageCode),
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
-        SizedBox(height: 8),
 
         // Horizontal scrollable cards
         Container(
-          height: 140,
+          height: 120,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: forecasts.length,
-            separatorBuilder: (context, index) => SizedBox(width: 12),
+            separatorBuilder: (context, index) => SizedBox(width: 8),
             itemBuilder: (context, index) {
               final weather = forecasts[index];
               return _buildWeatherTimeCard(context, weather);
@@ -382,18 +397,15 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
         // Additional details for first forecast
         if (forecasts.isNotEmpty) ...[
           SizedBox(height: 16),
-          Text(
-            TranslationHelper.translate(
-                'weather_details',
-                Provider.of<LocaleProvider>(context, listen: false)
-                    .locale
-                    .languageCode),
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              TranslationHelper.translate('weather_details', languageCode),
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
-          SizedBox(height: 8),
           _buildAdditionalWeatherDetails(context, forecasts.first),
-
-          // Add the padel ball behavior section
+          SizedBox(height: 16),
           _buildPadelBallBehavior(context, forecasts.first),
         ],
       ],
@@ -402,9 +414,10 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
 
   Widget _buildWeatherTimeCard(BuildContext context, DetailedWeather weather) {
     return Container(
-      width: 80, // Slightly smaller width
-      padding: EdgeInsets.all(8), // Slightly smaller padding
+      width: 80,
+      padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         border: Border.all(
             color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
         borderRadius: BorderRadius.circular(8),
@@ -414,37 +427,34 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
         children: [
           Text(
             DateFormat('HH:mm').format(weather.time),
-            style: TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 12), // Smaller font
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           ),
-          SizedBox(height: 4),
+          Divider(height: 8, thickness: 0.5),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.thermostat,
-                  color: Colors.red, size: 14), // Smaller icon
+              Icon(Icons.thermostat, color: Colors.red, size: 14),
               SizedBox(width: 2),
               Text('${weather.airTemperature.toStringAsFixed(1)}°C',
-                  style: TextStyle(fontSize: 11)), // Smaller font
+                  style: TextStyle(fontSize: 11)),
             ],
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.air, color: Colors.blue, size: 14), // Smaller icon
+              Icon(Icons.air, color: Colors.blue, size: 14),
               SizedBox(width: 2),
               Text('${weather.windSpeed.toStringAsFixed(1)} m/s',
-                  style: TextStyle(fontSize: 11)), // Smaller font
+                  style: TextStyle(fontSize: 11)),
             ],
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.water_drop,
-                  color: Colors.green, size: 14), // Smaller icon
+              Icon(Icons.water_drop, color: Colors.green, size: 14),
               SizedBox(width: 2),
               Text('${weather.precipitationProbability.toStringAsFixed(0)}%',
-                  style: TextStyle(fontSize: 11)), // Smaller font
+                  style: TextStyle(fontSize: 11)),
             ],
           ),
         ],
@@ -455,13 +465,16 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
   Widget _buildAdditionalWeatherDetails(
       BuildContext context, DetailedWeather weather) {
     final languageCode =
-        Provider.of<LocaleProvider>(context, listen: false).locale.languageCode;
+        Provider.of<LocaleProvider>(context).locale.languageCode;
 
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(8),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -469,16 +482,15 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           _buildDetailedWeatherInfoItem(
             context,
             Icons.compress,
-            '${weather.airPressure.toStringAsFixed(1)} hPa',
+            '${weather.airPressure.toStringAsFixed(0)} hPa',
             TranslationHelper.translate('air_pressure', languageCode),
           ),
           _buildDetailedWeatherInfoItem(
             context,
-            Icons.water,
+            Icons.water_outlined,
             '${weather.humidity.toStringAsFixed(0)}%',
             TranslationHelper.translate('humidity', languageCode),
           ),
-          // Wind direction with rotating arrow
           _buildWindDirectionItem(
             context,
             weather.windDirection,
@@ -491,15 +503,12 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
 
   Widget _buildWindDirectionItem(
       BuildContext context, double direction, String label) {
-    // Convert direction to radians (subtract 90 degrees to make 0 degrees point north)
-    final angleInRadians = (direction - 90) * (math.pi / 180);
-
     return Column(
       children: [
         Transform.rotate(
-          angle: angleInRadians,
+          angle: (direction * math.pi / 180) - math.pi / 2,
           child: Icon(
-            Icons.navigation,
+            Icons.arrow_upward,
             color: Theme.of(context).colorScheme.primary,
             size: 20,
           ),
@@ -551,44 +560,16 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
     );
   }
 
-  Widget _buildWeatherInfo(
-      BuildContext context, IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildPadelBallBehavior(
       BuildContext context, DetailedWeather weather) {
     final languageCode =
-        Provider.of<LocaleProvider>(context, listen: false).locale.languageCode;
+        Provider.of<LocaleProvider>(context).locale.languageCode;
     final behavior = weather.padelBallBehavior;
 
     return Container(
-      margin: EdgeInsets.only(top: 16),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
@@ -615,18 +596,11 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
               ),
             ],
           ),
-          SizedBox(height: 12),
-          Text(
-            TranslationHelper.translate('ball_behavior', languageCode),
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-          SizedBox(height: 8),
+          SizedBox(height: 16),
+
           // Ball behavior metrics
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildBallBehaviorItem(
                 context,
@@ -654,53 +628,75 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
               ),
             ],
           ),
+
           Divider(height: 24),
+
           // Recommendations
-          Column(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.sports_baseball,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    TranslationHelper.translate(
-                        'recommended_ball', languageCode),
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: EdgeInsets.only(left: 24, top: 4),
-                child: Text(
-                  TranslationHelper.translate(
-                      behavior.recommendedBallType, languageCode),
+              // Ball recommendation
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.sports_baseball,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          TranslationHelper.translate(
+                              'recommended_ball', languageCode),
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 24, top: 4),
+                      child: Text(
+                        TranslationHelper.translate(
+                            behavior.recommendedBallType, languageCode),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.lightbulb_outline,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    TranslationHelper.translate('strategy_tips', languageCode),
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: EdgeInsets.only(left: 24, top: 4),
-                child: Text(
-                  TranslationHelper.translate(
-                      behavior.playingStrategy, languageCode),
+
+              SizedBox(width: 16),
+
+              // Strategy tips
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          TranslationHelper.translate(
+                              'strategy_tips', languageCode),
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 24, top: 4),
+                      child: Text(
+                        TranslationHelper.translate(
+                            behavior.playingStrategy, languageCode),
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -720,6 +716,15 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
       return Colors.grey.shade700;
     }
 
+    final languageCode =
+        Provider.of<LocaleProvider>(context).locale.languageCode;
+    final scaleText = TranslationHelper.translate('score_scale', languageCode);
+
+    // Ensure value is properly bounded for display
+    int displayValue = value;
+    if (displayValue > 120) displayValue = 120;
+    if (displayValue < 80) displayValue = 80;
+
     return Column(
       children: [
         Icon(icon, size: 18),
@@ -728,7 +733,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           label,
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
-        SizedBox(height: 2),
+        SizedBox(height: 4),
         Container(
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
@@ -745,11 +750,50 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           ),
         ),
         SizedBox(height: 2),
+        Tooltip(
+          message:
+              '$scaleText (80-120, 100 = ${TranslationHelper.translate('normal', languageCode)})',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$displayValue',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              SizedBox(width: 2),
+              Icon(Icons.info_outline, size: 10, color: Colors.grey.shade400),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeatherInfo(
+      BuildContext context, IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Theme.of(context).colorScheme.primary,
+          size: 20,
+        ),
+        SizedBox(height: 4),
         Text(
-          '$value',
+          value,
           style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
           ),
         ),
       ],

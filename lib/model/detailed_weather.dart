@@ -12,8 +12,8 @@ class DetailedWeather {
   final String symbolCode;
   final double precipitationProbability;
 
-  PadelBallBehavior get padelBallBehavior =>
-      PadelBallBehavior.calculate(airPressure, humidity, airTemperature);
+  PadelBallBehavior get padelBallBehavior => PadelBallBehavior.calculate(
+      airPressure, humidity, airTemperature, windSpeed);
 
   DetailedWeather({
     required this.time,
