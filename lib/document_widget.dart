@@ -241,7 +241,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                               // Precipitation
                               Row(
                                 children: [
-                                  Icon(Icons.water_drop,
+                                  Icon(Icons.umbrella,
                                       size: 16,
                                       color: Theme.of(context)
                                           .colorScheme

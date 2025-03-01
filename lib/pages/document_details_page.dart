@@ -78,8 +78,8 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           final forecastTime = DateTime.parse(item['time']);
           // Filter to get -1h, 0h, +1h, +2h relative to document time
           return forecastTime
-                  .isAfter(docDateTime.subtract(Duration(hours: 2))) &&
-              forecastTime.isBefore(docDateTime.add(Duration(hours: 3)));
+                  .isAfter(docDateTime.subtract(Duration(hours: 1))) &&
+              forecastTime.isBefore(docDateTime.add(Duration(hours: 4)));
         }).toList();
 
         // Sort by time to ensure correct order
@@ -264,7 +264,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
                       ),
                       _buildWeatherInfo(
                         context,
-                        Icons.water_drop,
+                        Icons.umbrella,
                         '${club.weather.precipitationProbability}${TranslationHelper.translate('percent', languageCode)}',
                         TranslationHelper.translate(
                             'precipitation', languageCode),
@@ -423,9 +423,9 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-          _buildAdditionalWeatherDetails(context, forecasts.first),
+          _buildWeatherMetrics(context, forecasts.first, languageCode),
           SizedBox(height: 16),
-          _buildPadelBallBehavior(context, forecasts.first),
+          _buildPadelConditions(context, forecasts.first, languageCode),
         ],
       ],
     );
@@ -452,7 +452,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.thermostat, color: Colors.red, size: 14),
+              Icon(Icons.thermostat, size: 14),
               SizedBox(width: 2),
               Text('${weather.airTemperature.toStringAsFixed(1)}°C',
                   style: TextStyle(fontSize: 11)),
@@ -461,7 +461,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.air, color: Colors.blue, size: 14),
+              Icon(Icons.air, size: 14),
               SizedBox(width: 2),
               Text('${weather.windSpeed.toStringAsFixed(1)} m/s',
                   style: TextStyle(fontSize: 11)),
@@ -470,7 +470,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.water_drop, color: Colors.green, size: 14),
+              Icon(Icons.umbrella, size: 14),
               SizedBox(width: 2),
               Text('${weather.precipitationProbability.toStringAsFixed(0)}%',
                   style: TextStyle(fontSize: 11)),
@@ -481,143 +481,50 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
     );
   }
 
-  Widget _buildAdditionalWeatherDetails(
-      BuildContext context, DetailedWeather weather) {
-    final languageCode =
-        Provider.of<LocaleProvider>(context).locale.languageCode;
-
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildDetailedWeatherInfoItem(
-            context,
-            Icons.compress,
-            '${weather.airPressure.toStringAsFixed(0)} hPa',
-            TranslationHelper.translate('air_pressure', languageCode),
-          ),
-          _buildDetailedWeatherInfoItem(
-            context,
-            Icons.water_outlined,
-            '${weather.humidity.toStringAsFixed(0)}%',
-            TranslationHelper.translate('humidity', languageCode),
-          ),
-          _buildWindDirectionItem(
-            context,
-            weather.windDirection,
-            TranslationHelper.translate('wind_direction', languageCode),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWindDirectionItem(
-      BuildContext context, double direction, String label) {
-    return Column(
+  Widget _buildWeatherMetrics(
+      BuildContext context, DetailedWeather weather, String languageCode) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        Transform.rotate(
-          angle: (direction * math.pi / 180) - math.pi / 2,
-          child: Icon(
-            Icons.arrow_upward,
-            color: Theme.of(context).colorScheme.primary,
-            size: 20,
-          ),
+        _buildDetailedWeatherInfoItem(
+          context,
+          Icons.compress,
+          '${weather.airPressure.round()} hPa',
+          TranslationHelper.translate('air_pressure', languageCode),
         ),
-        SizedBox(height: 4),
-        Text(
-          '${direction.toStringAsFixed(0)}°',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
+        _buildDetailedWeatherInfoItem(
+          context,
+          Icons.opacity,
+          '${weather.humidity.round()}${TranslationHelper.translate('percent', languageCode)}',
+          TranslationHelper.translate('humidity', languageCode),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 12,
-          ),
+        _buildDetailedWeatherInfoItem(
+          context,
+          Icons.navigation,
+          '${weather.windDirection.round()}°',
+          TranslationHelper.translate('wind_direction', languageCode),
         ),
       ],
     );
   }
 
-  Widget _buildDetailedWeatherInfoItem(
-      BuildContext context, IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: Theme.of(context).colorScheme.primary,
-          size: 20,
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPadelBallBehavior(
-      BuildContext context, DetailedWeather weather) {
-    final languageCode =
-        Provider.of<LocaleProvider>(context).locale.languageCode;
+  Widget _buildPadelConditions(
+      BuildContext context, DetailedWeather weather, String languageCode) {
     final behavior = weather.padelBallBehavior;
 
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-        ),
-      ),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.sports_tennis,
-                color: Theme.of(context).colorScheme.primary,
-                size: 20,
-              ),
-              SizedBox(width: 8),
-              Text(
-                TranslationHelper.translate('padel_conditions', languageCode),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ],
+          Text(
+            TranslationHelper.translate('padel_conditions', languageCode),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          SizedBox(height: 16),
-
-          // Ball behavior metrics
+          SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -639,7 +546,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
               ),
               _buildBallBehaviorItem(
                 context,
-                Icons.sports_tennis_rounded,
+                Icons.social_distance,
                 TranslationHelper.translate('control', languageCode),
                 TranslationHelper.translate(
                     behavior.getControlDescription(), languageCode),
@@ -648,9 +555,9 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
             ],
           ),
 
-          Divider(height: 24),
+          SizedBox(height: 20),
 
-          // Recommendations
+          // Restored recommendations section
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -725,6 +632,62 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
     );
   }
 
+  Widget _buildWeatherInfo(
+      BuildContext context, IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Theme.of(context).colorScheme.primary,
+          size: 20,
+        ),
+        SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailedWeatherInfoItem(
+      BuildContext context, IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Theme.of(context).colorScheme.primary,
+          size: 20,
+        ),
+        SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildBallBehaviorItem(BuildContext context, IconData icon,
       String label, String description, int value) {
     Color getValueColor() {
@@ -757,34 +720,6 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWeatherInfo(
-      BuildContext context, IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: Theme.of(context).colorScheme.primary,
-          size: 20,
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 12,
           ),
         ),
       ],
