@@ -735,15 +735,6 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
       return Colors.grey.shade700;
     }
 
-    final languageCode =
-        Provider.of<LocaleProvider>(context).locale.languageCode;
-    final scaleText = TranslationHelper.translate('score_scale', languageCode);
-
-    // Ensure value is properly bounded for display
-    int displayValue = value;
-    if (displayValue > 120) displayValue = 120;
-    if (displayValue < 80) displayValue = 80;
-
     return Column(
       children: [
         Icon(icon, size: 18),
@@ -766,25 +757,6 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
-          ),
-        ),
-        SizedBox(height: 2),
-        Tooltip(
-          message:
-              '$scaleText (80-120, 100 = ${TranslationHelper.translate('normal', languageCode)})',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '$displayValue',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              SizedBox(width: 2),
-              Icon(Icons.info_outline, size: 10, color: Colors.grey.shade400),
-            ],
           ),
         ),
       ],
