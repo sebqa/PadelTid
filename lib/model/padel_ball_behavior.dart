@@ -25,47 +25,52 @@ class PadelBallBehavior {
     const standardTemp = 8.3; // °C
     const standardWindSpeed = 2.0; // m/s - light breeze
 
-    // Calculate relative pressure (ratio of standard to actual)
-    // Lower external air pressure = higher internal-to-external pressure difference
-    final pressureDifferential = standardPressure / airPressure;
+    // --------- PRESSURE EFFECT ON BALL ---------
+    // Higher atmospheric pressure = slower ball
+    // Calculate as a ratio, where:
+    // - pressure ratio > 1.0 means pressure is higher than standard (slower ball)
+    // - pressure ratio < 1.0 means pressure is lower than standard (faster ball)
+    final pressureRatio = airPressure / standardPressure;
 
-    // Calculate moisture absorption factor (increases with humidity)
-    // Higher humidity = heavier, slower ball
-    final moistureAbsorptionFactor =
-        1 + ((humidity - standardHumidity) * 0.003);
+    // Convert to speed effect (inverse relationship)
+    // When pressure is higher (ratio > 1), speed factor should be < 1
+    final pressureSpeedFactor = 2 - pressureRatio; // Inverting effect
 
-    // Calculate ball behaviors with bounds checking
+    // --------- HUMIDITY EFFECT ON BALL ---------
+    // Higher humidity = heavier, slower ball due to moisture absorption
+    // 0% humidity would be 0.85, 100% humidity would be 1.15 (±15% effect)
+    final humidityFactor = 0.85 + (humidity / 100) * 0.3;
 
-    // Ball weight (100 = standard, higher means heavier)
-    // Weight increases with humidity as ball absorbs moisture
-    double ballWeight = 100 * moistureAbsorptionFactor;
-    ballWeight = _boundValue(ballWeight, 80, 120);
+    // --------- TEMPERATURE EFFECT ON BALL ---------
+    // Higher temperature = less dense air = faster ball
+    // Calculate relative to standard, with limits
+    // (Temperature has less impact than pressure or humidity)
+    final relativeTemp = temperature / standardTemp;
+    final tempFactor = max(0.9, min(1.1, 0.95 + relativeTemp * 0.05));
 
-    // Ball speed (100 = standard, higher means faster)
-    // Speed increases with lower air pressure (higher pressure differential)
-    // Speed decreases with higher humidity (heavier ball)
-    // Speed increases slightly with higher temperature (less air resistance)
-    double tempFactor = min(temperature / standardTemp, 1.2);
+    // --------- CALCULATE BALL CHARACTERISTICS ---------
+
+    // WEIGHT: Higher humidity = heavier ball
+    double ballWeight = 100 * humidityFactor;
+
+    // SPEED: Affected by all factors
+    // Lower pressure = faster ball
+    // Lower humidity = faster ball
+    // Higher temperature = faster ball
     double ballSpeed =
-        100 * (pressureDifferential * tempFactor / moistureAbsorptionFactor);
-    ballSpeed = _boundValue(ballSpeed, 80, 120);
+        100 * (pressureSpeedFactor / humidityFactor) * tempFactor;
 
-    // Ball bounce (100 = standard, higher means higher bounce)
-    // Bounce increases with lower air pressure (higher pressure differential)
-    // Bounce decreases with higher humidity (softer, less elastic ball)
-    double ballBounce = 100 *
-        (pressureDifferential * 0.6 + (1 / moistureAbsorptionFactor) * 0.4);
-    ballBounce = _boundValue(ballBounce, 80, 120);
+    // BOUNCE: Similar factors as speed
+    double ballBounce = 100 * (pressureSpeedFactor / humidityFactor) * 0.8 + 20;
 
-    // Ball control (100 = standard, higher is better control)
-    // Control is better when conditions are close to standard
-    // Control is significantly reduced by high wind speeds
+    // CONTROL: Better in stable, standard conditions
+    // Wind has major impact on control
     final humidityDeviation = (humidity - standardHumidity).abs() / 50;
     final pressureDeviation =
         (airPressure - standardPressure).abs() / standardPressure;
     final tempDeviation = (temperature - standardTemp).abs() / 20;
 
-    // Wind factor: exponential decrease in control as wind increases beyond standard
+    // Wind factor: exponential decrease in control as wind increases
     final windFactor = windSpeed <= standardWindSpeed
         ? 0.0
         : min(pow(windSpeed / standardWindSpeed - 1, 1.5) * 0.5, 0.6);
@@ -77,7 +82,19 @@ class PadelBallBehavior {
                 tempDeviation * 0.1 +
                 windFactor));
 
+    // Ensure all values stay within our scale
+    ballWeight = _boundValue(ballWeight, 80, 120);
+    ballSpeed = _boundValue(ballSpeed, 80, 120);
+    ballBounce = _boundValue(ballBounce, 80, 120);
     ballControl = _boundValue(ballControl, 80, 120);
+
+    // Debug print showing key values
+    print(
+        "Weather - P: $airPressure hPa, H: $humidity%, T: $temperature°C, W: $windSpeed m/s");
+    print(
+        "Factors - P: $pressureRatio/$pressureSpeedFactor, H: $humidityFactor, T: $tempFactor");
+    print(
+        "Results - Speed: $ballSpeed, Bounce: $ballBounce, Control: $ballControl");
 
     return PadelBallBehavior(
       ballWeight: ballWeight,
@@ -136,10 +153,10 @@ class PadelBallBehavior {
   }
 
   String getSpeedDescription() {
-    if (ballSpeed > 110) return 'ball_speed_much_faster';
-    if (ballSpeed > 105) return 'ball_speed_faster';
-    if (ballSpeed > 95) return 'ball_speed_normal';
-    if (ballSpeed > 90) return 'ball_speed_slower';
+    if (ballSpeed >= 110) return 'ball_speed_much_faster';
+    if (ballSpeed >= 105) return 'ball_speed_faster';
+    if (ballSpeed > 95 && ballSpeed < 105) return 'ball_speed_normal';
+    if (ballSpeed >= 90) return 'ball_speed_slower';
     return 'ball_speed_much_slower';
   }
 

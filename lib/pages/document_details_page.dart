@@ -110,6 +110,25 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
     }
   }
 
+  Future<void> _refreshData() async {
+    setState(() {
+      // Reset loading states and error messages
+      _clubLoadingStates.clear();
+      _clubErrorMessages.clear();
+    });
+
+    // Re-initialize and fetch weather data for all clubs
+    for (var clubEntry in widget.document.clubs.entries) {
+      if (clubEntry.value.latitude.isNotEmpty &&
+          clubEntry.value.longitude.isNotEmpty) {
+        setState(() {
+          _clubLoadingStates[clubEntry.key] = true;
+        });
+        await _fetchDetailedWeatherForClub(clubEntry.key, clubEntry.value);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final localeProvider = Provider.of<LocaleProvider>(context);
@@ -129,54 +148,22 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
-      body: ListView(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        children: [
-          // Overview section
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  TranslationHelper.translate('overview', languageCode),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.location_on_outlined,
-                        color: Theme.of(context).colorScheme.primary, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      '${widget.document.totalClubs} ${widget.document.totalClubs == 1 ? TranslationHelper.translate('location', languageCode) : TranslationHelper.translate('locations', languageCode)} ${TranslationHelper.translate('available', languageCode)}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.sports_tennis_outlined,
-                        color: Theme.of(context).colorScheme.primary, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      '${widget.document.totalAvailableSlots} ${TranslationHelper.translate('courts', languageCode)} ${TranslationHelper.translate('available', languageCode)}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          Divider(),
-
-          // Club sections
-          ...widget.document.clubs.entries.map((entry) {
-            return _buildClubSection(context, entry.key, entry.value);
-          }).toList(),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: ListView(
+          padding: EdgeInsets.only(top: 8, bottom: 24),
+          children: [
+            // Club sections
+            if (widget.document.clubs.isNotEmpty)
+              ...widget.document.clubs.entries.map((clubEntry) {
+                return _buildClubSection(
+                  context,
+                  clubEntry.key,
+                  clubEntry.value,
+                );
+              }).toList(),
+          ],
+        ),
       ),
     );
   }
@@ -189,175 +176,207 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
         club.latitude.isNotEmpty && club.longitude.isNotEmpty;
     final isExpanded = _expandedClubs[clubName] ?? false;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Club header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  clubName,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Club header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        clubName,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
+                    ),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        '${club.availableSlots}/${club.totalCourts} ${TranslationHelper.translate('courts', languageCode)}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  '${club.availableSlots}/${club.totalCourts} ${TranslationHelper.translate('courts', languageCode)}',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w500,
+
+                SizedBox(height: 16),
+
+                // Basic weather information
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildWeatherInfo(
+                        context,
+                        Icons.thermostat,
+                        '${club.weather.airTemperature}${TranslationHelper.translate('temperature_unit', languageCode)}',
+                        TranslationHelper.translate(
+                            'temperature', languageCode),
+                      ),
+                      _buildWeatherInfo(
+                        context,
+                        Icons.air,
+                        '${club.weather.windSpeed}${TranslationHelper.translate('meters_per_second', languageCode)}',
+                        TranslationHelper.translate('wind_speed', languageCode),
+                      ),
+                      _buildWeatherInfo(
+                        context,
+                        Icons.water_drop,
+                        '${club.weather.precipitationProbability}${TranslationHelper.translate('percent', languageCode)}',
+                        TranslationHelper.translate(
+                            'precipitation', languageCode),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
 
-          SizedBox(height: 16),
-
-          // Basic weather information
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildWeatherInfo(
-                  context,
-                  Icons.thermostat,
-                  '${club.weather.airTemperature}${TranslationHelper.translate('temperature_unit', languageCode)}',
-                  TranslationHelper.translate('temperature', languageCode),
-                ),
-                _buildWeatherInfo(
-                  context,
-                  Icons.air,
-                  '${club.weather.windSpeed}${TranslationHelper.translate('meters_per_second', languageCode)}',
-                  TranslationHelper.translate('wind_speed', languageCode),
-                ),
-                _buildWeatherInfo(
-                  context,
-                  Icons.water_drop,
-                  '${club.weather.precipitationProbability}${TranslationHelper.translate('percent', languageCode)}',
-                  TranslationHelper.translate('precipitation', languageCode),
-                ),
-              ],
-            ),
-          ),
-
-          // Detailed weather forecast if available
-          if (hasDetailedWeather) ...[
-            SizedBox(height: 16),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Expandable header
-                  InkWell(
-                    onTap: () {
-                      setState(() {
-                        _expandedClubs[clubName] = !isExpanded;
-                      });
-                    },
-                    child: Row(
+                // Detailed weather forecast if available
+                if (hasDetailedWeather) ...[
+                  SizedBox(height: 16),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.2),
+                      ),
+                    ),
+                    child: Column(
                       children: [
-                        Icon(
-                          Icons.wb_sunny,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          TranslationHelper.translate(
-                              'detailed_weather', languageCode),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
+                        // Expandable header
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _expandedClubs[clubName] = !isExpanded;
+                            });
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.wb_sunny,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                TranslationHelper.translate(
+                                    'detailed_weather', languageCode),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Spacer(),
+                              Icon(
+                                isExpanded
+                                    ? Icons.keyboard_arrow_up
+                                    : Icons.keyboard_arrow_down,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
                           ),
                         ),
-                        Spacer(),
-                        Icon(
-                          isExpanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+
+                        // Only show details if expanded
+                        if (isExpanded) ...[
+                          SizedBox(height: 16),
+                          if (_clubLoadingStates[clubName] == true)
+                            Center(
+                                child: SizedBox(
+                              height: 100,
+                              child: Center(child: CircularProgressIndicator()),
+                            ))
+                          else if (_clubErrorMessages.containsKey(clubName))
+                            Center(child: Text(_clubErrorMessages[clubName]!))
+                          else if (_clubWeatherForecasts[clubName]?.isEmpty ??
+                              true)
+                            Center(
+                                child: Text(TranslationHelper.translate(
+                                    'no_forecast', languageCode)))
+                          else
+                            _buildWeatherForClub(
+                                context, _clubWeatherForecasts[clubName]!),
+                        ],
                       ],
                     ),
                   ),
-
-                  // Only show details if expanded
-                  if (isExpanded) ...[
-                    SizedBox(height: 16),
-                    if (_clubLoadingStates[clubName] == true)
-                      Center(
-                          child: SizedBox(
-                        height: 100,
-                        child: Center(child: CircularProgressIndicator()),
-                      ))
-                    else if (_clubErrorMessages.containsKey(clubName))
-                      Center(child: Text(_clubErrorMessages[clubName]!))
-                    else if (_clubWeatherForecasts[clubName]?.isEmpty ?? true)
-                      Center(
-                          child: Text(TranslationHelper.translate(
-                              'no_forecast', languageCode)))
-                    else
-                      _buildWeatherForClub(
-                          context, _clubWeatherForecasts[clubName]!),
-                  ],
                 ],
-              ),
-            ),
-          ],
 
-          // Book Court button - moved below weather details
-          if (club.clubUrl.isNotEmpty) ...[
-            SizedBox(height: 16),
-            Center(
-              child: ElevatedButton.icon(
-                icon: Icon(Icons.sports_tennis),
-                label: Text(
-                    TranslationHelper.translate('book_court', languageCode)),
-                onPressed: () async {
-                  final url = Uri.parse(club.clubUrl);
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                // Book Court button - moved below weather details
+                if (club.clubUrl.isNotEmpty) ...[
+                  SizedBox(height: 16),
+                  Center(
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.sports_tennis),
+                      label: Text(TranslationHelper.translate(
+                          'book_court', languageCode)),
+                      onPressed: () async {
+                        final url = Uri.parse(club.clubUrl);
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                ],
+              ],
             ),
-          ],
-
-          Divider(height: 24),
+          ),
         ],
       ),
     );
