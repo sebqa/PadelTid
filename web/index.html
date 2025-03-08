@@ -91,6 +91,10 @@
   
   <!-- Flutter initialization -->
   <script src="flutter.js" defer></script>
+
+  <!-- Add these preloaded images in the head section -->
+  <link rel="preload" href="assets/icon/notification_icon.png" as="image">
+  <link rel="preload" href="assets/icon/logo.svg" as="image">
 </head>
 <body>
   <div class="initial-loader">
@@ -142,27 +146,96 @@
     // and move non-critical CSS to be loaded asynchronously
   </script>
   <script>
-    // Register Firebase messaging service worker as early as possible
+    // Completely disable Firebase Messaging in the browser context
+    window.disableFCMInFlutter = true;
+    
+    // Store a flag to indicate we're handling notifications via service worker only
+    localStorage.setItem('notification_handler', 'service_worker_only');
+    
+    // Intercept any Firebase Messaging initialization
+    window.firebaseMessagingOverride = {
+      get: function() { 
+        console.log('Preventing Firebase Messaging initialization in app');
+        return { getToken: () => Promise.resolve("DISABLED") };
+      }
+    };
+    
+    // Override Firebase method
+    Object.defineProperty(window, 'firebase', {
+      get: function() {
+        return {
+          messaging: function() { 
+            console.log('Firebase messaging requested but disabled');
+            return { getToken: () => Promise.resolve("DISABLED") };
+          }
+        };
+      },
+      configurable: true
+    });
+  </script>
+  <script>
+    // Add this before the other firebase-related scripts
+    // Force-disable Firebase on-page messaging for web
+    window.disableFCMInFlutter = true;
+
+    // Determine if we're running as a PWA
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                  window.navigator.standalone || 
+                  document.referrer.includes('android-app://');
+    
+    // Store this globally
+    window.isPWA = isPWA;
+    console.log('Running as PWA:', isPWA);
+    
+    // Replace your service worker registration with this more aggressive version
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./firebase-messaging-sw.js', {
-          scope: './'
-        })
-          .then(registration => {
-            console.log('Firebase messaging service worker registered:', registration.scope);
-            
-            // Try to trigger vibration after registration
-            if ('vibrate' in navigator) {
-              // User gesture required for vibration to work
-              document.addEventListener('click', function() {
-                navigator.vibrate([100]);
-                console.log('Vibration test triggered by user interaction');
-              }, {once: true});
-            }
-          })
-          .catch(error => {
-            console.error('Firebase messaging service worker registration failed:', error);
+      window.addEventListener('load', async function() {
+        // Completely unregister all service workers
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        console.log('Found', registrations.length, 'service worker registrations');
+        
+        for (const registration of registrations) {
+          console.log("Unregistering service worker", registration.scope);
+          await registration.unregister();
+        }
+        
+        // Clear cache to ensure clean state
+        if ('caches' in window) {
+          try {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+            console.log('Cleared all caches');
+          } catch (e) {
+            console.error('Failed to clear caches', e);
+          }
+        }
+        
+        // Wait a bit to ensure complete cleanup
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Register the service worker fresh
+        try {
+          const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
+            scope: './',
+            updateViaCache: 'none'
           });
+          console.log('Service worker registered:', registration.scope);
+          
+          // Force update
+          await registration.update();
+          
+          // Detect if we have an updated service worker
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            console.log('New service worker installing');
+            
+            newWorker.addEventListener('statechange', () => {
+              console.log('Service worker state:', newWorker.state);
+            });
+          });
+        } catch (error) {
+          console.error('Service worker registration failed:', error);
+        }
       });
     }
   </script>

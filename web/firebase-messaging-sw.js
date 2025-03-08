@@ -1,3 +1,5 @@
+console.log("Service worker script loaded - version 1");
+
 importScripts("https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js");
 importScripts("https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js");
 
@@ -13,35 +15,73 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Add this at the top of your service worker file
+self.addEventListener('install', (event) => {
+  console.log("Service worker installing...");
+  // Force activation without waiting for page reload
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  console.log("Service worker activating...");
+  // Take control of all clients immediately
+  event.waitUntil(clients.claim());
+});
+
+// Add this helper function for displaying notification source
+function showDebugNotification(source) {
+  self.registration.showNotification(`Debug: ${source}`, {
+    body: `This notification came from ${source} at ${new Date().toISOString()}`,
+    icon: './assets/icon/logo.svg',
+    badge: './assets/icon/notification_icon.png',
+    tag: 'debug-notification'
+  });
+}
+
 // This service worker should ONLY handle background messages
 // We deliberately don't call showNotification for foreground messages
 messaging.onBackgroundMessage((message) => {
-  console.log("SW: Background message received", message);
+  console.log("SW: Background message received with ID:", message.messageId, message);
   
-  // Don't display if this is a foreground message (handled by app)
-  if (message.data && message.data.foreground === 'true') {
-    console.log("SW: Skipping notification display for foreground message");
+  // Generate a unique ID based on timestamp + random for this notification
+  const notificationId = Date.now() + '-' + Math.random().toString(36).substring(2, 15);
+  
+  // Store this notification ID to prevent duplicates
+  const storedIds = self.notificationIds || [];
+  if (storedIds.includes(message.messageId)) {
+    console.log("SW: Ignoring duplicate message", message.messageId);
     return;
   }
+  
+  // Remember this ID
+  storedIds.push(message.messageId);
+  self.notificationIds = storedIds.slice(-10); // Keep last 10
   
   // Extract notification data from message
   const notificationTitle = message.notification.title || 'PADELTID';
   const notificationOptions = {
     body: message.notification.body || '',
     icon: './assets/icon/logo.svg',
-    badge: './assets/icon/logo.svg',
-    vibrate: [200, 100, 200, 100, 200, 100, 400], // Stronger pattern
-    silent: false, // Ensure sound plays
-    renotify: true, // Force notification alert
-    requireInteraction: true, // Make notification persist
+    badge: './assets/icon/notification_icon.png',
+    vibrate: [200, 100, 200],
+    silent: false,
+    renotify: true,
+    requireInteraction: true,
     data: {
       url: self.location.origin,
+      notificationId: notificationId
     },
-    tag: 'padeltid-notification-' + Date.now(), // Unique tag per notification
+    tag: notificationId, // Use the unique ID as the tag
   };
 
-  // Show the notification
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+  // Only show notifications in true background mode
+  if (!message.data || message.data.foreground !== 'true') {
+    console.log('Showing background notification with ID:', notificationId);
+    return self.registration.showNotification(notificationTitle, notificationOptions);
+  } else {
+    console.log('Skipping foreground notification');
+    return;
+  }
 });
 
 // Handle notification clicks
@@ -72,5 +112,59 @@ self.addEventListener('notificationclick', (event) => {
         return clients.openWindow(urlToOpen);
       }
     })
+  );
+});
+
+// Add this event listener to your service worker file
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'NOTIFICATION_TEST') {
+    self.registration.showNotification(event.data.title, {
+      body: event.data.body,
+      icon: './assets/icon/logo.svg',
+      badge: './assets/icon/notification_icon.png',
+      vibrate: [200, 100, 200],
+      tag: 'test-notification'
+    });
+  }
+});
+
+// Add this to your service worker file
+self.addEventListener('push', (event) => {
+  console.log('Push message received', event);
+  
+  // Ensure we show something even if the format is unexpected
+  let title = 'PADELTID';
+  let options = {
+    body: 'You have a new notification',
+    icon: './assets/icon/logo.svg',
+    badge: './assets/icon/notification_icon.png',
+    vibrate: [200, 100, 200, 100, 400],
+    data: {
+      url: self.location.origin
+    },
+    tag: 'padeltid-' + Date.now()
+  };
+  
+  // Try to parse the event data
+  try {
+    if (event.data) {
+      const data = event.data.json();
+      
+      if (data.notification) {
+        title = data.notification.title || title;
+        options.body = data.notification.body || options.body;
+      }
+      
+      if (data.data) {
+        options.data = { ...options.data, ...data.data };
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing push data', e);
+  }
+  
+  // Show the notification
+  event.waitUntil(
+    self.registration.showNotification(title, options)
   );
 });

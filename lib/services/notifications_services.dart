@@ -2,66 +2,70 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:async';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
-    // Request permission for iOS and web
+    // For web, completely skip Firebase initialization in Flutter code
+    if (kIsWeb) {
+      print(
+          "Web platform - skipping Firebase messaging initialization in Flutter");
+      return;
+    }
+
+    // Only proceed with mobile initialization below
+    // Request permissions for mobile
     await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    // Set foreground notification presentation options
-    await FirebaseMessaging.instance
-        .setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
+    // Mobile-specific initialization
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestSoundPermission: true,
+      requestBadgePermission: true,
+      requestAlertPermission: true,
     );
 
-    // Initialize local notifications for mobile only
-    if (!kIsWeb) {
-      const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
 
-      const DarwinInitializationSettings initializationSettingsIOS =
-          DarwinInitializationSettings(
-        requestSoundPermission: true,
-        requestBadgePermission: true,
-        requestAlertPermission: true,
-      );
+    await _flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        print('Notification tapped: ${response.payload}');
+      },
+    );
 
-      const InitializationSettings initializationSettings =
-          InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsIOS,
-      );
+    // Listen for Firebase messages on mobile only
+    FirebaseMessaging.onMessage.listen(_showFlutterNotification);
 
-      await _flutterLocalNotificationsPlugin.initialize(
-        initializationSettings,
-        onDidReceiveNotificationResponse: (NotificationResponse response) {
-          print('Notification tapped: ${response.payload}');
-        },
-      );
+    // Set up background message handling for mobile only
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
 
-      // Listen for Firebase messages on mobile only
-      FirebaseMessaging.onMessage.listen(_showFlutterNotification);
-
-      // Set up background message handling for mobile only
-      FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler);
-    } else {
-      // For web, we'll use the service worker exclusively
-      print("Web platform detected - using service worker for notifications");
+  Future<String> getToken() async {
+    // For web, just return empty string or get token from service worker
+    if (kIsWeb) {
+      return '';
     }
+
+    return await FirebaseMessaging.instance.getToken() ?? '';
   }
 
   Future<void> _showFlutterNotification(RemoteMessage message) async {
-    // Skip for web altogether - let service worker handle everything
+    // Should never be called on web now
     if (kIsWeb) return;
 
     RemoteNotification? notification = message.notification;
@@ -97,10 +101,6 @@ class NotificationService {
         payload: message.data['url'] ?? '',
       );
     }
-  }
-
-  Future<String> getToken() async {
-    return await FirebaseMessaging.instance.getToken() ?? '';
   }
 }
 
