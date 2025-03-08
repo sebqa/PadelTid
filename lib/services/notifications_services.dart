@@ -8,52 +8,61 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
-    // Initialize local notifications
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-      requestSoundPermission: true,
-      requestBadgePermission: true,
-      requestAlertPermission: true,
+    // Request permission for iOS and web
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
     );
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
+    // Set foreground notification presentation options
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
     );
 
-    await _flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification taps
-        print('Notification tapped: ${response.payload}');
-        // You can add navigation logic here
-      },
-    );
-
-    // Listen for Firebase messages
-    FirebaseMessaging.onMessage.listen(_showFlutterNotification);
-
-    // Set up background message handling for mobile only
-    // Skip for web since service worker handles background messages
+    // Initialize local notifications for mobile only
     if (!kIsWeb) {
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+
+      const DarwinInitializationSettings initializationSettingsIOS =
+          DarwinInitializationSettings(
+        requestSoundPermission: true,
+        requestBadgePermission: true,
+        requestAlertPermission: true,
+      );
+
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS,
+      );
+
+      await _flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          print('Notification tapped: ${response.payload}');
+        },
+      );
+
+      // Listen for Firebase messages on mobile only
+      FirebaseMessaging.onMessage.listen(_showFlutterNotification);
+
+      // Set up background message handling for mobile only
       FirebaseMessaging.onBackgroundMessage(
           _firebaseMessagingBackgroundHandler);
+    } else {
+      // For web, we'll use the service worker exclusively
+      print("Web platform detected - using service worker for notifications");
     }
   }
 
   Future<void> _showFlutterNotification(RemoteMessage message) async {
-    // For web PWA, skip showing this notification if we're in the foreground
-    // since the service worker will handle background notifications
-    if (kIsWeb) {
-      if (message.data['isFromServiceWorker'] == 'true') {
-        print('Skipping duplicate notification from service worker');
-        return;
-      }
-    }
+    // Skip for web altogether - let service worker handle everything
+    if (kIsWeb) return;
 
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
@@ -71,11 +80,10 @@ class NotificationService {
                 'This channel is used for important notifications.',
             importance: Importance.max,
             priority: Priority.high,
-            icon: android?.smallIcon ?? 'assets/icon/logo', // Use app icon
+            icon: android?.smallIcon ?? 'assets/icon/logo',
             playSound: true,
             enableVibration: true,
-            vibrationPattern: Int64List.fromList(
-                [0, 200, 100, 200, 100, 200]), // Enhanced pattern
+            vibrationPattern: Int64List.fromList([0, 200, 100, 200, 100, 400]),
             sound:
                 const RawResourceAndroidNotificationSound('notification_sound'),
           ),
@@ -99,6 +107,5 @@ class NotificationService {
 // This needs to be a top-level function
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you need to handle background notifications specially
   print("Handling a background message: ${message.messageId}");
 }

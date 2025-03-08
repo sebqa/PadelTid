@@ -142,18 +142,30 @@
     // and move non-critical CSS to be loaded asynchronously
   </script>
   <script>
-    // Register Firebase messaging service worker specifically for PWA
+    // Register Firebase messaging service worker as early as possible
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./firebase-messaging-sw.js', {
-        scope: './'
-      })
-        .then(registration => {
-          console.log('Firebase messaging service worker registered:', registration.scope);
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./firebase-messaging-sw.js', {
+          scope: './'
         })
-        .catch(error => {
-          console.error('Firebase messaging service worker registration failed:', error);
-        });
+          .then(registration => {
+            console.log('Firebase messaging service worker registered:', registration.scope);
+            
+            // Try to trigger vibration after registration
+            if ('vibrate' in navigator) {
+              // User gesture required for vibration to work
+              document.addEventListener('click', function() {
+                navigator.vibrate([100]);
+                console.log('Vibration test triggered by user interaction');
+              }, {once: true});
+            }
+          })
+          .catch(error => {
+            console.error('Firebase messaging service worker registration failed:', error);
+          });
+      });
     }
   </script>
+  <script src="notification_handler.js"></script>
 </body>
 </html>

@@ -13,29 +13,31 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Add notification options for background messages only
-// This will only run when the app is in the background or closed
+// This service worker should ONLY handle background messages
+// We deliberately don't call showNotification for foreground messages
 messaging.onBackgroundMessage((message) => {
-  console.log("onBackgroundMessage", message);
+  console.log("SW: Background message received", message);
+  
+  // Don't display if this is a foreground message (handled by app)
+  if (message.data && message.data.foreground === 'true') {
+    console.log("SW: Skipping notification display for foreground message");
+    return;
+  }
   
   // Extract notification data from message
   const notificationTitle = message.notification.title || 'PADELTID';
   const notificationOptions = {
     body: message.notification.body || '',
-    icon: './assets/icon/logo.svg',  // Use relative path
-    badge: './assets/icon/logo.svg', // Use relative path
-    vibrate: [200, 100, 200, 100, 200], // Stronger vibration pattern
+    icon: './assets/icon/logo.svg',
+    badge: './assets/icon/logo.svg',
+    vibrate: [200, 100, 200, 100, 200, 100, 400], // Stronger pattern
+    silent: false, // Ensure sound plays
+    renotify: true, // Force notification alert
+    requireInteraction: true, // Make notification persist
     data: {
-      url: self.location.origin, // URL to open when clicked
-      isFromServiceWorker: true  // Mark that this came from service worker
+      url: self.location.origin,
     },
-    actions: [
-      {
-        action: 'open',
-        title: 'Open App'
-      }
-    ],
-    tag: 'padeltid-notification' // Add a tag to prevent duplicate notifications
+    tag: 'padeltid-notification-' + Date.now(), // Unique tag per notification
   };
 
   // Show the notification
