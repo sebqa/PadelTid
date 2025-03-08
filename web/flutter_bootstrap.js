@@ -3,6 +3,18 @@ window.addEventListener('load', function() {
   // Check if serviceWorkerVersion is defined, use null if not
   const serviceWorkerVersion = self.serviceWorkerVersion || null;
   
+  // Request notification permission for PWA
+  if ('Notification' in window) {
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      // Only ask if not already granted or denied
+      setTimeout(() => {
+        Notification.requestPermission().then(permission => {
+          console.log('Notification permission:', permission);
+        });
+      }, 5000); // Delay asking for a few seconds after app load
+    }
+  }
+  
   _flutter.loader.loadEntrypoint({
     serviceWorker: {
       serviceWorkerVersion: serviceWorkerVersion,

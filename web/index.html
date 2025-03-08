@@ -141,5 +141,17 @@
     // Implement critical path CSS inline to avoid render blocking
     // and move non-critical CSS to be loaded asynchronously
   </script>
+  <script>
+    // Register Firebase messaging service worker specifically for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then(registration => {
+          console.log('Firebase messaging service worker registered:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Firebase messaging service worker registration failed:', error);
+        });
+    }
+  </script>
 </body>
 </html>
