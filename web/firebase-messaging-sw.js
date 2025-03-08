@@ -13,7 +13,8 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Add notification options for background messages
+// Add notification options for background messages only
+// This will only run when the app is in the background or closed
 messaging.onBackgroundMessage((message) => {
   console.log("onBackgroundMessage", message);
   
@@ -21,18 +22,20 @@ messaging.onBackgroundMessage((message) => {
   const notificationTitle = message.notification.title || 'PADELTID';
   const notificationOptions = {
     body: message.notification.body || '',
-    icon: '/assets/icon/logo.svg',  // This path must be accessible in PWA context
-    badge: '/assets/icon/logo.svg', // This path must be accessible in PWA context
-    vibrate: [200, 100, 200], // Vibration pattern
+    icon: './assets/icon/logo.svg',  // Use relative path
+    badge: './assets/icon/logo.svg', // Use relative path
+    vibrate: [200, 100, 200, 100, 200], // Stronger vibration pattern
     data: {
-      url: self.location.origin // URL to open when clicked
+      url: self.location.origin, // URL to open when clicked
+      isFromServiceWorker: true  // Mark that this came from service worker
     },
     actions: [
       {
         action: 'open',
         title: 'Open App'
       }
-    ]
+    ],
+    tag: 'padeltid-notification' // Add a tag to prevent duplicate notifications
   };
 
   // Show the notification
@@ -57,7 +60,7 @@ self.addEventListener('notificationclick', (event) => {
     .then((clientList) => {
       // Try to find an existing window
       for (const client of clientList) {
-        if (client.url === urlToOpen && 'focus' in client) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus();
         }
       }

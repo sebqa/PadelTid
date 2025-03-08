@@ -144,7 +144,9 @@
   <script>
     // Register Firebase messaging service worker specifically for PWA
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      navigator.serviceWorker.register('./firebase-messaging-sw.js', {
+        scope: './'
+      })
         .then(registration => {
           console.log('Firebase messaging service worker registered:', registration.scope);
         })
