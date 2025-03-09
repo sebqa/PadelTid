@@ -372,163 +372,168 @@ class _HomePageState extends State<HomePage>
             ),
           ),
 
-          // Main content
-          CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                floating: true,
-                snap: false,
-                pinned: false,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                title: Text(
-                  TranslationHelper.translate(
-                      'app_title', localeProvider.locale.languageCode),
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    icon: Icon(Icons.settings),
-                    color: Colors.black,
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AuthGate(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              SliverToBoxAdapter(
-                child: LocationSelector(
-                  onLocationsChanged: (locations) {
-                    setState(() {
-                      _selectedLocations = locations;
-                    });
-                    updateThresholds();
-                  },
-                  initialLocations: _selectedLocations,
-                ),
-              ),
-              if (_selectedLocations.isNotEmpty) ...[
-                // Show Recommended section header and content
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                    child: Text(
-                      TranslationHelper.translate(
-                          'recommended', localeProvider.locale.languageCode),
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                                height: 1.2,
-                              ),
+          // Main content - add RefreshIndicator here
+          RefreshIndicator(
+            onRefresh: _refreshData,
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  floating: true,
+                  snap: false,
+                  pinned: false,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  title: Text(
+                    TranslationHelper.translate(
+                        'app_title', localeProvider.locale.languageCode),
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
                     ),
                   ),
+                  actions: [
+                    IconButton(
+                      icon: Icon(Icons.settings),
+                      color: Colors.black,
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const AuthGate(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                // Show loading state or content
-                if (recommendedDocuments != null)
+                SliverToBoxAdapter(
+                  child: LocationSelector(
+                    onLocationsChanged: (locations) {
+                      setState(() {
+                        _selectedLocations = locations;
+                      });
+                      updateThresholds();
+                    },
+                    initialLocations: _selectedLocations,
+                  ),
+                ),
+                if (_selectedLocations.isNotEmpty) ...[
+                  // Show Recommended section header and content
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                      child: Text(
+                        TranslationHelper.translate(
+                            'recommended', localeProvider.locale.languageCode),
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  height: 1.2,
+                                ),
+                      ),
+                    ),
+                  ),
+                  // Show loading state or content
+                  if (recommendedDocuments != null)
+                    SliverToBoxAdapter(
+                      child: FutureBuilder<List<Document>>(
+                        future: recommendedDocuments,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return RecommendedListSkeleton();
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else {
+                            return recommended_lv_holder(
+                                documents: snapshot.data ?? []);
+                          }
+                        },
+                      ),
+                    ),
+
+                  // Show All Timeslots section header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            TranslationHelper.translate('all_timeslots',
+                                localeProvider.locale.languageCode),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  height: 1.2,
+                                ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.tune, color: Colors.black),
+                            onPressed: showSettingsDialog,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Show loading state or content for All Timeslots
                   SliverToBoxAdapter(
                     child: FutureBuilder<List<Document>>(
-                      future: recommendedDocuments,
+                      future: futureDocuments,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return RecommendedListSkeleton();
+                          return MainListSkeleton();
                         } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else {
-                          return recommended_lv_holder(
-                              documents: snapshot.data ?? []);
+                          return Center(
+                              child: Text(
+                                  '${TranslationHelper.translate('error_prefix', localeProvider.locale.languageCode)} ${snapshot.error}'));
+                        } else if (snapshot.hasData) {
+                          final groupedDocuments =
+                              _groupDocuments(snapshot.data!);
+                          if (!consentShown) {
+                            showConsentSnackbar(context,
+                                onlyShowIfNotSet: true);
+                            consentShown = true;
+                          }
+                          return MainListView(
+                            groupedDocuments: groupedDocuments,
+                            onFilterTap: showSettingsDialog,
+                          );
                         }
+                        return const Center(child: Text('No data'));
                       },
                     ),
                   ),
-
-                // Show All Timeslots section header
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          TranslationHelper.translate('all_timeslots',
+                ] else
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Text(
+                          TranslationHelper.translate('select_clubs',
                               localeProvider.locale.languageCode),
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                                height: 1.2,
-                              ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.tune, color: Colors.black),
-                          onPressed: showSettingsDialog,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Show loading state or content for All Timeslots
-                SliverToBoxAdapter(
-                  child: FutureBuilder<List<Document>>(
-                    future: futureDocuments,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return MainListSkeleton();
-                      } else if (snapshot.hasError) {
-                        return Center(
-                            child: Text(
-                                '${TranslationHelper.translate('error_prefix', localeProvider.locale.languageCode)} ${snapshot.error}'));
-                      } else if (snapshot.hasData) {
-                        final groupedDocuments =
-                            _groupDocuments(snapshot.data!);
-                        if (!consentShown) {
-                          showConsentSnackbar(context, onlyShowIfNotSet: true);
-                          consentShown = true;
-                        }
-                        return MainListView(
-                          groupedDocuments: groupedDocuments,
-                          onFilterTap: showSettingsDialog,
-                        );
-                      }
-                      return const Center(child: Text('No data'));
-                    },
-                  ),
-                ),
-              ] else
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text(
-                        TranslationHelper.translate(
-                            'select_clubs', localeProvider.locale.languageCode),
-                        style: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.6),
-                          fontSize: 16,
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.6),
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -589,12 +594,7 @@ class _HomePageState extends State<HomePage>
 
       if (_selectedLocations.isNotEmpty) {
         recommendedDocuments = documentService.fetchDocuments(
-            windSpeedThreshold,
-            precipitationProbabilityThreshold,
-            temperatureThreshold,
-            false,
-            true,
-            _selectedLocations);
+            4.0, 10.0, 10.0, false, true, _selectedLocations);
       }
     });
   }

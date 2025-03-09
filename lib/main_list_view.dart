@@ -38,11 +38,8 @@ class _MainListViewState extends State<MainListView> {
   Widget build(BuildContext context) {
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
 
-    return ListView(
-      // This makes the ListView take only the space it needs
-      shrinkWrap: true,
-      // Disable scrolling in this ListView since parent handles it
-      physics: NeverScrollableScrollPhysics(),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: widget.groupedDocuments.entries.map((entry) {
         final date = entry.key;
         final documentsForDate = entry.value;
