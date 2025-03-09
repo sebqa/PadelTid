@@ -137,7 +137,7 @@ self.addEventListener('push', (event) => {
   let options = {
     body: 'You have a new notification',
     icon: './assets/icon/logo.svg',
-    badge: './assets/icon/notification_icon.png',
+    badge: './assets/icon/logo.svg',
     vibrate: [200, 100, 200, 100, 400],
     data: {
       url: self.location.origin

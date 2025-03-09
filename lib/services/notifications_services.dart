@@ -84,7 +84,7 @@ class NotificationService {
                 'This channel is used for important notifications.',
             importance: Importance.max,
             priority: Priority.high,
-            icon: android?.smallIcon ?? 'assets/icon/logo',
+            icon: android?.smallIcon ?? 'assets/images/maskable_logo.svg',
             playSound: true,
             enableVibration: true,
             vibrationPattern: Int64List.fromList([0, 200, 100, 200, 100, 400]),

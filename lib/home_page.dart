@@ -115,12 +115,7 @@ class _HomePageState extends State<HomePage>
 
     // Initialize recommended documents with selected locations
     recommendedDocuments = documentService.fetchDocuments(
-        windSpeedThreshold,
-        precipitationProbabilityThreshold,
-        temperatureThreshold,
-        false,
-        true,
-        _selectedLocations);
+        4.0, 10.0, 10.0, false, true, _selectedLocations);
   }
 
   Future<void> _initializePreferences() async {
