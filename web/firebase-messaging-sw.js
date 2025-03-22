@@ -13,7 +13,7 @@ firebase.initializeApp({
     measurementId: "G-6SRZ7SK2BE"
 });
 
-const messaging = firebase.messaging();
+//const messaging = firebase.messaging();
 
 // Add this at the top of your service worker file
 self.addEventListener('install', (event) => {
@@ -72,19 +72,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Add this event listener to your service worker file
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'NOTIFICATION_TEST') {
-    self.registration.showNotification(event.data.title, {
-      body: event.data.body,
-      icon: './assets/icon/logo.svg',
-      badge: './assets/icon/notification_icon.png',
-      vibrate: [200, 100, 200],
-      tag: 'test-notification'
-    });
-  }
-});
-
+/**
 // Add this to your service worker file
 self.addEventListener('push', (event) => {
   console.log('Push message received', event);
@@ -125,3 +113,4 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(title, options)
   );
 });
+ */
