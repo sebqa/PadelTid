@@ -40,49 +40,6 @@ function showDebugNotification(source) {
 
 // This service worker should ONLY handle background messages
 // We deliberately don't call showNotification for foreground messages
-messaging.onBackgroundMessage((message) => {
-  console.log("SW: Background message received with ID:", message.messageId, message);
-  
-  // Generate a unique ID based on timestamp + random for this notification
-  const notificationId = Date.now() + '-' + Math.random().toString(36).substring(2, 15);
-  
-  // Store this notification ID to prevent duplicates
-  const storedIds = self.notificationIds || [];
-  if (storedIds.includes(message.messageId)) {
-    console.log("SW: Ignoring duplicate message", message.messageId);
-    return;
-  }
-  
-  // Remember this ID
-  storedIds.push(message.messageId);
-  self.notificationIds = storedIds.slice(-10); // Keep last 10
-  
-  // Extract notification data from message
-  const notificationTitle = message.notification.title || 'PADELTID';
-  const notificationOptions = {
-    body: message.notification.body || '',
-    icon: './assets/icon/logo.svg',
-    badge: './assets/icon/notification_icon.png',
-    vibrate: [200, 100, 200],
-    silent: false,
-    renotify: true,
-    requireInteraction: true,
-    data: {
-      url: self.location.origin,
-      notificationId: notificationId
-    },
-    tag: notificationId, // Use the unique ID as the tag
-  };
-
-  // Only show notifications in true background mode
-  if (!message.data || message.data.foreground !== 'true') {
-    console.log('Showing background notification with ID:', notificationId);
-    return self.registration.showNotification(notificationTitle, notificationOptions);
-  } else {
-    console.log('Skipping foreground notification');
-    return;
-  }
-});
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
