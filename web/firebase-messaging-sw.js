@@ -33,7 +33,7 @@ function showDebugNotification(source) {
   self.registration.showNotification(`Debug: ${source}`, {
     body: `This notification came from ${source} at ${new Date().toISOString()}`,
     icon: './assets/icon/logo.svg',
-    badge: './assets/icon/notification_icon.png',
+    badge: './assets/icon/badge-icon-96x96.png',
     tag: 'debug-notification'
   });
 }
@@ -82,7 +82,7 @@ self.addEventListener('push', (event) => {
   let options = {
     body: 'You have a new notification',
     icon: './assets/icon/logo.svg',
-    badge: './assets/icon/logo.svg',
+    badge: './assets/icon/badge-icon-96x96.png',
     vibrate: [200, 100, 200, 100, 400],
     data: {
       url: self.location.origin
