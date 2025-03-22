@@ -52,7 +52,7 @@ class NotificationService {
     //FirebaseMessaging.onMessage.listen(_showFlutterNotification);
 
     // Set up background message handling for mobile only
-    //FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
   Future<String> getToken() async {
