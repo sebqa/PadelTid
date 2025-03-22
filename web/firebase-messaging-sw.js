@@ -72,7 +72,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-/**
+
 // Add this to your service worker file
 self.addEventListener('push', (event) => {
   console.log('Push message received', event);
@@ -113,4 +113,3 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(title, options)
   );
 });
- */
