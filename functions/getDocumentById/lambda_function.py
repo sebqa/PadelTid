@@ -5,15 +5,15 @@ from pymongo import MongoClient
 from bson.json_util import dumps
 
 def lambda_handler(event, context):
-    # Set up CORS headers
+    # Set up CORS headers - make sure these are included in ALL responses
     headers = {
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Origin': '*',  # Allow all origins
-        'Access-Control-Allow-Methods': 'OPTIONS,GET'
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': '*'
     }
     
     # Handle OPTIONS request (preflight request)
-    if event.get('httpMethod') == 'OPTIONS':
+    if event.get('requestContext', {}).get('http', {}).get('method') == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': headers,
@@ -22,7 +22,15 @@ def lambda_handler(event, context):
     
     try:
         # Extract document ID from query parameters
-        document_id = event['queryStringParameters']['documentId']
+        params = event.get('queryStringParameters', {}) or {}
+        document_id = params.get('documentId')
+        
+        if not document_id:
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'Missing documentId parameter'})
+            }
         
         # Parse date and time from document ID (format: YYYYMMDDHHMMSS)
         date_str = f"{document_id[0:4]}-{document_id[4:6]}-{document_id[6:8]}"
