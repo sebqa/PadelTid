@@ -8,6 +8,8 @@ import '../services/notification_history_service.dart';
 import 'package:flutter/material.dart';
 import '../pages/document_details_page.dart';
 import '../main.dart'; // Import to access navigatorKey
+import 'package:firebase_core/firebase_core.dart';
+import '../firebase_options.dart';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
@@ -53,6 +55,9 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         print('Notification tapped: ${response.payload}');
+        if (response.payload != null && response.payload!.isNotEmpty) {
+          _handleNotificationClick(null, documentId: response.payload);
+        }
       },
     );
 
@@ -64,6 +69,9 @@ class NotificationService {
 
     // Add this method to handle notification clicks on Android
     setupNotificationClickHandling();
+
+    // Initialize the notification history service
+    await NotificationHistoryService().initialize();
   }
 
   void _setupWebMessageHandlers() {
@@ -254,6 +262,15 @@ class NotificationService {
 // This needs to be a top-level function
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase first when handling background messages
+  try {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+    print("Firebase initialized in background handler");
+  } catch (e) {
+    print("Failed to initialize Firebase in background handler: $e");
+  }
+
   print("Handling a background message: ${message.messageId}");
 
   // Store notification in history even for background messages
@@ -266,20 +283,28 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     final documentId = data['documentId'];
     final timestamp = DateTime.now();
 
-    // Use the same ID generation logic
-    final id =
-        'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}';
+    try {
+      // Initialize the notification history service
+      final notificationService = NotificationHistoryService();
+      await notificationService.initialize();
 
-    final notificationItem = NotificationItem(
-      id: id,
-      title: title,
-      body: body,
-      documentId: documentId,
-      timestamp: timestamp,
-    );
+      // Use the same ID generation logic
+      final id =
+          'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}';
 
-    await NotificationHistoryService().addNotification(notificationItem);
-    print(
-        'Added background notification to history: ${notificationItem.title}');
+      final notificationItem = NotificationItem(
+        id: id,
+        title: title,
+        body: body,
+        documentId: documentId,
+        timestamp: timestamp,
+      );
+
+      await notificationService.addNotification(notificationItem);
+      print(
+          'Added background notification to history: ${notificationItem.title}');
+    } catch (e) {
+      print('Error storing background notification: $e');
+    }
   }
 }

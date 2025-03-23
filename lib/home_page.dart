@@ -406,55 +406,72 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                   actions: [
-                    // Notification icon with badge
-                    Consumer<NotificationHistoryService>(
-                      builder: (context, notificationService, child) {
-                        final unreadCount = notificationService.unreadCount;
-
-                        return Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.notifications),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          NotificationsPage()),
-                                );
-                              },
-                            ),
-                            if (unreadCount > 0)
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  constraints: BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Text(
-                                    unreadCount > 9
-                                        ? '9+'
-                                        : unreadCount.toString(),
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
+                    // Notification icon with larger hitbox
+                    Padding(
+                      padding: EdgeInsets.only(right: 8.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(24),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => NotificationsPage()),
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(
+                                8.0), // Increase padding for larger touch target
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Icon(
+                                  Icons.notifications_outlined,
+                                  size: 28, // Slightly larger icon
                                 ),
-                              ),
-                          ],
-                        );
-                      },
+                                Consumer<NotificationHistoryService>(
+                                  builder:
+                                      (context, notificationService, child) {
+                                    final unreadCount =
+                                        notificationService.unreadCount;
+                                    return unreadCount > 0
+                                        ? Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: Container(
+                                              padding: EdgeInsets.all(2),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              constraints: BoxConstraints(
+                                                minWidth: 16,
+                                                minHeight: 16,
+                                              ),
+                                              child: Text(
+                                                unreadCount > 9
+                                                    ? '9+'
+                                                    : '$unreadCount',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          )
+                                        : SizedBox
+                                            .shrink(); // Return empty widget when no unread notifications
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                     IconButton(
                       icon: Icon(Icons.settings),

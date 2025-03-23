@@ -37,10 +37,11 @@ Future<void> main() async {
   final localeProvider = LocaleProvider();
   await localeProvider.initialize();
 
-  // Initialize Firebase in parallel with app loading
-  final firebaseInitialization = Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Set up notification handling for when app is launched from notification
+  await setupInitialNotificationHandling();
 
   // Pre-initialize other services in parallel
   final notificationServiceInit = NotificationService().initialize();
@@ -50,20 +51,12 @@ Future<void> main() async {
   runApp(LoadingApp());
 
   // Wait for critical initializations
-  await firebaseInitialization;
+  await notificationServiceInit;
 
   // Perform user auth check and token operations
   if (FirebaseAuth.instance.currentUser != null) {
     TokenService().saveToken();
   }
-
-  // Request notification permissions in parallel with app startup
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
-  messaging.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
 
   // Now launch the full app when ready
   runApp(
@@ -254,5 +247,49 @@ class MyApp extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+// Add this function to handle initial notification
+Future<void> setupInitialNotificationHandling() async {
+  // Only proceed for mobile platforms
+  if (kIsWeb) return;
+
+  // Check if app was opened from a notification
+  final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    print('App was launched by notification: ${initialMessage.messageId}');
+    print('Document ID: ${initialMessage.data['documentId']}');
+
+    // Store the documentId to navigate after app is fully initialized
+    final documentId = initialMessage.data['documentId'];
+    if (documentId != null) {
+      // Add a delay to ensure the app is fully initialized
+      Future.delayed(Duration(seconds: 1), () {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => DocumentDetailsPage(
+              documentId: documentId,
+            ),
+          ),
+        );
+      });
+
+      // Mark notification as read
+      final notificationService = NotificationHistoryService();
+      await notificationService.initialize();
+
+      final notifications = notificationService.notifications
+          .where((n) => n.documentId == documentId)
+          .toList();
+
+      if (notifications.isNotEmpty) {
+        for (var notification in notifications) {
+          notificationService.markAsRead(notification.id);
+        }
+        print(
+            'Marked ${notifications.length} notifications as read for document: $documentId');
+      }
+    }
   }
 }
