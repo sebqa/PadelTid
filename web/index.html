@@ -242,31 +242,50 @@
   <script src="notification_handler.js"></script>
   <script>
     // Bridge between service worker and Flutter
-    window.addEventListener('message', function(event) {
-      console.log('Window received message:', event.data);
+    (function() {
+      let lastDocumentId = null;
+      let lastClickTime = 0;
+      const debounceTime = 3000; // 3 seconds
       
-      // Check if this is a notification click
-      if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
-        // If Flutter is ready, call the handler directly
-        if (window.handleNotificationClick) {
-          window.handleNotificationClick(event.data.documentId);
-        } else {
-          // Store the message to process when Flutter is ready
-          window.pendingNotificationClick = event.data.documentId;
+      window.addEventListener('message', function(event) {
+        console.log('Window received message:', event.data);
+        
+        // Check if this is a notification click
+        if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
+          const documentId = event.data.documentId;
+          const now = Date.now();
+          
+          // Debounce duplicate clicks
+          if (documentId === lastDocumentId && now - lastClickTime < debounceTime) {
+            console.log('Debouncing duplicate notification click for document:', documentId);
+            return;
+          }
+          
+          // Update tracking variables
+          lastDocumentId = documentId;
+          lastClickTime = now;
+          
+          // If Flutter is ready, call the handler directly
+          if (window.handleNotificationClick) {
+            window.handleNotificationClick(documentId);
+          } else {
+            // Store the message to process when Flutter is ready
+            window.pendingNotificationClick = documentId;
+          }
         }
-      }
-    });
-    
-    // Also listen for service worker messages
-    if (navigator.serviceWorker) {
-      navigator.serviceWorker.addEventListener('message', function(event) {
-        console.log('Service worker message received:', event.data);
-        // Forward to window message handler
-        window.dispatchEvent(new MessageEvent('message', {
-          data: event.data
-        }));
       });
-    }
+      
+      // Also listen for service worker messages
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener('message', function(event) {
+          console.log('Service worker message received:', event.data);
+          // Forward to window message handler
+          window.dispatchEvent(new MessageEvent('message', {
+            data: event.data
+          }));
+        });
+      }
+    })();
   </script>
 </body>
 </html>

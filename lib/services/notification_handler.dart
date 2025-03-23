@@ -11,6 +11,11 @@ class NotificationHandler {
   static final NotificationHandler _instance = NotificationHandler._internal();
   static BuildContext? _context;
 
+  // Add a simple debounce mechanism
+  String? _lastProcessedDocumentId;
+  DateTime? _lastProcessedTime;
+  static const _debounceTimeMs = 3000; // 3 seconds
+
   factory NotificationHandler() {
     return _instance;
   }
@@ -83,6 +88,23 @@ class NotificationHandler {
 
   void _navigateToDocument(String documentId) {
     if (_context != null) {
+      // Check if this is a duplicate navigation request
+      final now = DateTime.now();
+      if (_lastProcessedDocumentId == documentId &&
+          _lastProcessedTime != null &&
+          now.difference(_lastProcessedTime!).inMilliseconds <
+              _debounceTimeMs) {
+        print(
+            'Ignoring duplicate navigation request for document: $documentId');
+        return;
+      }
+
+      // Update last processed info
+      _lastProcessedDocumentId = documentId;
+      _lastProcessedTime = now;
+
+      print('Navigating to document: $documentId');
+
       // Navigate to document details page with just the ID
       Navigator.of(_context!).push(
         MaterialPageRoute(
