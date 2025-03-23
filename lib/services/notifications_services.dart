@@ -170,10 +170,14 @@ class NotificationService {
   void setupNotificationClickHandling() {
     if (kIsWeb) return; // Skip for web
 
+    print('Setting up notification click handling for mobile');
+
     // Handle notification clicks when app is in background/terminated
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print(
           'Notification clicked when app was in background: ${message.messageId}');
+      print(
+          'Document ID from clicked notification: ${message.data['documentId']}');
       _handleNotificationClick(message);
     });
 
@@ -183,6 +187,8 @@ class NotificationService {
         .then((RemoteMessage? message) {
       if (message != null) {
         print('App launched from notification: ${message.messageId}');
+        print(
+            'Document ID from launch notification: ${message.data['documentId']}');
         _handleNotificationClick(message);
       }
     });
@@ -197,6 +203,7 @@ class NotificationService {
         print('Local notification clicked: ${response.payload}');
         if (response.payload != null && response.payload!.isNotEmpty) {
           final documentId = response.payload;
+          print('Document ID from local notification payload: $documentId');
           _handleNotificationClick(null, documentId: documentId);
         }
       },
@@ -217,20 +224,22 @@ class NotificationService {
       final notificationService = NotificationHistoryService();
 
       // Find the notification by document ID
-      final notification = notificationService.notifications
-          .firstWhere((n) => n.documentId == docId,
-              orElse: () => NotificationItem(
-                    id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
-                    title: 'Notification',
-                    body: 'Document notification',
-                    documentId: docId,
-                    timestamp: DateTime.now(),
-                  ));
+      final notifications = notificationService.notifications
+          .where((n) => n.documentId == docId)
+          .toList();
 
-      notificationService.markAsRead(notification.id);
+      // Mark all matching notifications as read
+      if (notifications.isNotEmpty) {
+        for (var notification in notifications) {
+          notificationService.markAsRead(notification.id);
+        }
+        print(
+            'Marked ${notifications.length} notifications as read for document: $docId');
+      } else {
+        print('No notifications found for document: $docId');
+      }
 
       // Navigate to document details
-      // We need to use a global navigator key since we might not have context
       navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (context) => DocumentDetailsPage(

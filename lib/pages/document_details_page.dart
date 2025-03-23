@@ -217,12 +217,30 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isLoading
-            ? TranslationHelper.translate(
-                'loading', localeProvider.locale.languageCode)
-            : TranslationHelper.translate(
-                'available_courts', localeProvider.locale.languageCode)),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: _isLoading
+            ? Text(
+                TranslationHelper.translate(
+                    'loading', localeProvider.locale.languageCode),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 16,
+                ),
+              )
+            : Text(
+                _document != null
+                    ? '${_formatDate(_document!.date, context)} ${TranslationHelper.translate('at', localeProvider.locale.languageCode)} ${_document!.time}'
+                    : TranslationHelper.translate(
+                        'available_courts', localeProvider.locale.languageCode),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 16,
+                ),
+              ),
+        backgroundColor: Colors.white,
+        elevation: 1, // Subtle elevation
+        iconTheme: IconThemeData(
+          color: Theme.of(context).colorScheme.primary, // Back button color
+        ),
       ),
       body: _isLoading
           ? _buildLoadingUI(context)
@@ -341,31 +359,15 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
             ),
           ),
 
-          // Weather forecast skeleton
+          // Weather forecast button (collapsed state)
           Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
               children: [
-                _buildShimmerPlaceholder(height: 18, width: 120),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(
-                      4,
-                      (index) => Column(
-                            children: [
-                              _buildShimmerPlaceholder(
-                                  height: 24,
-                                  width: 24,
-                                  shape: BoxShape.circle),
-                              SizedBox(height: 4),
-                              _buildShimmerPlaceholder(height: 14, width: 40),
-                              SizedBox(height: 4),
-                              _buildShimmerPlaceholder(height: 14, width: 30),
-                            ],
-                          )),
-                ),
+                _buildShimmerPlaceholder(height: 16, width: 120),
+                Spacer(),
+                _buildShimmerPlaceholder(
+                    height: 24, width: 24, shape: BoxShape.circle),
               ],
             ),
           ),
@@ -451,36 +453,21 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
 
   Widget _buildDocumentUI(BuildContext context) {
     // Show document details
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back,
-              color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          '${_formatDate(_document!.date, context)} ${TranslationHelper.translate('at', Localizations.localeOf(context).languageCode)} ${_document!.time}',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-        ),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: ListView(
-          padding: EdgeInsets.only(top: 8, bottom: 24),
-          children: [
-            // Club sections
-            if (_document!.clubs.isNotEmpty)
-              ..._document!.clubs.entries.map((clubEntry) {
-                return _buildClubSection(
-                  context,
-                  clubEntry.key,
-                  clubEntry.value,
-                );
-              }).toList(),
-          ],
-        ),
+    return RefreshIndicator(
+      onRefresh: _refreshData,
+      child: ListView(
+        padding: EdgeInsets.only(top: 16, bottom: 24),
+        children: [
+          // Club sections
+          if (_document!.clubs.isNotEmpty)
+            ..._document!.clubs.entries.map((clubEntry) {
+              return _buildClubSection(
+                context,
+                clubEntry.key,
+                clubEntry.value,
+              );
+            }).toList(),
+        ],
       ),
     );
   }
