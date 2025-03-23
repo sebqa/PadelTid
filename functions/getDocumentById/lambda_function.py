@@ -10,7 +10,7 @@ def lambda_handler(event, context):
         
         # Parse date and time from document ID (format: YYYYMMDDHHMMSS)
         date_str = f"{document_id[0:4]}-{document_id[4:6]}-{document_id[6:8]}"
-        time_str = f"{document_id[8:10]}:{document_id[10:12]}:00}"
+        time_str = f"{document_id[8:10]}:{document_id[10:12]}:00"
         
         # Connect to MongoDB
         client = MongoClient(host=os.environ.get("ATLAS_URI"))
