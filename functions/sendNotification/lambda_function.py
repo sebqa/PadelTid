@@ -127,6 +127,11 @@ def send_notification(event):
                 notification_body = "No more available courts"
             
             if notification_body:
+                # Create document ID from date and time
+                date_no_dashes = date.replace('-', '')
+                time_no_colons = time.replace(':', '')
+                doc_id = f"{date_no_dashes}{time_no_colons}"
+                
                 # Send notification to this specific user with just the document ID
                 message = messaging.Message(
                     notification=messaging.Notification(
