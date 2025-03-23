@@ -107,7 +107,8 @@ self.addEventListener('push', (event) => {
     data: {
       url: self.location.origin,
       documentId: null,
-      documentData: null
+      documentData: null,
+      timestamp: Date.now()
     },
     tag: 'padeltid-' + Date.now()
   };
@@ -125,9 +126,24 @@ self.addEventListener('push', (event) => {
       // Store document data from the notification payload
       if (data.data) {
         options.data = { ...options.data, ...data.data };
-        
-
       }
+      
+      // Try to send the notification data to all clients to store in history
+      self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      }).then(clients => {
+        if (clients && clients.length) {
+          // Send to first client
+          clients[0].postMessage({
+            type: 'NOTIFICATION_RECEIVED',
+            title: title,
+            body: options.body,
+            documentId: options.data.documentId,
+            timestamp: options.data.timestamp || Date.now()
+          });
+        }
+      });
     }
   } catch (e) {
     console.error('Error parsing push data', e);

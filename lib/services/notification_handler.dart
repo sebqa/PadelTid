@@ -76,6 +76,7 @@ class NotificationHandler {
     try {
       if (data is Map || data is js.JsObject) {
         final type = data['type'];
+
         if (type == 'NOTIFICATION_CLICK') {
           final documentId = data['documentId'];
           if (documentId != null && _context != null) {
@@ -89,6 +90,23 @@ class NotificationHandler {
 
             _navigateToDocument(documentId.toString());
           }
+        } else if (type == 'NOTIFICATION_RECEIVED') {
+          // Store notification when received (not clicked)
+          final title = data['title'] ?? 'New Notification';
+          final body = data['body'] ?? '';
+          final documentId = data['documentId'];
+          final timestamp = data['timestamp'];
+
+          // Store this notification as unread
+          _storeNotification(
+            title: title,
+            body: body,
+            documentId: documentId?.toString(),
+            isRead: false,
+            timestamp: timestamp != null
+                ? DateTime.fromMillisecondsSinceEpoch(timestamp)
+                : DateTime.now(),
+          );
         }
       }
     } catch (e) {
@@ -158,16 +176,18 @@ class NotificationHandler {
     required String body,
     String? documentId,
     bool isRead = false,
+    DateTime? timestamp,
   }) {
     final notification = NotificationItem(
       id: 'notification_${DateTime.now().millisecondsSinceEpoch}',
       title: title,
       body: body,
       documentId: documentId,
-      timestamp: DateTime.now(),
+      timestamp: timestamp ?? DateTime.now(),
       isRead: isRead,
     );
 
     NotificationHistoryService().addNotification(notification);
+    print('Stored notification: $title (read: $isRead)');
   }
 }

@@ -15,6 +15,9 @@ class NotificationService {
     if (kIsWeb) {
       print(
           "Web platform - skipping Firebase messaging initialization in Flutter");
+
+      // Set up message listener for web
+      _setupWebMessageHandlers();
       return;
     }
 
@@ -50,11 +53,22 @@ class NotificationService {
       },
     );
 
-    // Listen for Firebase messages on mobile only
-    //FirebaseMessaging.onMessage.listen(_showFlutterNotification);
+    // Listen for Firebase messages on mobile
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
     // Set up background message handling for mobile only
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
+
+  void _setupWebMessageHandlers() {
+    // For web, we need to listen for messages from the service worker
+    if (kIsWeb) {
+      // Listen for push messages from Firebase Cloud Messaging
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print("Web received foreground message: ${message.messageId}");
+        _handleForegroundMessage(message);
+      });
+    }
   }
 
   Future<String> getToken() async {
@@ -105,7 +119,7 @@ class NotificationService {
     }
   }
 
-  Future<void> handleForegroundMessage(RemoteMessage message) async {
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
     print("Handling a foreground message: ${message.messageId}");
 
     // Extract notification data
@@ -122,10 +136,14 @@ class NotificationService {
         timestamp: DateTime.now(),
       );
 
-      NotificationHistoryService().addNotification(notificationItem);
+      await NotificationHistoryService().addNotification(notificationItem);
+      print('Added notification to history: ${notificationItem.title}');
     }
 
-    // ... rest of your handling code
+    // Show notification on mobile
+    if (!kIsWeb) {
+      await _showFlutterNotification(message);
+    }
   }
 }
 
@@ -133,4 +151,22 @@ class NotificationService {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
+
+  // Store notification in history even for background messages
+  final notification = message.notification;
+  final data = message.data;
+
+  if (notification != null) {
+    final notificationItem = NotificationItem(
+      id: message.messageId ?? 'msg_${DateTime.now().millisecondsSinceEpoch}',
+      title: notification.title ?? 'New Notification',
+      body: notification.body ?? '',
+      documentId: data['documentId'],
+      timestamp: DateTime.now(),
+    );
+
+    await NotificationHistoryService().addNotification(notificationItem);
+    print(
+        'Added background notification to history: ${notificationItem.title}');
+  }
 }
