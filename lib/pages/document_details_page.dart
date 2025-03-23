@@ -36,7 +36,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
   Map<String, bool> _expandedClubs = {};
 
   // Document state
-  bool _isLoading = false;
+  bool _isLoading = true;
   String? _errorMessage;
   Document? _document;
 
