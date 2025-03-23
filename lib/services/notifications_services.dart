@@ -119,6 +119,18 @@ class NotificationService {
     }
   }
 
+  // Helper function to generate consistent notification IDs
+  String _generateNotificationId(
+      String title, String body, String? documentId, DateTime timestamp) {
+    final idBase = documentId != null
+        ? 'doc_${documentId}_${timestamp.millisecondsSinceEpoch}'
+        : 'notification_${timestamp.millisecondsSinceEpoch}';
+
+    // Add a hash of the content to help with deduplication
+    final contentHash = title.hashCode ^ body.hashCode;
+    return '${idBase}_${contentHash.abs()}';
+  }
+
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     print("Handling a foreground message: ${message.messageId}");
 
@@ -128,12 +140,17 @@ class NotificationService {
 
     // Store in notification history
     if (notification != null) {
+      final title = notification.title ?? 'New Notification';
+      final body = notification.body ?? '';
+      final documentId = data['documentId'];
+      final timestamp = DateTime.now();
+
       final notificationItem = NotificationItem(
-        id: message.messageId ?? 'msg_${DateTime.now().millisecondsSinceEpoch}',
-        title: notification.title ?? 'New Notification',
-        body: notification.body ?? '',
-        documentId: data['documentId'],
-        timestamp: DateTime.now(),
+        id: _generateNotificationId(title, body, documentId, timestamp),
+        title: title,
+        body: body,
+        documentId: documentId,
+        timestamp: timestamp,
       );
 
       await NotificationHistoryService().addNotification(notificationItem);
@@ -157,12 +174,21 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final data = message.data;
 
   if (notification != null) {
+    final title = notification.title ?? 'New Notification';
+    final body = notification.body ?? '';
+    final documentId = data['documentId'];
+    final timestamp = DateTime.now();
+
+    // Use the same ID generation logic
+    final id =
+        'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}';
+
     final notificationItem = NotificationItem(
-      id: message.messageId ?? 'msg_${DateTime.now().millisecondsSinceEpoch}',
-      title: notification.title ?? 'New Notification',
-      body: notification.body ?? '',
-      documentId: data['documentId'],
-      timestamp: DateTime.now(),
+      id: id,
+      title: title,
+      body: body,
+      documentId: documentId,
+      timestamp: timestamp,
     );
 
     await NotificationHistoryService().addNotification(notificationItem);

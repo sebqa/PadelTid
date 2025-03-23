@@ -178,12 +178,23 @@ class NotificationHandler {
     bool isRead = false,
     DateTime? timestamp,
   }) {
+    final now = timestamp ?? DateTime.now();
+
+    // Create a more unique ID that includes content information
+    final idBase = documentId != null
+        ? 'doc_${documentId}_${now.millisecondsSinceEpoch}'
+        : 'notification_${now.millisecondsSinceEpoch}';
+
+    // Add a hash of the content to help with deduplication
+    final contentHash = title.hashCode ^ body.hashCode;
+    final id = '${idBase}_${contentHash.abs()}';
+
     final notification = NotificationItem(
-      id: 'notification_${DateTime.now().millisecondsSinceEpoch}',
+      id: id,
       title: title,
       body: body,
       documentId: documentId,
-      timestamp: timestamp ?? DateTime.now(),
+      timestamp: now,
       isRead: isRead,
     );
 

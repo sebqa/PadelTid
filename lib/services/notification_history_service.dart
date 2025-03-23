@@ -27,15 +27,40 @@ class NotificationHistoryService extends ChangeNotifier {
     _isInitialized = true;
   }
 
-  // Add a new notification
-  Future<void> addNotification(NotificationItem notification) async {
-    // Check for duplicates (same ID)
+  // Add this method to check if a notification with the same content exists recently
+  bool hasRecentDuplicate(String title, String? documentId,
+      {int timeWindowMs = 10000}) {
+    final now = DateTime.now();
+
+    // Look for notifications with the same title and documentId in the last timeWindowMs
+    return _notifications.any((notification) {
+      // Check if title and documentId match
+      final isSameContent =
+          notification.title == title && notification.documentId == documentId;
+
+      // Check if it was received recently (within timeWindowMs)
+      final isRecent =
+          now.difference(notification.timestamp).inMilliseconds < timeWindowMs;
+
+      return isSameContent && isRecent;
+    });
+  }
+
+  // Modify the addNotification method to check for duplicates
+  Future<void> addNotification(NotificationItem notification,
+      {bool checkDuplicates = true}) async {
+    // Check for exact ID duplicates
     final existingIndex =
         _notifications.indexWhere((n) => n.id == notification.id);
 
     if (existingIndex >= 0) {
       // Update existing notification
       _notifications[existingIndex] = notification;
+    } else if (checkDuplicates &&
+        hasRecentDuplicate(notification.title, notification.documentId)) {
+      // Skip adding if it's a duplicate by content
+      print('Skipping duplicate notification: ${notification.title}');
+      return;
     } else {
       // Add new notification
       _notifications.add(notification);
