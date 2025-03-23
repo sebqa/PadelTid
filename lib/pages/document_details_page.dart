@@ -60,10 +60,9 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
 
   Future<Document> _fetchDocumentById(String documentId) async {
     try {
-      // Use the Lambda Function URL instead of API Gateway
       final response = await http.get(
         Uri.parse(
-            'https://laseojfvjff4ms5nagckrhrd2u0cprtj.lambda-url.eu-north-1.on.aws/?documentId=$documentId'),
+            'https://4ui8jbkcgc.execute-api.eu-north-1.amazonaws.com/default/getDocumentById?documentId=$documentId'),
         headers: {'Content-Type': 'application/json'},
       );
 

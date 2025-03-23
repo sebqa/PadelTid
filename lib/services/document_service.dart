@@ -5,10 +5,10 @@ import '../model/document.dart';
 class DocumentService {
   Future<Document> getDocumentById(String documentId) async {
     try {
-      // Use the Lambda Function URL instead of API Gateway
+      // Use the correct endpoint for fetching document by ID
       final response = await http.get(
         Uri.parse(
-            'https://laseojfvjff4ms5nagckrhrd2u0cprtj.lambda-url.eu-north-1.on.aws/?documentId=$documentId'),
+            'https://4ui8jbkcgc.execute-api.eu-north-1.amazonaws.com/default/getDocumentById?documentId=$documentId'),
         headers: {'Content-Type': 'application/json'},
       );
 
