@@ -10,7 +10,8 @@ import 'package:flutter_application_1/providers/locale_provider.dart';
 import 'package:flutter_application_1/utils/translations.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import 'dart:ui' show TextDirection;
 import 'dart:math' as math;
 import '../services/document_service.dart';
 
@@ -27,7 +28,8 @@ class DocumentDetailsPage extends StatefulWidget {
   _DocumentDetailsPageState createState() => _DocumentDetailsPageState();
 }
 
-class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
+class _DocumentDetailsPageState extends State<DocumentDetailsPage>
+    with SingleTickerProviderStateMixin {
   // Map to store weather forecasts for each club
   Map<String, List<DetailedWeather>> _clubWeatherForecasts = {};
   Map<String, bool> _clubLoadingStates = {};
@@ -40,10 +42,24 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
   String? _errorMessage;
   Document? _document;
 
+  // Animation controller for shimmer effect
+  late AnimationController _shimmerController;
+
   @override
   void initState() {
     super.initState();
+
+    // Initialize shimmer animation
+    _shimmerController = AnimationController.unbounded(vsync: this)
+      ..repeat(min: -0.5, max: 1.5, period: Duration(milliseconds: 1000));
+
     _loadDocument();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDocument() async {
@@ -198,96 +214,242 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final localeProvider = Provider.of<LocaleProvider>(context);
-    final languageCode = localeProvider.locale.languageCode;
 
-    // Show loading state
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back,
-                color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Text(
-            TranslationHelper.translate('loading', languageCode),
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-          ),
-        ),
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isLoading
+            ? TranslationHelper.translate(
+                'loading', localeProvider.locale.languageCode)
+            : TranslationHelper.translate(
+                'available_courts', localeProvider.locale.languageCode)),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+      body: _isLoading
+          ? _buildLoadingUI(context)
+          : _errorMessage != null
+              ? _buildErrorUI(context)
+              : _buildDocumentUI(context),
+    );
+  }
 
-    // Show error state
-    if (_errorMessage != null) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back,
-                color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () => Navigator.of(context).pop(),
+  Widget _buildLoadingUI(BuildContext context) {
+    return SingleChildScrollView(
+      physics: BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Date header skeleton
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(16),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildShimmerPlaceholder(height: 24, width: 200),
+                SizedBox(height: 8),
+                _buildShimmerPlaceholder(height: 16, width: 150),
+              ],
+            ),
           ),
-          title: Text(
-            TranslationHelper.translate('error', languageCode),
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+
+          // Club skeletons
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children:
+                  List.generate(3, (index) => _buildClubSkeleton(context)),
+            ),
           ),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Theme.of(context).colorScheme.error,
-                size: 48,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClubSkeleton(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        children: [
+          // Club header
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Club logo placeholder
+                _buildShimmerPlaceholder(
+                    height: 40, width: 40, shape: BoxShape.circle),
+                SizedBox(width: 12),
+
+                // Club name and location
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildShimmerPlaceholder(height: 18, width: 160),
+                      SizedBox(height: 4),
+                      _buildShimmerPlaceholder(height: 14, width: 120),
+                    ],
+                  ),
+                ),
+
+                // Expand icon placeholder
+                _buildShimmerPlaceholder(
+                    height: 24, width: 24, shape: BoxShape.circle),
+              ],
+            ),
+          ),
+
+          // Divider
+          Divider(height: 1),
+
+          // Court slots skeleton
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              children: List.generate(
+                  3,
+                  (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Time slot
+                            _buildShimmerPlaceholder(height: 16, width: 80),
+                            SizedBox(height: 8),
+
+                            // Court slots
+                            Row(
+                              children: List.generate(
+                                  4,
+                                  (i) => Expanded(
+                                        child: Padding(
+                                          padding: EdgeInsets.only(
+                                              right: i < 3 ? 8 : 0),
+                                          child: _buildShimmerPlaceholder(
+                                              height: 36,
+                                              width: double.infinity,
+                                              borderRadius: 8),
+                                        ),
+                                      )),
+                            ),
+                          ],
+                        ),
+                      )),
+            ),
+          ),
+
+          // Weather forecast skeleton
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildShimmerPlaceholder(height: 18, width: 120),
+                SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                      4,
+                      (index) => Column(
+                            children: [
+                              _buildShimmerPlaceholder(
+                                  height: 24,
+                                  width: 24,
+                                  shape: BoxShape.circle),
+                              SizedBox(height: 4),
+                              _buildShimmerPlaceholder(height: 14, width: 40),
+                              SizedBox(height: 4),
+                              _buildShimmerPlaceholder(height: 14, width: 30),
+                            ],
+                          )),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerPlaceholder(
+      {required double height,
+      required double width,
+      double borderRadius = 4,
+      BoxShape shape = BoxShape.rectangle}) {
+    return AnimatedBuilder(
+      animation: _shimmerController,
+      builder: (context, child) {
+        return Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            shape: shape,
+            borderRadius: shape == BoxShape.rectangle
+                ? BorderRadius.circular(borderRadius)
+                : null,
+            gradient: LinearGradient(
+              colors: [
+                Colors.grey.shade200,
+                Colors.grey.shade100,
+                Colors.grey.shade200,
+              ],
+              stops: [0.0, 0.5, 1.0],
+              begin: Alignment(-1.0, -0.3),
+              end: Alignment(1.0, 0.3),
+              transform: _SlidingGradientTransform(
+                  slidePercent: _shimmerController.value),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorUI(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: Colors.red,
+              size: 60,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Error Loading Data',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
-              SizedBox(height: 16),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            SizedBox(height: 8),
+            Text(
+              _errorMessage ?? 'An unknown error occurred',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadDocument,
+              icon: Icon(Icons.refresh),
+              label: Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _loadDocument,
-                child:
-                    Text(TranslationHelper.translate('tryAgain', languageCode)),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    // If we don't have a document at this point, something went wrong
-    if (_document == null) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back,
-                color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Text(
-            TranslationHelper.translate('error', languageCode),
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-          ),
-        ),
-        body: Center(
-          child: Text(
-              TranslationHelper.translate('documentNotFound', languageCode)),
-        ),
-      );
-    }
-
+  Widget _buildDocumentUI(BuildContext context) {
     // Show document details
     return Scaffold(
       appBar: AppBar(
@@ -299,7 +461,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          '${_formatDate(_document!.date, context)} ${TranslationHelper.translate('at', languageCode)} ${_document!.time}',
+          '${_formatDate(_document!.date, context)} ${TranslationHelper.translate('at', Localizations.localeOf(context).languageCode)} ${_document!.time}',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
@@ -879,5 +1041,19 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
         ),
       ],
     );
+  }
+}
+
+// Helper class for shimmer animation
+class _SlidingGradientTransform extends GradientTransform {
+  const _SlidingGradientTransform({
+    required this.slidePercent,
+  });
+
+  final double slidePercent;
+
+  @override
+  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
+    return Matrix4.translationValues(bounds.width * slidePercent, 0.0, 0.0);
   }
 }
