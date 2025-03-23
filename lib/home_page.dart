@@ -6,6 +6,9 @@ import 'package:flutter_application_1/model/document.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/painters/tennis_ball_painter.dart';
 import 'widgets/skeleton_widgets.dart';
+import 'package:provider/provider.dart';
+import 'services/notification_history_service.dart';
+import 'pages/notifications_page.dart';
 
 import 'login_page.dart';
 import 'document_widget.dart';
@@ -14,7 +17,6 @@ import 'recommended_lv_holder.dart';
 import 'location_selector.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/services/token_service.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_application_1/providers/locale_provider.dart';
 import 'package:flutter_application_1/utils/translations.dart';
 import 'package:flutter_application_1/services/notification_handler.dart';
@@ -86,6 +88,10 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       NotificationHandler().initialize(context);
     });
+
+    // Initialize notification history service
+    Provider.of<NotificationHistoryService>(context, listen: false)
+        .initialize();
   }
 
   @override
@@ -400,6 +406,56 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                   actions: [
+                    // Notification icon with badge
+                    Consumer<NotificationHistoryService>(
+                      builder: (context, notificationService, child) {
+                        final unreadCount = notificationService.unreadCount;
+
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.notifications),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          NotificationsPage()),
+                                );
+                              },
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    unreadCount > 9
+                                        ? '9+'
+                                        : unreadCount.toString(),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                     IconButton(
                       icon: Icon(Icons.settings),
                       color: Colors.black,

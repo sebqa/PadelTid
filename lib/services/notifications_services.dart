@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
+import '../model/notification_item.dart';
+import '../services/notification_history_service.dart';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
@@ -101,6 +103,29 @@ class NotificationService {
         payload: message.data['url'] ?? '',
       );
     }
+  }
+
+  Future<void> handleForegroundMessage(RemoteMessage message) async {
+    print("Handling a foreground message: ${message.messageId}");
+
+    // Extract notification data
+    final notification = message.notification;
+    final data = message.data;
+
+    // Store in notification history
+    if (notification != null) {
+      final notificationItem = NotificationItem(
+        id: message.messageId ?? 'msg_${DateTime.now().millisecondsSinceEpoch}',
+        title: notification.title ?? 'New Notification',
+        body: notification.body ?? '',
+        documentId: data['documentId'],
+        timestamp: DateTime.now(),
+      );
+
+      NotificationHistoryService().addNotification(notificationItem);
+    }
+
+    // ... rest of your handling code
   }
 }
 

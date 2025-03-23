@@ -6,6 +6,8 @@ import '../pages/document_details_page.dart';
 import '../services/document_service.dart';
 import 'dart:html' as html;
 import 'dart:js' as js;
+import '../model/notification_item.dart';
+import '../services/notification_history_service.dart';
 
 class NotificationHandler {
   static final NotificationHandler _instance = NotificationHandler._internal();
@@ -77,6 +79,14 @@ class NotificationHandler {
         if (type == 'NOTIFICATION_CLICK') {
           final documentId = data['documentId'];
           if (documentId != null && _context != null) {
+            // Store this notification and mark as read
+            _storeNotification(
+              title: 'New Availability',
+              body: 'Tap to view available courts',
+              documentId: documentId.toString(),
+              isRead: true,
+            );
+
             _navigateToDocument(documentId.toString());
           }
         }
@@ -140,5 +150,24 @@ class NotificationHandler {
     );
 
     return Container(); // Return a dummy widget
+  }
+
+  // Store a notification in history
+  void _storeNotification({
+    required String title,
+    required String body,
+    String? documentId,
+    bool isRead = false,
+  }) {
+    final notification = NotificationItem(
+      id: 'notification_${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      body: body,
+      documentId: documentId,
+      timestamp: DateTime.now(),
+      isRead: isRead,
+    );
+
+    NotificationHistoryService().addNotification(notification);
   }
 }

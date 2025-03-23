@@ -65,15 +65,20 @@ self.addEventListener('notificationclick', (event) => {
       includeUncontrolled: true
     })
     .then((clientList) => {
+      // Keep track of whether we've sent a message
+      let messageSent = false;
+      
       // Try to find an existing window
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          // Post message to client with document ID before focusing
-          if (documentId) {
+          // Only post message once to the first matching client
+          if (documentId && !messageSent) {
+            console.log('Sending notification click message to client:', client.id);
             client.postMessage({
               type: 'NOTIFICATION_CLICK',
               documentId: documentId
             });
+            messageSent = true;
           }
           return client.focus();
         }

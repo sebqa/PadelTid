@@ -1,0 +1,122 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../model/notification_item.dart';
+import 'package:flutter/foundation.dart';
+
+class NotificationHistoryService extends ChangeNotifier {
+  static final NotificationHistoryService _instance =
+      NotificationHistoryService._internal();
+
+  factory NotificationHistoryService() {
+    return _instance;
+  }
+
+  NotificationHistoryService._internal();
+
+  List<NotificationItem> _notifications = [];
+  bool _isInitialized = false;
+
+  List<NotificationItem> get notifications => _notifications;
+  int get unreadCount => _notifications.where((n) => !n.isRead).length;
+
+  // Initialize and load notifications from storage
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    await _loadNotifications();
+    _isInitialized = true;
+  }
+
+  // Add a new notification
+  Future<void> addNotification(NotificationItem notification) async {
+    // Check for duplicates (same ID)
+    final existingIndex =
+        _notifications.indexWhere((n) => n.id == notification.id);
+
+    if (existingIndex >= 0) {
+      // Update existing notification
+      _notifications[existingIndex] = notification;
+    } else {
+      // Add new notification
+      _notifications.add(notification);
+    }
+
+    // Sort by timestamp (newest first)
+    _notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    // Limit to 50 notifications
+    if (_notifications.length > 50) {
+      _notifications = _notifications.sublist(0, 50);
+    }
+
+    await _saveNotifications();
+    notifyListeners();
+  }
+
+  // Mark a notification as read
+  Future<void> markAsRead(String notificationId) async {
+    final index = _notifications.indexWhere((n) => n.id == notificationId);
+
+    if (index >= 0) {
+      _notifications[index].isRead = true;
+      await _saveNotifications();
+      notifyListeners();
+    }
+  }
+
+  // Mark all notifications as read
+  Future<void> markAllAsRead() async {
+    for (var notification in _notifications) {
+      notification.isRead = true;
+    }
+
+    await _saveNotifications();
+    notifyListeners();
+  }
+
+  // Clear all notifications
+  Future<void> clearAll() async {
+    _notifications.clear();
+    await _saveNotifications();
+    notifyListeners();
+  }
+
+  // Load notifications from SharedPreferences
+  Future<void> _loadNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final notificationsJson = prefs.getString('notification_history');
+
+      if (notificationsJson != null) {
+        final List<dynamic> decodedList = jsonDecode(notificationsJson);
+        _notifications =
+            decodedList.map((item) => NotificationItem.fromJson(item)).toList();
+
+        // Sort by timestamp (newest first)
+        _notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      }
+    } catch (e) {
+      print('Error loading notifications: $e');
+    }
+  }
+
+  // Save notifications to SharedPreferences
+  Future<void> _saveNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final notificationsJson =
+          jsonEncode(_notifications.map((n) => n.toJson()).toList());
+
+      await prefs.setString('notification_history', notificationsJson);
+    } catch (e) {
+      print('Error saving notifications: $e');
+    }
+  }
+
+  // Add this public method to the NotificationHistoryService class
+  Future<void> removeNotification(String notificationId) async {
+    _notifications.removeWhere((n) => n.id == notificationId);
+    await _saveNotifications();
+    notifyListeners();
+  }
+}

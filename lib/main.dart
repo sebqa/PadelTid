@@ -17,6 +17,7 @@ import 'l10n/app_localizations.dart';
 import 'services/document_service.dart';
 import 'pages/document_details_page.dart';
 import 'services/notification_handler.dart';
+import 'services/notification_history_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,7 +66,9 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: localeProvider),
+        ChangeNotifierProvider(create: (context) => LocaleProvider()),
+        ChangeNotifierProvider(
+            create: (context) => NotificationHistoryService()),
       ],
       child: const MyApp(),
     ),
