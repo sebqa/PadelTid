@@ -1,7 +1,8 @@
 import json
 import os
 from pymongo import MongoClient
-from bson import json_util
+# Use the bson module that comes with pymongo
+from bson.json_util import dumps
 
 def lambda_handler(event, context):
     try:
@@ -34,8 +35,8 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'Document not found'})
             }
         
-        # Use json_util to properly convert MongoDB types to JSON
-        document_json = json_util.dumps(document)
+        # Use dumps from bson.json_util to properly convert MongoDB types to JSON
+        document_json = dumps(document)
         
         return {
             'statusCode': 200,
