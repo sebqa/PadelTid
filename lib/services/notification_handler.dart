@@ -32,6 +32,9 @@ class NotificationHandler {
 
       // Register a global function that can be called from JavaScript
       _registerJsHandlers();
+
+      // Handle potential auth errors in PWA
+      _handlePwaAuthError();
     }
   }
 
@@ -192,5 +195,26 @@ class NotificationHandler {
 
     NotificationHistoryService().addNotification(notification);
     print('Stored notification: $title (read: $isRead)');
+  }
+
+  // Add this method to handle auth errors in PWA
+  void _handlePwaAuthError() {
+    if (kIsWeb) {
+      // Listen for Firebase Auth errors that might occur when handling notifications
+      js.context['window'].callMethod('addEventListener', [
+        'error',
+        js.allowInterop((event) {
+          final errorMessage = event.toString();
+          if (errorMessage.contains('auth/no-auth-event') ||
+              errorMessage.contains('An internal error has occurred')) {
+            print('Caught Firebase Auth error in PWA, continuing execution');
+            // Prevent the error from stopping execution
+            event.callMethod('preventDefault');
+            event.callMethod('stopPropagation');
+            return false;
+          }
+        })
+      ]);
+    }
   }
 }

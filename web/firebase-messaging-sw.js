@@ -41,55 +41,48 @@ function showDebugNotification(source) {
 // This service worker should ONLY handle background messages
 // We deliberately don't call showNotification for foreground messages
 
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked', event);
+// Handle notification clicks more gracefully
+self.addEventListener('notificationclick', function(event) {
+  console.log('Notification clicked:', event);
   
-  event.notification.close();
-  
-  // Get document ID from notification
-  const documentId = event.notification.data?.documentId;
-  
-  // Create URL with document ID
-  let urlToOpen = self.location.origin;
-  
-  if (documentId) {
-    // Add document ID as a query parameter
-    urlToOpen = `${self.location.origin}/#/document/${documentId}`;
-  }
+  try {
+    const notification = event.notification;
+    notification.close();
     
-  // Check if there's already a window/tab open with our app
-  event.waitUntil(
-    clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true
-    })
-    .then((clientList) => {
-      // Keep track of whether we've sent a message
-      let messageSent = false;
-      
-      // Try to find an existing window
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          // Only post message once to the first matching client
-          if (documentId && !messageSent) {
-            console.log('Sending notification click message to client:', client.id);
-            client.postMessage({
-              type: 'NOTIFICATION_CLICK',
-              documentId: documentId
-            });
-            messageSent = true;
+    // Get the document ID from the notification data
+    const documentId = notification.data && notification.data.documentId;
+    
+    // Create a URL to navigate to
+    let url = '/';
+    if (documentId) {
+      url = `/document/${documentId}`;
+    }
+    
+    // Focus on existing tab if available, otherwise open new one
+    event.waitUntil(
+      clients.matchAll({type: 'window', includeUncontrolled: true})
+        .then(function(clientList) {
+          for (let i = 0; i < clientList.length; i++) {
+            const client = clientList[i];
+            if ('focus' in client) {
+              client.focus();
+              client.navigate(url);
+              return;
+            }
           }
-          return client.focus();
-        }
-      }
-      
-      // If no window exists, open a new one
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
-  );
+          
+          // No existing window/tab, open a new one
+          if (clients.openWindow) {
+            return clients.openWindow(url);
+          }
+        })
+        .catch(function(error) {
+          console.error('Error handling notification click:', error);
+        })
+    );
+  } catch (error) {
+    console.error('Error in notification click handler:', error);
+  }
 });
 
 
