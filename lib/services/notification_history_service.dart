@@ -16,6 +16,9 @@ class NotificationHistoryService extends ChangeNotifier {
   List<NotificationItem> _notifications = [];
   bool _isInitialized = false;
 
+  // Add a static set to track recently processed notification IDs across all instances
+  static final Set<String> _recentlyProcessedIds = {};
+
   List<NotificationItem> get notifications => _notifications;
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
@@ -46,10 +49,22 @@ class NotificationHistoryService extends ChangeNotifier {
     });
   }
 
-  // Modify the addNotification method to check for duplicates
+  // Modify the addNotification method with stronger deduplication
   Future<void> addNotification(NotificationItem notification,
       {bool checkDuplicates = true}) async {
-    // Check for exact ID duplicates
+    // First check if we've recently processed this exact ID
+    if (_recentlyProcessedIds.contains(notification.id)) {
+      print('Ignoring already processed notification ID: ${notification.id}');
+      return;
+    }
+
+    // Add to recently processed set with automatic cleanup after 30 seconds
+    _recentlyProcessedIds.add(notification.id);
+    Future.delayed(Duration(seconds: 30), () {
+      _recentlyProcessedIds.remove(notification.id);
+    });
+
+    // Check for exact ID duplicates in stored notifications
     final existingIndex =
         _notifications.indexWhere((n) => n.id == notification.id);
 
@@ -59,7 +74,8 @@ class NotificationHistoryService extends ChangeNotifier {
     } else if (checkDuplicates &&
         hasRecentDuplicate(notification.title, notification.documentId)) {
       // Skip adding if it's a duplicate by content
-      print('Skipping duplicate notification: ${notification.title}');
+      print(
+          'Skipping duplicate notification by content: ${notification.title}');
       return;
     } else {
       // Add new notification

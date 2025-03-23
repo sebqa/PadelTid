@@ -19,6 +19,9 @@ import 'pages/document_details_page.dart';
 import 'services/notification_handler.dart';
 import 'services/notification_history_service.dart';
 
+// Add this at the top level
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -162,6 +165,7 @@ class MyApp extends StatelessWidget {
       builder: (context, localeProvider, _) {
         print('Current locale: ${localeProvider.locale.languageCode}');
         return MaterialApp(
+          navigatorKey: navigatorKey,
           home: HomePage(),
           debugShowCheckedModeBanner: false,
           theme: ThemeData(

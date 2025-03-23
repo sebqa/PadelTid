@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
 import '../model/notification_item.dart';
 import '../services/notification_history_service.dart';
+import 'package:flutter/material.dart';
+import '../pages/document_details_page.dart';
+import '../main.dart'; // Import to access navigatorKey
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
@@ -58,6 +61,9 @@ class NotificationService {
 
     // Set up background message handling for mobile only
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Add this method to handle notification clicks on Android
+    setupNotificationClickHandling();
   }
 
   void _setupWebMessageHandlers() {
@@ -86,6 +92,7 @@ class NotificationService {
 
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
+    final documentId = message.data['documentId'];
 
     if (notification != null) {
       await _flutterLocalNotificationsPlugin.show(
@@ -100,21 +107,17 @@ class NotificationService {
                 'This channel is used for important notifications.',
             importance: Importance.max,
             priority: Priority.high,
-            icon: android?.smallIcon ?? 'assets/images/maskable_logo.svg',
+            icon: android?.smallIcon ?? '@mipmap/ic_launcher',
             playSound: true,
             enableVibration: true,
-            vibrationPattern: Int64List.fromList([0, 200, 100, 200, 100, 400]),
-            sound:
-                const RawResourceAndroidNotificationSound('notification_sound'),
           ),
           iOS: const DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
-            sound: 'notification_sound.aiff',
           ),
         ),
-        payload: message.data['url'] ?? '',
+        payload: documentId,
       );
     }
   }
@@ -160,6 +163,81 @@ class NotificationService {
     // Show notification on mobile
     if (!kIsWeb) {
       await _showFlutterNotification(message);
+    }
+  }
+
+  // Add this method to handle notification clicks on Android
+  void setupNotificationClickHandling() {
+    if (kIsWeb) return; // Skip for web
+
+    // Handle notification clicks when app is in background/terminated
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print(
+          'Notification clicked when app was in background: ${message.messageId}');
+      _handleNotificationClick(message);
+    });
+
+    // Check for initial notification that launched the app
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((RemoteMessage? message) {
+      if (message != null) {
+        print('App launched from notification: ${message.messageId}');
+        _handleNotificationClick(message);
+      }
+    });
+
+    // Set up local notification click handling
+    _flutterLocalNotificationsPlugin.initialize(
+      InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(),
+      ),
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        print('Local notification clicked: ${response.payload}');
+        if (response.payload != null && response.payload!.isNotEmpty) {
+          final documentId = response.payload;
+          _handleNotificationClick(null, documentId: documentId);
+        }
+      },
+    );
+  }
+
+  // Handle notification clicks
+  void _handleNotificationClick(RemoteMessage? message, {String? documentId}) {
+    // Extract document ID from message or use provided one
+    String? docId = documentId;
+
+    if (docId == null && message != null) {
+      docId = message.data['documentId'];
+    }
+
+    if (docId != null) {
+      // Mark notification as read
+      final notificationService = NotificationHistoryService();
+
+      // Find the notification by document ID
+      final notification = notificationService.notifications
+          .firstWhere((n) => n.documentId == docId,
+              orElse: () => NotificationItem(
+                    id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                    title: 'Notification',
+                    body: 'Document notification',
+                    documentId: docId,
+                    timestamp: DateTime.now(),
+                  ));
+
+      notificationService.markAsRead(notification.id);
+
+      // Navigate to document details
+      // We need to use a global navigator key since we might not have context
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => DocumentDetailsPage(
+            documentId: docId,
+          ),
+        ),
+      );
     }
   }
 }
