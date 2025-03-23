@@ -127,7 +127,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
             MaterialPageRoute(
               builder: (context) => DocumentDetailsPage(
                 // Pass the document ID instead of the full document
-                documentId: documentId,
+                document: widget.document,
               ),
             ),
           );

@@ -5,6 +5,11 @@ from pymongo import MongoClient
 from bson.json_util import dumps
 
 def lambda_handler(event, context):
+    # Log the request details for debugging
+    print(f"Event: {json.dumps(event)}")
+    print(f"Headers: {event.get('headers', {})}")
+    print(f"Request context: {event.get('requestContext', {})}")
+    
     # Set up CORS headers - make sure these are included in ALL responses
     headers = {
         'Access-Control-Allow-Headers': '*',

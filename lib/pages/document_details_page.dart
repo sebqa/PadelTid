@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
+import '../services/document_service.dart';
 
 class DocumentDetailsPage extends StatefulWidget {
   final Document? document;
@@ -34,47 +35,52 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
   // Track expanded state for each club
   Map<String, bool> _expandedClubs = {};
 
-  // Add a future for loading document by ID
-  Future<Document>? _documentFuture;
+  // Document state
+  bool _isLoading = false;
+  String? _errorMessage;
   Document? _document;
 
   @override
   void initState() {
     super.initState();
+    _loadDocument();
+  }
 
+  Future<void> _loadDocument() async {
     if (widget.document != null) {
       // If document is provided directly, use it
-      _document = widget.document;
+      setState(() {
+        _document = widget.document;
+        _isLoading = false;
+      });
       _initializeClubWeatherStates();
     } else if (widget.documentId != null) {
       // If only ID is provided, fetch the document
-      _documentFuture = _fetchDocumentById(widget.documentId!);
-      _documentFuture!.then((document) {
-        setState(() {
-          _document = document;
-          _initializeClubWeatherStates();
-        });
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
       });
-    }
-  }
 
-  Future<Document> _fetchDocumentById(String documentId) async {
-    try {
-      final response = await http.get(
-        Uri.parse(
-            'https://4ui8jbkcgc.execute-api.eu-north-1.amazonaws.com/default/getDocumentById?documentId=$documentId'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      try {
+        final document =
+            await DocumentService().getDocumentById(widget.documentId!);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return Document.fromJson(data, []);
-      } else {
-        throw Exception('Failed to load document: ${response.statusCode}');
+        if (mounted) {
+          setState(() {
+            _document = document;
+            _isLoading = false;
+          });
+          _initializeClubWeatherStates();
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Failed to load document: $e';
+            _isLoading = false;
+          });
+        }
+        print('Error loading document: $e');
       }
-    } catch (e) {
-      print('Error fetching document: $e');
-      throw Exception('Failed to load document: $e');
     }
   }
 
@@ -134,26 +140,37 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
             .map((item) => DetailedWeather.fromJson(item))
             .toList();
 
-        setState(() {
-          _clubWeatherForecasts[clubName] = forecasts;
-          _clubLoadingStates[clubName] = false;
-        });
+        if (mounted) {
+          setState(() {
+            _clubWeatherForecasts[clubName] = forecasts;
+            _clubLoadingStates[clubName] = false;
+          });
+        }
       } else {
-        setState(() {
-          _clubLoadingStates[clubName] = false;
-          _clubErrorMessages[clubName] =
-              'Failed to fetch weather data: ${response.statusCode}';
-        });
+        if (mounted) {
+          setState(() {
+            _clubLoadingStates[clubName] = false;
+            _clubErrorMessages[clubName] =
+                'Failed to fetch weather data: ${response.statusCode}';
+          });
+        }
       }
     } catch (e) {
-      setState(() {
-        _clubLoadingStates[clubName] = false;
-        _clubErrorMessages[clubName] = 'Error fetching weather data: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _clubLoadingStates[clubName] = false;
+          _clubErrorMessages[clubName] = 'Error fetching weather data: $e';
+        });
+      }
     }
   }
 
   Future<void> _refreshData() async {
+    if (_document == null) {
+      // If we don't have a document yet, try to load it
+      return _loadDocument();
+    }
+
     setState(() {
       // Reset loading states and error messages
       _clubLoadingStates.clear();
@@ -172,13 +189,32 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
     }
   }
 
+  String _formatDate(String dateStr, BuildContext context) {
+    final date = DateTime.parse(dateStr);
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMMMd(locale).format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // If we're loading the document, show a loading indicator
-    if (widget.document == null && _document == null) {
+    final localeProvider = Provider.of<LocaleProvider>(context);
+    final languageCode = localeProvider.locale.languageCode;
+
+    // Show loading state
+    if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Loading...'),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            TranslationHelper.translate('loading', languageCode),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
         ),
         body: Center(
           child: CircularProgressIndicator(),
@@ -186,12 +222,73 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
       );
     }
 
-    // Use the loaded document
-    final document = _document ?? widget.document!;
+    // Show error state
+    if (_errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            TranslationHelper.translate('error', languageCode),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Theme.of(context).colorScheme.error,
+                size: 48,
+              ),
+              SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _loadDocument,
+                child:
+                    Text(TranslationHelper.translate('tryAgain', languageCode)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-    final localeProvider = Provider.of<LocaleProvider>(context);
-    final languageCode = localeProvider.locale.languageCode;
+    // If we don't have a document at this point, something went wrong
+    if (_document == null) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            TranslationHelper.translate('error', languageCode),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+        ),
+        body: Center(
+          child: Text(
+              TranslationHelper.translate('documentNotFound', languageCode)),
+        ),
+      );
+    }
 
+    // Show document details
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -202,7 +299,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          '${_formatDate(document.date, context)} ${TranslationHelper.translate('at', languageCode)} ${document.time}',
+          '${_formatDate(_document!.date, context)} ${TranslationHelper.translate('at', languageCode)} ${_document!.time}',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
@@ -212,8 +309,8 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           padding: EdgeInsets.only(top: 8, bottom: 24),
           children: [
             // Club sections
-            if (document.clubs.isNotEmpty)
-              ...document.clubs.entries.map((clubEntry) {
+            if (_document!.clubs.isNotEmpty)
+              ..._document!.clubs.entries.map((clubEntry) {
                 return _buildClubSection(
                   context,
                   clubEntry.key,
@@ -782,55 +879,5 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
         ),
       ],
     );
-  }
-
-  String _formatDate(String date, BuildContext context) {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    final languageCode = localeProvider.locale.languageCode;
-
-    final documentDate = DateTime.parse(date);
-    final now = DateTime.now();
-    final tomorrow = DateTime(now.year, now.month, now.day + 1);
-
-    if (documentDate.year == now.year &&
-        documentDate.month == now.month &&
-        documentDate.day == now.day) {
-      return TranslationHelper.translate('today', languageCode);
-    } else if (documentDate.year == tomorrow.year &&
-        documentDate.month == tomorrow.month &&
-        documentDate.day == tomorrow.day) {
-      return TranslationHelper.translate('tomorrow', languageCode);
-    } else {
-      final weekday = TranslationHelper.translate(
-          [
-            'monday',
-            'tuesday',
-            'wednesday',
-            'thursday',
-            'friday',
-            'saturday',
-            'sunday'
-          ][documentDate.weekday - 1],
-          languageCode);
-
-      final month = TranslationHelper.translate(
-          [
-            'jan',
-            'feb',
-            'mar',
-            'apr',
-            'may',
-            'jun',
-            'jul',
-            'aug',
-            'sep',
-            'oct',
-            'nov',
-            'dec'
-          ][documentDate.month - 1],
-          languageCode);
-
-      return '$weekday, $month ${documentDate.day}';
-    }
   }
 }
