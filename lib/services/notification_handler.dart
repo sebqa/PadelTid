@@ -80,14 +80,6 @@ class NotificationHandler {
         if (type == 'NOTIFICATION_CLICK') {
           final documentId = data['documentId'];
           if (documentId != null && _context != null) {
-            // Store this notification and mark as read
-            _storeNotification(
-              title: 'New Availability',
-              body: 'Tap to view available courts',
-              documentId: documentId.toString(),
-              isRead: true,
-            );
-
             _navigateToDocument(documentId.toString());
           }
         } else if (type == 'NOTIFICATION_RECEIVED') {
