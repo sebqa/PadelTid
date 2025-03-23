@@ -5,6 +5,21 @@ from pymongo import MongoClient
 from bson.json_util import dumps
 
 def lambda_handler(event, context):
+    # Set up CORS headers
+    headers = {
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Origin': '*',  # Allow all origins
+        'Access-Control-Allow-Methods': 'OPTIONS,GET'
+    }
+    
+    # Handle OPTIONS request (preflight request)
+    if event.get('httpMethod') == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'message': 'CORS preflight request successful'})
+        }
+    
     try:
         # Extract document ID from query parameters
         document_id = event['queryStringParameters']['documentId']
@@ -27,11 +42,7 @@ def lambda_handler(event, context):
         if not document:
             return {
                 'statusCode': 404,
-                'headers': {
-                    'Access-Control-Allow-Headers': 'Content-Type',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,GET'
-                },
+                'headers': headers,
                 'body': json.dumps({'error': 'Document not found'})
             }
         
@@ -40,11 +51,7 @@ def lambda_handler(event, context):
         
         return {
             'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,GET'
-            },
+            'headers': headers,
             'body': document_json
         }
         
@@ -52,10 +59,6 @@ def lambda_handler(event, context):
         print(f"Error in lambda_handler: {str(e)}")
         return {
             'statusCode': 500,
-            'headers': {
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,GET'
-            },
+            'headers': headers,
             'body': json.dumps({'error': str(e)})
         } 
