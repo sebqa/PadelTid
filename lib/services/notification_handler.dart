@@ -5,9 +5,11 @@ import '../model/document.dart';
 import '../pages/document_details_page.dart';
 import '../services/document_service.dart';
 import 'dart:html' as html;
+import 'dart:js' as js;
 
 class NotificationHandler {
   static final NotificationHandler _instance = NotificationHandler._internal();
+  static BuildContext? _context;
 
   factory NotificationHandler() {
     return _instance;
@@ -16,39 +18,81 @@ class NotificationHandler {
   NotificationHandler._internal();
 
   void initialize(BuildContext context) {
+    _context = context;
     if (kIsWeb) {
       // Set up a listener for messages from the service worker
-      // This requires dart:html, which we'll use conditionally
-      _setupWebMessageListener(context);
+      _setupWebMessageListener();
+
+      // Register a global function that can be called from JavaScript
+      _registerJsHandlers();
     }
   }
 
-  void _setupWebMessageListener(BuildContext context) {
+  void _setupWebMessageListener() {
     // Use dart:html conditionally to avoid issues on non-web platforms
     if (kIsWeb) {
       // This code will only run on web
-      // ignore: undefined_prefixed_name
       html.window.addEventListener('message', (html.Event event) {
         // Cast to MessageEvent to access data property
         if (event is html.MessageEvent) {
-          final dynamic data = event.data;
-
-          if (data is Map && data['type'] == 'NOTIFICATION_CLICK') {
-            print('Received notification click message: $data');
-
-            if (data['documentId'] != null) {
-              // Navigate to document details page with just the ID
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => DocumentDetailsPage(
-                    documentId: data['documentId'],
-                  ),
-                ),
-              );
-            }
-          }
+          print('Received message from service worker: ${event.data}');
+          _handleMessage(event.data);
         }
       });
+
+      // Also listen for navigator.serviceWorker.onmessage events
+      js.context.callMethod('eval', [
+        '''
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.addEventListener('message', function(event) {
+            window.dispatchEvent(new MessageEvent('message', {
+              data: event.data
+            }));
+          });
+        }
+      '''
+      ]);
+    }
+  }
+
+  void _registerJsHandlers() {
+    // Create a global JS function that Flutter can expose
+    js.context['handleNotificationClick'] = (dynamic documentId) {
+      print('JS called handleNotificationClick with: $documentId');
+      if (documentId != null && _context != null) {
+        _navigateToDocument(documentId.toString());
+      }
+    };
+  }
+
+  void _handleMessage(dynamic data) {
+    try {
+      if (data is Map || data is js.JsObject) {
+        final type = data['type'];
+        if (type == 'NOTIFICATION_CLICK') {
+          final documentId = data['documentId'];
+          if (documentId != null && _context != null) {
+            _navigateToDocument(documentId.toString());
+          }
+        }
+      }
+    } catch (e) {
+      print('Error handling message: $e');
+    }
+  }
+
+  void _navigateToDocument(String documentId) {
+    if (_context != null) {
+      // Navigate to document details page with just the ID
+      Navigator.of(_context!).push(
+        MaterialPageRoute(
+          builder: (context) => DocumentDetailsPage(
+            documentId: documentId,
+          ),
+        ),
+      );
+    } else {
+      print('Cannot navigate: context is null');
     }
   }
 

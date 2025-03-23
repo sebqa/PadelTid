@@ -16,6 +16,7 @@ import 'providers/locale_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'services/document_service.dart';
 import 'pages/document_details_page.dart';
+import 'services/notification_handler.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -149,6 +150,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize notification handler with the global context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationHandler().initialize(context);
+    });
+
     return Consumer<LocaleProvider>(
       builder: (context, localeProvider, _) {
         print('Current locale: ${localeProvider.locale.languageCode}');

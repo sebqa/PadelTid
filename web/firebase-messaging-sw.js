@@ -57,9 +57,7 @@ self.addEventListener('notificationclick', (event) => {
     // Add document ID as a query parameter
     urlToOpen = `${self.location.origin}/#/document/${documentId}`;
   }
-  
-  console.log('Opening URL:', urlToOpen);
-  
+    
   // Check if there's already a window/tab open with our app
   event.waitUntil(
     clients.matchAll({
@@ -123,10 +121,7 @@ self.addEventListener('push', (event) => {
       if (data.data) {
         options.data = { ...options.data, ...data.data };
         
-        // Log document data for debugging
-        if (data.data.documentData) {
-          console.log('Received document data in notification:', data.data.documentData);
-        }
+
       }
     }
   } catch (e) {

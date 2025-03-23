@@ -240,5 +240,33 @@
     }
   </script>
   <script src="notification_handler.js"></script>
+  <script>
+    // Bridge between service worker and Flutter
+    window.addEventListener('message', function(event) {
+      console.log('Window received message:', event.data);
+      
+      // Check if this is a notification click
+      if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
+        // If Flutter is ready, call the handler directly
+        if (window.handleNotificationClick) {
+          window.handleNotificationClick(event.data.documentId);
+        } else {
+          // Store the message to process when Flutter is ready
+          window.pendingNotificationClick = event.data.documentId;
+        }
+      }
+    });
+    
+    // Also listen for service worker messages
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener('message', function(event) {
+        console.log('Service worker message received:', event.data);
+        // Forward to window message handler
+        window.dispatchEvent(new MessageEvent('message', {
+          data: event.data
+        }));
+      });
+    }
+  </script>
 </body>
 </html>
