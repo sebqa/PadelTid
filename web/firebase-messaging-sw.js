@@ -47,8 +47,18 @@ self.addEventListener('notificationclick', (event) => {
   
   event.notification.close();
   
-  // Open or focus the app
-  const urlToOpen = event.notification.data?.url || self.location.origin;
+  // Get document ID from notification
+  const documentId = event.notification.data?.documentId;
+  
+  // Create URL with document ID
+  let urlToOpen = self.location.origin;
+  
+  if (documentId) {
+    // Add document ID as a query parameter
+    urlToOpen = `${self.location.origin}/#/document/${documentId}`;
+  }
+  
+  console.log('Opening URL:', urlToOpen);
   
   // Check if there's already a window/tab open with our app
   event.waitUntil(
@@ -60,6 +70,13 @@ self.addEventListener('notificationclick', (event) => {
       // Try to find an existing window
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
+          // Post message to client with document ID before focusing
+          if (documentId) {
+            client.postMessage({
+              type: 'NOTIFICATION_CLICK',
+              documentId: documentId
+            });
+          }
           return client.focus();
         }
       }
@@ -85,7 +102,9 @@ self.addEventListener('push', (event) => {
     badge: './assets/icon/badge-icon-96x96.png',
     vibrate: [200, 100, 200, 100, 400],
     data: {
-      url: self.location.origin
+      url: self.location.origin,
+      documentId: null,
+      documentData: null
     },
     tag: 'padeltid-' + Date.now()
   };
@@ -100,8 +119,14 @@ self.addEventListener('push', (event) => {
         options.body = data.notification.body || options.body;
       }
       
+      // Store document data from the notification payload
       if (data.data) {
         options.data = { ...options.data, ...data.data };
+        
+        // Log document data for debugging
+        if (data.data.documentData) {
+          console.log('Received document data in notification:', data.data.documentData);
+        }
       }
     }
   } catch (e) {

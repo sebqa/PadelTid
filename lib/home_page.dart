@@ -17,6 +17,7 @@ import 'package:flutter_application_1/services/token_service.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/providers/locale_provider.dart';
 import 'package:flutter_application_1/utils/translations.dart';
+import 'package:flutter_application_1/services/notification_handler.dart';
 
 class Location {
   final String name;
@@ -80,6 +81,11 @@ class _HomePageState extends State<HomePage>
     _initializePreferences();
     _tokenService.initTokenRefreshListener();
     localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+
+    // Initialize notification handler
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationHandler().initialize(context);
+    });
   }
 
   @override

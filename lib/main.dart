@@ -14,6 +14,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/locale_provider.dart';
 import 'l10n/app_localizations.dart';
+import 'services/document_service.dart';
+import 'pages/document_details_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -221,6 +223,21 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          initialRoute: '/',
+          onGenerateRoute: (settings) {
+            if (settings.name?.startsWith('/document/') == true) {
+              final documentId = settings.name!.replaceFirst('/document/', '');
+
+              // Navigate to document details page with just the ID
+              return MaterialPageRoute(
+                builder: (context) => DocumentDetailsPage(
+                  documentId: documentId,
+                ),
+              );
+            }
+
+            return null;
+          },
         );
       },
     );

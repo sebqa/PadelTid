@@ -7,6 +7,7 @@ import requests, os
 import pymongo
 from pymongo import MongoClient
 from datetime import datetime, timedelta
+import json
 
 # Initialize Firebase Admin SDK only if not already initialized
 def initialize_firebase():
@@ -126,12 +127,17 @@ def send_notification(event):
                 notification_body = "No more available courts"
             
             if notification_body:
-                # Send notification to this specific user
+                # Send notification to this specific user with just the document ID
                 message = messaging.Message(
                     notification=messaging.Notification(
                         title=title,
                         body=notification_body
                     ),
+                    data={
+                        "documentId": doc_id,
+                        "click_action": "FLUTTER_NOTIFICATION_CLICK",
+                        "club_id": club_id
+                    },
                     token=token
                 )
                 

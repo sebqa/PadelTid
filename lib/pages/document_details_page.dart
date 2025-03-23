@@ -14,10 +14,13 @@ import 'package:intl/intl.dart';
 import 'dart:math' as math;
 
 class DocumentDetailsPage extends StatefulWidget {
-  final Document document;
+  final Document? document;
+  final String? documentId;
 
-  const DocumentDetailsPage({Key? key, required this.document})
-      : super(key: key);
+  // Allow creating with either a document or a document ID
+  const DocumentDetailsPage({Key? key, this.document, this.documentId})
+      : assert(document != null || documentId != null),
+        super(key: key);
 
   @override
   _DocumentDetailsPageState createState() => _DocumentDetailsPageState();
@@ -31,14 +34,54 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
   // Track expanded state for each club
   Map<String, bool> _expandedClubs = {};
 
+  // Add a future for loading document by ID
+  Future<Document>? _documentFuture;
+  Document? _document;
+
   @override
   void initState() {
     super.initState();
-    _initializeClubWeatherStates();
+
+    if (widget.document != null) {
+      // If document is provided directly, use it
+      _document = widget.document;
+      _initializeClubWeatherStates();
+    } else if (widget.documentId != null) {
+      // If only ID is provided, fetch the document
+      _documentFuture = _fetchDocumentById(widget.documentId!);
+      _documentFuture!.then((document) {
+        setState(() {
+          _document = document;
+          _initializeClubWeatherStates();
+        });
+      });
+    }
+  }
+
+  Future<Document> _fetchDocumentById(String documentId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://4ui8jbkcgc.execute-api.eu-north-1.amazonaws.com/default/getDocumentById?documentId=$documentId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return Document.fromJson(data, []);
+      } else {
+        throw Exception('Failed to load document: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching document: $e');
+      throw Exception('Failed to load document: $e');
+    }
   }
 
   void _initializeClubWeatherStates() {
-    for (var clubEntry in widget.document.clubs.entries) {
+    if (_document == null) return;
+
+    for (var clubEntry in _document!.clubs.entries) {
       if (clubEntry.value.latitude.isNotEmpty &&
           clubEntry.value.longitude.isNotEmpty) {
         _clubLoadingStates[clubEntry.key] = true;
@@ -71,7 +114,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
 
         // Parse document date and time
         final docDateTime =
-            DateTime.parse('${widget.document.date}T${widget.document.time}');
+            DateTime.parse('${_document!.date}T${_document!.time}');
 
         // Find closest forecast times (hour before, current hour, next two hours)
         final forecastTimes = timeseries.where((item) {
@@ -118,7 +161,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
     });
 
     // Re-initialize and fetch weather data for all clubs
-    for (var clubEntry in widget.document.clubs.entries) {
+    for (var clubEntry in _document!.clubs.entries) {
       if (clubEntry.value.latitude.isNotEmpty &&
           clubEntry.value.longitude.isNotEmpty) {
         setState(() {
@@ -131,6 +174,21 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // If we're loading the document, show a loading indicator
+    if (widget.document == null && _document == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Loading...'),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Use the loaded document
+    final document = _document ?? widget.document!;
+
     final localeProvider = Provider.of<LocaleProvider>(context);
     final languageCode = localeProvider.locale.languageCode;
 
@@ -144,7 +202,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          '${_formatDate(widget.document.date, context)} ${TranslationHelper.translate('at', languageCode)} ${widget.document.time}',
+          '${_formatDate(document.date, context)} ${TranslationHelper.translate('at', languageCode)} ${document.time}',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
@@ -154,8 +212,8 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
           padding: EdgeInsets.only(top: 8, bottom: 24),
           children: [
             // Club sections
-            if (widget.document.clubs.isNotEmpty)
-              ...widget.document.clubs.entries.map((clubEntry) {
+            if (document.clubs.isNotEmpty)
+              ...document.clubs.entries.map((clubEntry) {
                 return _buildClubSection(
                   context,
                   clubEntry.key,

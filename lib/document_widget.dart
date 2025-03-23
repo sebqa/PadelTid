@@ -114,14 +114,21 @@ class _DocumentWidgetState extends State<DocumentWidget> {
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
     final languageCode = localeProvider.locale.languageCode;
 
+    // Generate document ID from date and time
+    final date = widget.document.date.replaceAll('-', '');
+    final time = widget.document.time.replaceAll(':', '');
+    final documentId = date + time;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) =>
-                  DocumentDetailsPage(document: widget.document),
+              builder: (context) => DocumentDetailsPage(
+                // Pass the document ID instead of the full document
+                documentId: documentId,
+              ),
             ),
           );
         },

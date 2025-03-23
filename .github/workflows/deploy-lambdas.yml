@@ -96,6 +96,10 @@ jobs:
           {
             name: 'manageTokens',
             handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'getDocumentById',
+            handler: 'lambda_function.lambda_handler'
           }
         ]
     
