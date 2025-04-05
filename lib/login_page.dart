@@ -11,6 +11,7 @@ import 'package:flutter_application_1/providers/locale_provider.dart';
 import 'package:flutter_application_1/utils/translations.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -96,7 +97,11 @@ class _AuthGateState extends State<AuthGate> {
                       child: SignInScreen(
                         providers: [
                           EmailAuthProvider(),
-                          GoogleProvider(clientId: Secrets.clientId),
+                          GoogleProvider(
+                            clientId: kIsWeb
+                                ? "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com" // Web client ID
+                                : Secrets.clientId, // Android/iOS client ID
+                          ),
                         ],
                         headerBuilder: (context, constraints, shrinkOffset) {
                           return Padding(
@@ -174,47 +179,165 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     final localeProvider = Provider.of<LocaleProvider>(context);
     final languageCode = localeProvider.locale.languageCode;
+    final user = FirebaseAuth.instance.currentUser;
 
     return Column(
       children: [
         Expanded(
-          child: ProfileScreen(
-            appBar: AppBar(
-              title: Text(
-                TranslationHelper.translate('profile', languageCode),
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              ),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              automaticallyImplyLeading: false,
-            ),
-            actions: [
-              SignedOutAction(
-                (context) {
-                  // Sign out and navigate back to AuthGate
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AuthGate()),
-                    (route) => false, // Remove all previous routes
-                  );
-                },
-              ),
-            ],
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  TranslationHelper.translate('account_settings', languageCode),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onBackground,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Profile header
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          child: Center(
+                            child: Text(
+                              user?.displayName?.isNotEmpty == true
+                                  ? user!.displayName![0].toUpperCase()
+                                  : user?.email?[0].toUpperCase() ?? 'S',
+                              style: TextStyle(
+                                fontSize: 48,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          user?.displayName ??
+                              user?.email ??
+                              TranslationHelper.translate(
+                                  'guest', languageCode),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (user?.email != null && user?.displayName != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              user!.email!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+
+                  SizedBox(height: 32),
+
+                  // Account Settings Section
+                  Text(
+                    TranslationHelper.translate(
+                        'account_settings', languageCode),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+
+                  // Sign out button
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.2),
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: () => _signOut(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout,
+                                color: Theme.of(context).colorScheme.primary),
+                            SizedBox(width: 16),
+                            Text(
+                              TranslationHelper.translate(
+                                  'sign_out', languageCode),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            Spacer(),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Delete account button
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: Colors.red.shade200,
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: () => _showDeleteAccountDialog(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_forever, color: Colors.red),
+                            SizedBox(width: 16),
+                            Text(
+                              TranslationHelper.translate(
+                                  'delete_account', languageCode),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-            providers: const [],
+            ),
           ),
         ),
         Card(
@@ -230,6 +353,85 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signOut();
+
+      // Navigate back to login screen after sign out
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const AuthGate()),
+        (route) => false, // Remove all previous routes
+      );
+    } catch (e) {
+      print('Error signing out: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error signing out: $e')),
+      );
+    }
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationHelper.translate(
+            'delete_account_confirm', languageCode)),
+        content: Text(TranslationHelper.translate(
+            'delete_account_warning', languageCode)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(TranslationHelper.translate('cancel', languageCode)),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            onPressed: () => _deleteAccount(context),
+            child: Text(TranslationHelper.translate('delete', languageCode)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    try {
+      await FirebaseAuth.instance.currentUser?.delete();
+
+      // Navigate back to login screen after account deletion
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const AuthGate()),
+        (route) => false, // Remove all previous routes
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                TranslationHelper.translate('account_deleted', languageCode))),
+      );
+    } catch (e) {
+      Navigator.of(context).pop(); // Close the dialog
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '${TranslationHelper.translate('delete_error', languageCode)}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
 
