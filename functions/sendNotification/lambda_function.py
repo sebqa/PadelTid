@@ -172,17 +172,17 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
         print(f"Current slots: {current_slots}, Previous slots: {previous_slots}")
         
         # Check if there's been ANY change in availability
-        if previous_slots is None or current_slots != previous_slots:
+        #if previous_slots is None or current_slots != previous_slots:
             # Add ALL changes to criteria with availability status
-            matching_criteria.append({
-                "club_id": club_id,
-                "available": current_slots > 0,
-                "slots": current_slots,
-                "previous_slots": previous_slots,
-                "weather": club_data.get('weather', {})
-            })
-            print(f"Added matching criteria for club {club_id} with {current_slots} slots (previously {previous_slots})")
-            print(f"Weather data: {json.dumps(club_data.get('weather', {}))}")
+        matching_criteria.append({
+            "club_id": club_id,
+            "available": current_slots > 0,
+            "slots": current_slots,
+            "previous_slots": previous_slots,
+            "weather": club_data.get('weather', {})
+        })
+        print(f"Added matching criteria for club {club_id} with {current_slots} slots (previously {previous_slots})")
+        print(f"Weather data: {json.dumps(club_data.get('weather', {}))}")
     
     print(f"Total matching criteria found: {len(matching_criteria)}")
     if not matching_criteria:
