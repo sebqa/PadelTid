@@ -42,8 +42,78 @@ def get_user_subscriptions(user_id):
         print(f"Error in get_user_subscriptions: {str(e)}")
         return set()
 
+def get_recommended_times(user_id, locations):
+    """
+    Get recommended padel times for a specific user based on their preferences
+    """
+    try:
+        # Validate user exists
+        user = db_padeltid['users'].find_one({"_id": user_id})
+        if not user:
+            return {"error": "User not found"}, 404
+            
+        # Make sure locations is a list
+        if isinstance(locations, str):
+            locations = [loc for loc in locations.split(',') if loc]
+        if not locations:
+            return {"error": "At least one location must be specified"}, 400
+            
+        # TODO: Implement actual recommendation logic here
+        # For now, return placeholder data structure
+        current_time = datetime.now()
+        current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Using empty placeholders for now - will be replaced with actual recommendation logic
+        recommended_times = []
+        
+        return recommended_times, 200
+        
+    except Exception as e:
+        print(f"Error in get_recommended_times: {str(e)}")
+        return {"error": str(e)}, 500
+
 def lambda_handler(event,context):
     try:
+        # Check if this is a request for recommendations
+        is_recommendation_request = event['queryStringParameters'].get('recommendation', 'false').lower() == 'true'
+        
+        if is_recommendation_request:
+            # Handle recommendation request
+            user_id = event['queryStringParameters'].get('user_id')
+            if not user_id:
+                raise ValueError("user_id is required for recommendation requests")
+                
+            locations = event['queryStringParameters'].get('locations', '')
+            if not locations:
+                raise ValueError("locations is required for recommendation requests")
+                
+            locations = locations.split(',')
+            locations = [loc for loc in locations if loc]
+            
+            recommended_times, status_code = get_recommended_times(user_id, locations)
+            
+            if status_code != 200:
+                return {
+                    'statusCode': status_code,
+                    'headers': {
+                        'Access-Control-Allow-Headers': 'Content-Type',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+                    },
+                    'body': json.dumps(recommended_times)
+                }
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+                },
+                'body': json.dumps(recommended_times)
+            }
+        
+        # Standard request flow continues below
         wind_speed_threshold = float(event['queryStringParameters']['wind_speed_threshold'])
         precipitation_probability_threshold = float(event['queryStringParameters']['precipitation_probability_threshold'])
         temperature_threshold = float(event['queryStringParameters']['temperature_threshold'])
