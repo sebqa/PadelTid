@@ -136,11 +136,6 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       // Get all user tokens
       //final tokens = await _tokenService.getUserTokens(user.uid);
       final tokens = [];
-      if (tokens.isEmpty) {
-        // If no tokens, save current token
-        await _tokenService.saveToken();
-        tokens.add(await FirebaseMessaging.instance.getToken() ?? '');
-      }
 
       // Create document ID in the format YYYYMMDDHHMMSS
       final docId = document.date.replaceAll("-", "") +
