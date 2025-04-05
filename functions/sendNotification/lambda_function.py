@@ -287,14 +287,14 @@ def check_filter_match(club_data, filter_prefs):
         return True  # No weather data means we can't filter on it
     
     print(f"  Weather data: {json.dumps(weather)}")
-    print(f"  User thresholds: wind={filter_prefs.get('wind_speed_threshold')}, " +
-          f"precip={filter_prefs.get('precipitation_probability_threshold')}, " +
-          f"temp={filter_prefs.get('temperature_threshold')}")
+    print(f"  User thresholds: wind={filter_prefs.get('wind_threshold')}, " +
+          f"precip={filter_prefs.get('precip_threshold')}, " +
+          f"temp={filter_prefs.get('min_temp')}")
     
     # Check wind speed threshold
-    if weather.get('wind_speed') is not None and filter_prefs.get('wind_speed_threshold') is not None:
+    if weather.get('wind_speed') is not None and filter_prefs.get('wind_threshold') is not None:
         wind_speed = weather.get('wind_speed')
-        threshold = filter_prefs.get('wind_speed_threshold')
+        threshold = filter_prefs.get('wind_threshold')
         print(f"  Wind check: current={wind_speed}, threshold={threshold}")
         
         if wind_speed > threshold:
@@ -306,9 +306,9 @@ def check_filter_match(club_data, filter_prefs):
         print(f"  ℹ️ Skipping wind check - missing data")
     
     # Check precipitation probability threshold
-    if weather.get('precipitation_probability') is not None and filter_prefs.get('precipitation_probability_threshold') is not None:
+    if weather.get('precipitation_probability') is not None and filter_prefs.get('precip_threshold') is not None:
         precip = weather.get('precipitation_probability')
-        threshold = filter_prefs.get('precipitation_probability_threshold')
+        threshold = filter_prefs.get('precip_threshold')
         print(f"  Precipitation check: current={precip}, threshold={threshold}")
         
         if precip > threshold:
@@ -320,9 +320,9 @@ def check_filter_match(club_data, filter_prefs):
         print(f"  ℹ️ Skipping precipitation check - missing data")
     
     # Check temperature threshold
-    if weather.get('temperature') is not None and filter_prefs.get('temperature_threshold') is not None:
+    if weather.get('temperature') is not None and filter_prefs.get('min_temp') is not None:
         temp = weather.get('temperature')
-        threshold = filter_prefs.get('temperature_threshold')
+        threshold = filter_prefs.get('min_temp')
         print(f"  Temperature check: current={temp}, threshold={threshold}")
         
         if temp < threshold:
