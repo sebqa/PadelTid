@@ -268,6 +268,7 @@ def check_filter_match(club_data, filter_prefs):
     club_id = club_data.get('club_id', 'unknown')
     
     print(f"Checking filter match for club {club_id} against user {user_id} preferences")
+    print(f"  Full filter preferences: {json.dumps(filter_prefs)}")
     
     # Check availability first
     available_slots = club_data.get('available_slots', 0)
@@ -287,14 +288,42 @@ def check_filter_match(club_data, filter_prefs):
         return True  # No weather data means we can't filter on it
     
     print(f"  Weather data: {json.dumps(weather)}")
-    print(f"  User thresholds: wind={filter_prefs.get('wind_threshold')}, " +
-          f"precip={filter_prefs.get('precip_threshold')}, " +
-          f"temp={filter_prefs.get('min_temp')}")
+    
+    # Handle both optimized structure (nested under locationPreferences) and original structure
+    wind_threshold = None
+    precip_threshold = None
+    temp_threshold = None
+    
+    # Try optimized structure first
+    location_prefs = filter_prefs.get('locationPreferences', {}).get(club_id, {})
+    if location_prefs:
+        wind_threshold = location_prefs.get('wind_threshold')
+        precip_threshold = location_prefs.get('precip_threshold')
+        temp_threshold = location_prefs.get('min_temp')
+        print(f"  Using location-specific preferences for club {club_id}")
+    
+    # Fall back to original structure if needed
+    if wind_threshold is None:
+        wind_threshold = filter_prefs.get('wind_speed_threshold')
+        if isinstance(wind_threshold, dict) and '$numberDouble' in wind_threshold:
+            wind_threshold = float(wind_threshold.get('$numberDouble'))
+    
+    if precip_threshold is None:
+        precip_threshold = filter_prefs.get('precipitation_probability_threshold')
+        if isinstance(precip_threshold, dict) and '$numberDouble' in precip_threshold:
+            precip_threshold = float(precip_threshold.get('$numberDouble'))
+    
+    if temp_threshold is None:
+        temp_threshold = filter_prefs.get('temperature_threshold')
+        if isinstance(temp_threshold, dict) and '$numberDouble' in temp_threshold:
+            temp_threshold = float(temp_threshold.get('$numberDouble'))
+    
+    print(f"  User thresholds: wind={wind_threshold}, precip={precip_threshold}, temp={temp_threshold}")
     
     # Check wind speed threshold
-    if weather.get('wind_speed') is not None and filter_prefs.get('wind_threshold') is not None:
+    if weather.get('wind_speed') is not None and wind_threshold is not None:
         wind_speed = weather.get('wind_speed')
-        threshold = filter_prefs.get('wind_threshold')
+        threshold = wind_threshold
         print(f"  Wind check: current={wind_speed}, threshold={threshold}")
         
         if wind_speed > threshold:
@@ -306,9 +335,9 @@ def check_filter_match(club_data, filter_prefs):
         print(f"  ℹ️ Skipping wind check - missing data")
     
     # Check precipitation probability threshold
-    if weather.get('precipitation_probability') is not None and filter_prefs.get('precip_threshold') is not None:
+    if weather.get('precipitation_probability') is not None and precip_threshold is not None:
         precip = weather.get('precipitation_probability')
-        threshold = filter_prefs.get('precip_threshold')
+        threshold = precip_threshold
         print(f"  Precipitation check: current={precip}, threshold={threshold}")
         
         if precip > threshold:
@@ -320,9 +349,9 @@ def check_filter_match(club_data, filter_prefs):
         print(f"  ℹ️ Skipping precipitation check - missing data")
     
     # Check temperature threshold
-    if weather.get('temperature') is not None and filter_prefs.get('min_temp') is not None:
+    if weather.get('temperature') is not None and temp_threshold is not None:
         temp = weather.get('temperature')
-        threshold = filter_prefs.get('min_temp')
+        threshold = temp_threshold
         print(f"  Temperature check: current={temp}, threshold={threshold}")
         
         if temp < threshold:
