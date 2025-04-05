@@ -268,38 +268,27 @@ class _HomePageState extends State<HomePage>
                     ],
                   ),
                   SizedBox(height: 16),
-                  InkWell(
-                    onTap: () {
-                      setState(() =>
-                          notifyOnMatchingCourts = !notifyOnMatchingCourts);
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                TranslationHelper.translate(
-                                    'notify_on_matching_courts',
-                                    localeProvider.locale.languageCode),
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              SizedBox(width: 8),
-                              Icon(
-                                notifyOnMatchingCourts
-                                    ? Icons.notifications_active
-                                    : Icons.notifications_outlined,
-                                size: 24,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ],
+                          Text(
+                            TranslationHelper.translate(
+                                'notify_on_matching_courts',
+                                localeProvider.locale.languageCode),
+                            style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         ],
                       ),
-                    ),
+                      Switch(
+                        value: notifyOnMatchingCourts,
+                        onChanged: (value) {
+                          setState(() => notifyOnMatchingCourts = value);
+                        },
+                        activeColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    ],
                   ),
                   SizedBox(height: 32),
                   Row(

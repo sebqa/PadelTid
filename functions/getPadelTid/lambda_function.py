@@ -74,23 +74,38 @@ def get_recommended_times(user_id, locations):
 
 def save_user_preferences(user_id, preferences):
     """
-    Save user filter preferences to the database
+    Save user filter preferences to the database with denormalized structure
     """
     try:
         if not user_id:
             return
-            
-        # Create update data with filter preferences
-        update_data = {
-            "$set": {
-                "filterPreferences": preferences
+        
+        # Extract base preferences
+        base_preferences = {
+            "notifyOnMatchingCourts": preferences.get("notifyOnMatchingCourts", False),
+            "showUnavailableSlots": preferences.get("showUnavailableSlots", False),
+            "locations": preferences.get("locations", [])
+        }
+        
+        # Create location-specific preference structure
+        location_preferences = {}
+        for location in preferences.get("locations", []):
+            location_preferences[location] = {
+                "wind_threshold": preferences.get("wind_speed_threshold"),
+                "min_temp": preferences.get("temperature_threshold"),
+                "precip_threshold": preferences.get("precipitation_probability_threshold")
             }
+        
+        # Complete preferences structure
+        optimized_preferences = {
+            **base_preferences,
+            "locationPreferences": location_preferences
         }
         
         # Update the user document
         result = db_padeltid['users'].update_one(
             {"_id": user_id}, 
-            update_data,
+            {"$set": {"filterPreferences": optimized_preferences}},
             upsert=False  # Don't create a new user if not found
         )
         

@@ -65,6 +65,20 @@ def send_notification(event):
     db = client.padeltid
     users_collection = db.users
 
+    notifications_sent = 0
+    
+    # Process users with subscriptions for this time slot
+    subscription_notifications = process_subscribed_users(users_collection, doc_id, current_doc, previous_doc, title)
+    notifications_sent += subscription_notifications
+    
+    # Process users with matching court filters
+    filter_notifications = process_filter_matching_users(users_collection, doc_id, current_doc, previous_doc, title, date, time)
+    notifications_sent += filter_notifications
+
+    client.close()
+    return f"Sent {notifications_sent} notifications"
+
+def process_subscribed_users(users_collection, doc_id, current_doc, previous_doc, title):
     # Find all users subscribed to this time slot
     users = users_collection.find({
         "subscriptions": {
@@ -127,40 +141,186 @@ def send_notification(event):
                 notification_body = "No more available courts"
             
             if notification_body:
-                # Create document ID from date and time
-                date_no_dashes = date.replace('-', '')
-                time_no_colons = time.replace(':', '')
-                doc_id = f"{date_no_dashes}{time_no_colons}"
-                
-                # Send notification to this specific user with just the document ID
-                message = messaging.Message(
-                    notification=messaging.Notification(
-                        title=title,
-                        body=notification_body
-                    ),
-                    data={
-                        "documentId": doc_id,
-                        "click_action": "FLUTTER_NOTIFICATION_CLICK",
-                        "club_id": club_id
-                    },
-                    token=token
-                )
-                
-                try:
-                    response = messaging.send(message)
-                    print(f'Successfully sent message to user {user["_id"]}: {response}')
+                sent = send_notification_to_user(user, token, title, notification_body, doc_id, club_id)
+                if sent:
                     notifications_sent += 1
                     break  # Break after sending first applicable notification
-                except Exception as e:
-                    print(f'Failed to send message to user {user["_id"]}: {str(e)}')
 
-    client.close()
-    return f"Sent {notifications_sent} notifications"
+    return notifications_sent
 
+def process_filter_matching_users(users_collection, doc_id, current_doc, previous_doc, title, date, time):
+    # Create an inverted index of filter criteria that match this document
+    # Instead of checking each user against the document, identify criteria that match
+    matching_criteria = []
+    
+    for club_id, club_data in current_doc.get('clubs', {}).items():
+        previous_club_data = previous_doc.get('clubs', {}).get(club_id, {})
+        
+        if not previous_club_data or club_data.get('available_slots', 0) != previous_club_data.get('available_slots', 0):
+            # Add criteria for changed availability
+            if club_data.get('available_slots', 0) > 0:
+                matching_criteria.append({
+                    "club_id": club_id,
+                    "available": True,
+                    "weather": club_data.get('weather', {})
+                })
+    
+    # Find users with criteria matching our pre-calculated matches
+    total_notifications = 0
+    
+    # Process users in batches to stay within Lambda memory limits
+    batch_size = 100
+    for skip in range(0, 10000, batch_size):
+        query = build_efficient_user_query(matching_criteria, doc_id)
+        
+        # Use projection to only fetch needed fields
+        users_batch = users_collection.find(
+            query,
+            projection={
+                "_id": 1, 
+                "tokens": 1, 
+                "filterPreferences": 1
+            }
+        ).skip(skip).limit(batch_size)
+        
+        batch_count = 0
+        for user in users_batch:
+            batch_count += 1
+            
+            # Get the most recent token
+            tokens = user.get('tokens', [])
+            if not tokens:
+                continue
+                
+            # Sort tokens by lastUsedAt and get the most recent one
+            most_recent_token = max(tokens, key=lambda x: x['lastUsedAt'])
+            token = most_recent_token['token']
+            
+            # Find which club matched the user's criteria
+            for match in matching_criteria:
+                club_id = match.get("club_id")
+                
+                # Send the notification
+                notification_body = f"New court available matching your preferences"
+                sent = send_notification_to_user(user, token, title, notification_body, doc_id, club_id)
+                if sent:
+                    total_notifications += 1
+                    break  # Only send one notification per user
+        
+        # If we got fewer users than the batch size, we're done
+        if batch_count < batch_size:
+            break
+    
+    return total_notifications
 
+def build_efficient_user_query(matching_criteria, doc_id):
+    """Build a query that lets MongoDB do the heavy lifting"""
+    
+    if not matching_criteria:
+        return {"_id": None}  # Return empty query if no matching criteria
+    
+    # Base conditions for all users
+    base_condition = {
+        "filterPreferences.notifyOnMatchingCourts": True,
+        "tokens": {"$exists": True, "$ne": []},
+        "subscriptions.id": {"$ne": doc_id}  # Not already subscribed to this time slot
+    }
+    
+    # Build location-specific conditions
+    club_conditions = []
+    for match in matching_criteria:
+        club_id = match.get("club_id")
+        weather = match.get("weather", {})
+        
+        # Basic club match condition
+        club_condition = {
+            "filterPreferences.locations": club_id
+        }
+        
+        # Add weather threshold conditions if the weather data exists
+        if weather:
+            # Wind speed threshold
+            if weather.get("wind_speed") is not None:
+                club_condition["$or"] = [
+                    {"filterPreferences.wind_speed_threshold": {"$exists": False}},
+                    {"filterPreferences.wind_speed_threshold": {"$gte": weather.get("wind_speed")}}
+                ]
+            
+            # Precipitation probability threshold
+            if weather.get("precipitation_probability") is not None:
+                club_condition["$or"] = club_condition.get("$or", []) + [
+                    {"filterPreferences.precipitation_probability_threshold": {"$exists": False}},
+                    {"filterPreferences.precipitation_probability_threshold": {"$gte": weather.get("precipitation_probability")}}
+                ]
+            
+            # Temperature threshold
+            if weather.get("temperature") is not None:
+                club_condition["$or"] = club_condition.get("$or", []) + [
+                    {"filterPreferences.temperature_threshold": {"$exists": False}},
+                    {"filterPreferences.temperature_threshold": {"$lte": weather.get("temperature")}}
+                ]
+        
+        club_conditions.append(club_condition)
+    
+    # Combine with OR - user matches if any of the club conditions match
+    if club_conditions:
+        base_condition["$or"] = club_conditions
+    
+    return base_condition
 
+def check_filter_match(club_data, filter_prefs):
+    # Return False if club has no available slots and user doesn't want to see unavailable
+    if club_data.get('available_slots', 0) == 0 and not filter_prefs.get('showUnavailableSlots', False):
+        return False
+        
+    # Check weather conditions
+    weather = club_data.get('weather', {})
+    
+    # Validate weather thresholds
+    if weather:
+        # Check wind speed
+        if (weather.get('wind_speed') is not None and 
+            filter_prefs.get('wind_speed_threshold') is not None and
+            weather.get('wind_speed') > filter_prefs.get('wind_speed_threshold')):
+            return False
+            
+        # Check precipitation probability
+        if (weather.get('precipitation_probability') is not None and
+            filter_prefs.get('precipitation_probability_threshold') is not None and
+            weather.get('precipitation_probability') > filter_prefs.get('precipitation_probability_threshold')):
+            return False
+            
+        # Check temperature
+        if (weather.get('temperature') is not None and
+            filter_prefs.get('temperature_threshold') is not None and
+            weather.get('temperature') < filter_prefs.get('temperature_threshold')):
+            return False
+    
+    # If we passed all checks, it's a match
+    return True
+
+def send_notification_to_user(user, token, title, body, doc_id, club_id):
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=body
+        ),
+        data={
+            "documentId": doc_id,
+            "click_action": "FLUTTER_NOTIFICATION_CLICK",
+            "club_id": club_id
+        },
+        token=token
+    )
+    
+    try:
+        response = messaging.send(message)
+        print(f'Successfully sent message to user {user["_id"]}: {response}')
+        return True
+    except Exception as e:
+        print(f'Failed to send message to user {user["_id"]}: {str(e)}')
+        return False
 
 if __name__ == '__main__':
-
     send_notification(event)
 
