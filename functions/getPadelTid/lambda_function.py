@@ -72,6 +72,36 @@ def get_recommended_times(user_id, locations):
         print(f"Error in get_recommended_times: {str(e)}")
         return {"error": str(e)}, 500
 
+def save_user_preferences(user_id, preferences):
+    """
+    Save user filter preferences to the database
+    """
+    try:
+        if not user_id:
+            return
+            
+        # Create update data with filter preferences
+        update_data = {
+            "$set": {
+                "filterPreferences": preferences
+            }
+        }
+        
+        # Update the user document
+        result = db_padeltid['users'].update_one(
+            {"_id": user_id}, 
+            update_data,
+            upsert=False  # Don't create a new user if not found
+        )
+        
+        if result.modified_count > 0:
+            print(f"Updated filter preferences for user: {user_id}")
+        else:
+            print(f"No changes made to filter preferences for user: {user_id}")
+            
+    except Exception as e:
+        print(f"Error saving user preferences: {str(e)}")
+
 def lambda_handler(event,context):
     try:
         # Check if this is a request for recommendations
@@ -124,6 +154,17 @@ def lambda_handler(event,context):
         # Get user_id if provided
         user_id = event['queryStringParameters'].get('user_id')
         user_subscriptions = get_user_subscriptions(user_id)
+        
+        # Save user preferences if user_id is provided
+        if user_id:
+            preferences = {
+                "wind_speed_threshold": wind_speed_threshold,
+                "precipitation_probability_threshold": precipitation_probability_threshold,
+                "temperature_threshold": temperature_threshold,
+                "showUnavailableSlots": showUnavailableSlots == "true",
+                "locations": locations
+            }
+            save_user_preferences(user_id, preferences)
         
         current_time = datetime.now()
         current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
