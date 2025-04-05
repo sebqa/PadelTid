@@ -1,9 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../model/document.dart';
 import '../pages/document_details_page.dart';
-import '../services/document_service.dart';
 import 'dart:html' as html;
 import 'dart:js' as js;
 import '../model/notification_item.dart';

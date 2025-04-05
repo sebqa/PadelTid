@@ -14,7 +14,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/locale_provider.dart';
 import 'l10n/app_localizations.dart';
-import 'services/document_service.dart';
 import 'pages/document_details_page.dart';
 import 'services/notification_handler.dart';
 import 'services/notification_history_service.dart';
