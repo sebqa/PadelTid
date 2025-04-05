@@ -13,7 +13,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'dart:ui' show TextDirection;
 import 'dart:math' as math;
-import '../services/document_service.dart';
+import 'package:flutter_application_1/document_service.dart';
 
 class DocumentDetailsPage extends StatefulWidget {
   final Document? document;
