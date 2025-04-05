@@ -49,9 +49,12 @@ def lambda_handler(event, context):
     return send_notification(event)
 
 def send_notification(event):
+    print(f"Starting notification processing for event: {json.dumps(event.get('detail', {}).get('operationType', 'unknown'))}")
     date = event['detail']['fullDocument']['date']
     time = event['detail']['fullDocument']['time']
     doc_id = date.replace("-", "") + time.replace(":", "")
+    
+    print(f"Processing document: {doc_id} (date: {date}, time: {time})")
     
     # Get current and previous states
     current_doc = event['detail']['fullDocument']
@@ -68,14 +71,19 @@ def send_notification(event):
     notifications_sent = 0
     
     # Process users with subscriptions for this time slot
+    print("Processing subscription-based notifications...")
     subscription_notifications = process_subscribed_users(users_collection, doc_id, current_doc, previous_doc, title)
     notifications_sent += subscription_notifications
+    print(f"Subscription notifications sent: {subscription_notifications}")
     
     # Process users with matching court filters
+    print("Processing filter-based notifications...")
     filter_notifications = process_filter_matching_users(users_collection, doc_id, current_doc, previous_doc, title, date, time)
     notifications_sent += filter_notifications
+    print(f"Filter-based notifications sent: {filter_notifications}")
 
     client.close()
+    print(f"Notification processing complete. Total sent: {notifications_sent}")
     return f"Sent {notifications_sent} notifications"
 
 def process_subscribed_users(users_collection, doc_id, current_doc, previous_doc, title):
@@ -149,12 +157,16 @@ def process_subscribed_users(users_collection, doc_id, current_doc, previous_doc
     return notifications_sent
 
 def process_filter_matching_users(users_collection, doc_id, current_doc, previous_doc, title, date, time):
+    print(f"Starting filter-based notification processing for doc_id: {doc_id}")
+    
     # Create an inverted index of filter criteria that match this document
-    # Instead of checking each user against the document, identify criteria that match
     matching_criteria = []
     
     for club_id, club_data in current_doc.get('clubs', {}).items():
         previous_club_data = previous_doc.get('clubs', {}).get(club_id, {})
+        
+        print(f"Checking club: {club_id}")
+        print(f"Current slots: {club_data.get('available_slots', 0)}, Previous slots: {previous_club_data.get('available_slots', 0) if previous_club_data else 'None'}")
         
         if not previous_club_data or club_data.get('available_slots', 0) != previous_club_data.get('available_slots', 0):
             # Add criteria for changed availability
@@ -164,14 +176,23 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
                     "available": True,
                     "weather": club_data.get('weather', {})
                 })
+                print(f"Added matching criteria for club {club_id} with {club_data.get('available_slots', 0)} slots")
+                print(f"Weather data: {json.dumps(club_data.get('weather', {}))}")
     
-    # Find users with criteria matching our pre-calculated matches
+    print(f"Total matching criteria found: {len(matching_criteria)}")
+    if not matching_criteria:
+        print("No matching criteria, skipping user query")
+        return 0
+        
     total_notifications = 0
     
     # Process users in batches to stay within Lambda memory limits
     batch_size = 100
+    processed_users = 0
+    
     for skip in range(0, 10000, batch_size):
         query = build_efficient_user_query(matching_criteria, doc_id)
+        print(f"MongoDB query (batch {skip//batch_size + 1}): {json.dumps(query)}")
         
         # Use projection to only fetch needed fields
         users_batch = users_collection.find(
@@ -184,12 +205,18 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
         ).skip(skip).limit(batch_size)
         
         batch_count = 0
+        batch_notifications = 0
+        
         for user in users_batch:
             batch_count += 1
+            processed_users += 1
+            
+            print(f"Processing user: {user.get('_id')}")
             
             # Get the most recent token
             tokens = user.get('tokens', [])
             if not tokens:
+                print(f"User {user.get('_id')} has no tokens, skipping")
                 continue
                 
             # Sort tokens by lastUsedAt and get the most recent one
@@ -199,24 +226,32 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
             # Find which club matched the user's criteria
             for match in matching_criteria:
                 club_id = match.get("club_id")
+                print(f"Checking match for club {club_id} for user {user.get('_id')}")
                 
                 # Send the notification
                 notification_body = f"New court available matching your preferences"
                 sent = send_notification_to_user(user, token, title, notification_body, doc_id, club_id)
                 if sent:
                     total_notifications += 1
+                    batch_notifications += 1
+                    print(f"Notification sent to user {user.get('_id')} for club {club_id}")
                     break  # Only send one notification per user
+        
+        print(f"Batch {skip//batch_size + 1} processed: {batch_count} users, {batch_notifications} notifications sent")
         
         # If we got fewer users than the batch size, we're done
         if batch_count < batch_size:
+            print(f"Received fewer users ({batch_count}) than batch size ({batch_size}), stopping pagination")
             break
     
+    print(f"Filter notification processing complete. Processed {processed_users} users, sent {total_notifications} notifications")
     return total_notifications
 
 def build_efficient_user_query(matching_criteria, doc_id):
     """Build a query that lets MongoDB do the heavy lifting"""
     
     if not matching_criteria:
+        print("No matching criteria provided, returning empty query")
         return {"_id": None}  # Return empty query if no matching criteria
     
     # Base conditions for all users
@@ -232,34 +267,44 @@ def build_efficient_user_query(matching_criteria, doc_id):
         club_id = match.get("club_id")
         weather = match.get("weather", {})
         
+        print(f"Building query condition for club: {club_id}")
+        
         # Basic club match condition
         club_condition = {
             "filterPreferences.locations": club_id
         }
         
         # Add weather threshold conditions if the weather data exists
+        weather_conditions = []
         if weather:
             # Wind speed threshold
             if weather.get("wind_speed") is not None:
+                print(f"Adding wind speed condition: {weather.get('wind_speed')}")
                 club_condition["$or"] = [
                     {"filterPreferences.wind_speed_threshold": {"$exists": False}},
                     {"filterPreferences.wind_speed_threshold": {"$gte": weather.get("wind_speed")}}
                 ]
+                weather_conditions.append(f"wind_speed <= {weather.get('wind_speed')}")
             
             # Precipitation probability threshold
             if weather.get("precipitation_probability") is not None:
+                print(f"Adding precipitation condition: {weather.get('precipitation_probability')}")
                 club_condition["$or"] = club_condition.get("$or", []) + [
                     {"filterPreferences.precipitation_probability_threshold": {"$exists": False}},
                     {"filterPreferences.precipitation_probability_threshold": {"$gte": weather.get("precipitation_probability")}}
                 ]
+                weather_conditions.append(f"precip <= {weather.get('precipitation_probability')}")
             
             # Temperature threshold
             if weather.get("temperature") is not None:
+                print(f"Adding temperature condition: {weather.get('temperature')}")
                 club_condition["$or"] = club_condition.get("$or", []) + [
                     {"filterPreferences.temperature_threshold": {"$exists": False}},
                     {"filterPreferences.temperature_threshold": {"$lte": weather.get("temperature")}}
                 ]
+                weather_conditions.append(f"temp >= {weather.get('temperature')}")
         
+        print(f"Club {club_id} condition with weather checks: {', '.join(weather_conditions) if weather_conditions else 'No weather checks'}")
         club_conditions.append(club_condition)
     
     # Combine with OR - user matches if any of the club conditions match
@@ -300,6 +345,7 @@ def check_filter_match(club_data, filter_prefs):
     return True
 
 def send_notification_to_user(user, token, title, body, doc_id, club_id):
+    print(f"Preparing to send notification to {user.get('_id')}: {title} - {body}")
     message = messaging.Message(
         notification=messaging.Notification(
             title=title,
@@ -319,6 +365,7 @@ def send_notification_to_user(user, token, title, body, doc_id, club_id):
         return True
     except Exception as e:
         print(f'Failed to send message to user {user["_id"]}: {str(e)}')
+        print(f'Token used: {token[:10]}...{token[-5:]}')  # Log partial token for debugging
         return False
 
 if __name__ == '__main__':
