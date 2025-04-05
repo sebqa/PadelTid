@@ -43,6 +43,7 @@ class _HomePageState extends State<HomePage>
   double precipitationProbabilityThreshold = 100.0;
   double temperatureThreshold = 0.0;
   bool showUnavailableSlots = true;
+  bool notifyOnMatchingCourts = false;
   late SharedPreferences sharedPreferences;
   late Future<List<Document>> futureDocuments;
   late Future<List<Document>>? recommendedDocuments;
@@ -142,6 +143,8 @@ class _HomePageState extends State<HomePage>
           sharedPreferences.getDouble('temperature_threshold') ?? 0.0;
       showUnavailableSlots =
           sharedPreferences.getBool('show_unavailable_courts') ?? true;
+      notifyOnMatchingCourts =
+          sharedPreferences.getBool('notify_on_matching_courts') ?? false;
       _selectedLocations =
           sharedPreferences.getStringList('selected_locations') ?? [];
     });
@@ -156,6 +159,7 @@ class _HomePageState extends State<HomePage>
       showUnavailableSlots,
       false,
       _selectedLocations,
+      notifyOnMatchingCourts: notifyOnMatchingCourts,
     );
   }
 
@@ -170,6 +174,8 @@ class _HomePageState extends State<HomePage>
             'temperature_threshold', temperatureThreshold);
         await sharedPreferences.setBool(
             'show_unavailable_courts', showUnavailableSlots);
+        await sharedPreferences.setBool(
+            'notify_on_matching_courts', notifyOnMatchingCourts);
       }
       _fetchDocuments();
       setState(() {});
@@ -260,6 +266,40 @@ class _HomePageState extends State<HomePage>
                         activeColor: Theme.of(context).colorScheme.primary,
                       ),
                     ],
+                  ),
+                  SizedBox(height: 16),
+                  InkWell(
+                    onTap: () {
+                      setState(() =>
+                          notifyOnMatchingCourts = !notifyOnMatchingCourts);
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                TranslationHelper.translate(
+                                    'notify_on_matching_courts',
+                                    localeProvider.locale.languageCode),
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              SizedBox(width: 8),
+                              Icon(
+                                notifyOnMatchingCourts
+                                    ? Icons.notifications_active
+                                    : Icons.notifications_outlined,
+                                size: 24,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   SizedBox(height: 32),
                   Row(

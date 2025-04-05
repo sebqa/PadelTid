@@ -38,10 +38,11 @@ class DocumentService {
       double temperature,
       bool showUnavailableSlots,
       bool fetchRecommended,
-      List<String> selectedLocations) async {
+      List<String> selectedLocations,
+      {bool notifyOnMatchingCourts = false}) async {
     // Create a cache key based on parameters
     final cacheKey =
-        '${windSpeed}_${precipitationProbability}_${temperature}_${showUnavailableSlots}_${fetchRecommended}_${selectedLocations.join(',')}';
+        '${windSpeed}_${precipitationProbability}_${temperature}_${showUnavailableSlots}_${fetchRecommended}_${notifyOnMatchingCourts}_${selectedLocations.join(',')}';
 
     // Check if cache is valid
     final now = DateTime.now();
@@ -66,6 +67,8 @@ class DocumentService {
       'showUnavailableSlots': showUnavailableSlots.toString(),
       'locations': selectedLocations.join(','),
       if (user != null) 'user_id': user.uid,
+      if (user != null)
+        'notify_on_matching_courts': notifyOnMatchingCourts.toString(),
     };
 
     try {

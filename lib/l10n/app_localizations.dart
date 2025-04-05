@@ -69,6 +69,7 @@ class AppLocalizations {
       "language": "Language",
       "select_language": "Select Language",
       "english": "English",
+      "notify_on_matching_courts": "Notify on matching courts",
       "danish": "Danish",
       "welcome_sign_in": "Welcome to PadelTid, please sign in!",
       "welcome_sign_up": "Welcome to PadelTid, please sign up!",
@@ -98,6 +99,7 @@ class AppLocalizations {
       "terms_agreement":
           "Ved at logge ind accepterer du vores vilkår og betingelser.",
       "recommended": "Anbefalet",
+      "notify_on_matching_courts": "Notifikation om tilgængelige baner",
       "all_timeslots": "Alle tidspunkter",
       "select_clubs": "Vælg klubber for at se tilgængelige tider",
       "no_data": "Ingen data",

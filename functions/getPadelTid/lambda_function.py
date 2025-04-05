@@ -162,7 +162,8 @@ def lambda_handler(event,context):
                 "precipitation_probability_threshold": precipitation_probability_threshold,
                 "temperature_threshold": temperature_threshold,
                 "showUnavailableSlots": showUnavailableSlots == "true",
-                "locations": locations
+                "locations": locations,
+                "notifyOnMatchingCourts": event['queryStringParameters'].get('notify_on_matching_courts', 'false') == "true"
             }
             save_user_preferences(user_id, preferences)
         
