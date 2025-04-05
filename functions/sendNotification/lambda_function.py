@@ -349,8 +349,8 @@ def check_filter_match(club_data, filter_prefs):
         print(f"  ℹ️ Skipping precipitation check - missing data")
     
     # Check temperature threshold
-    if weather.get('temperature') is not None and temp_threshold is not None:
-        temp = weather.get('temperature')
+    if weather.get('air_temperature') is not None and temp_threshold is not None:
+        temp = weather.get('air_temperature')
         threshold = temp_threshold
         print(f"  Temperature check: current={temp}, threshold={threshold}")
         
