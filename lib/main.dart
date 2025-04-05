@@ -228,7 +228,8 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          initialRoute: '/',
+          initialRoute:
+              '/', /*
           onGenerateRoute: (settings) {
             if (settings.name?.startsWith('/document/') == true) {
               final documentId = settings.name!.replaceFirst('/document/', '');
@@ -242,7 +243,7 @@ class MyApp extends StatelessWidget {
             }
 
             return null;
-          },
+          }*/
         );
       },
     );
