@@ -89,7 +89,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       context: context,
       builder: (BuildContext context) {
         return NotificationPreferencesDialog(
-          initialPreferences: widget.document.notificationPreferences ?? 
+          initialPreferences: widget.document.notificationPreferences ??
               NotificationPreferences(
                 notifyOnWeatherChange: true,
                 notifyWhenAvailable: true,
@@ -98,9 +98,9 @@ class _SubscribingIconState extends State<SubscribingIcon> {
               ),
           onSave: (preferences) {
             final hasAnyPreference = preferences.notifyOnWeatherChange ||
-                                   preferences.notifyWhenAvailable ||
-                                   preferences.notifyWhenOneLeft ||
-                                   preferences.notifyWhenFull;
+                preferences.notifyWhenAvailable ||
+                preferences.notifyWhenOneLeft ||
+                preferences.notifyWhenFull;
 
             setState(() {
               subscribing = hasAnyPreference;
@@ -110,7 +110,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
 
             final user = FirebaseAuth.instance.currentUser!;
             subscribeToTopic(
-              widget.document, 
+              widget.document,
               hasAnyPreference ? 'true' : 'false',
               user,
               preferences,
@@ -119,10 +119,9 @@ class _SubscribingIconState extends State<SubscribingIcon> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 duration: Duration(seconds: 1),
-                content: Text(hasAnyPreference 
-                  ? 'Notification preferences updated'
-                  : 'No longer subscribed to timeslot'
-                ),
+                content: Text(hasAnyPreference
+                    ? 'Notification preferences updated'
+                    : 'No longer subscribed to timeslot'),
               ),
             );
           },
@@ -131,14 +130,12 @@ class _SubscribingIconState extends State<SubscribingIcon> {
     );
   }
 
-  Future<void> subscribeToTopic(
-      Document document, 
-      String subscribe,
-      User user,
+  Future<void> subscribeToTopic(Document document, String subscribe, User user,
       NotificationPreferences preferences) async {
     try {
       // Get all user tokens
-      final tokens = await _tokenService.getUserTokens(user.uid);
+      //final tokens = await _tokenService.getUserTokens(user.uid);
+      final tokens = [];
       if (tokens.isEmpty) {
         // If no tokens, save current token
         await _tokenService.saveToken();
@@ -146,9 +143,9 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       }
 
       // Create document ID in the format YYYYMMDDHHMMSS
-      final docId = document.date.replaceAll("-", "") + 
-                   document.time.replaceAll(":", "") + 
-                   "00";
+      final docId = document.date.replaceAll("-", "") +
+          document.time.replaceAll(":", "") +
+          "00";
 
       final queryParams = {
         'date': document.date,
@@ -156,12 +153,13 @@ class _SubscribingIconState extends State<SubscribingIcon> {
         'subscribe': subscribe,
         'device_tokens': json.encode(tokens),
         'userId': user.uid,
-        'id': docId,  // Add the document ID
-        if (preferences != null) 'preferences': json.encode(preferences.toJson()),
+        'id': docId, // Add the document ID
+        if (preferences != null)
+          'preferences': json.encode(preferences.toJson()),
       };
 
       final url = Uri.parse(
-          "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic")
+              "https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/subTopic")
           .replace(queryParameters: queryParams);
 
       final response = await http.get(url);
@@ -192,7 +190,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       ),
       onPressed: () {
         final user = FirebaseAuth.instance.currentUser;
-        
+
         if (user == null) {
           _showLoginDialog();
           return;
