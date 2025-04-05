@@ -159,49 +159,25 @@ def process_subscribed_users(users_collection, doc_id, current_doc, previous_doc
 def process_filter_matching_users(users_collection, doc_id, current_doc, previous_doc, title, date, time):
     print(f"Starting filter-based notification processing for doc_id: {doc_id}")
     
-    # Create an inverted index of filter criteria that match this document
-    matching_criteria = []
-    
-    # Track ALL court availability changes, not just available ones
-    for club_id, club_data in current_doc.get('clubs', {}).items():
-        previous_club_data = previous_doc.get('clubs', {}).get(club_id, {})
-        
-        print(f"Checking club: {club_id}")
-        current_slots = club_data.get('available_slots', 0)
-        previous_slots = previous_club_data.get('available_slots', 0) if previous_club_data else None
-        print(f"Current slots: {current_slots}, Previous slots: {previous_slots}")
-        
-        # Check if there's been ANY change in availability
-        #if previous_slots is None or current_slots != previous_slots:
-            # Add ALL changes to criteria with availability status
-        matching_criteria.append({
-            "club_id": club_id,
-            "available": current_slots > 0,
-            "slots": current_slots,
-            "previous_slots": previous_slots,
-            "weather": club_data.get('weather', {})
-        })
-        print(f"Added matching criteria for club {club_id} with {current_slots} slots (previously {previous_slots})")
-        print(f"Weather data: {json.dumps(club_data.get('weather', {}))}")
-    
-    print(f"Total matching criteria found: {len(matching_criteria)}")
-    if not matching_criteria:
-        print("No matching criteria, skipping user query")
+    # Skip if no previous document (new document won't have changed state)
+    if not previous_doc:
+        print("No previous document state, skipping filter notifications")
         return 0
-        
+    
     total_notifications = 0
     
-    # Process users in batches to stay within Lambda memory limits
+    # Get all users with notifyOnMatchingCourts enabled (with batching)
     batch_size = 100
     processed_users = 0
     
     for skip in range(0, 10000, batch_size):
-        query = build_efficient_user_query(matching_criteria, doc_id)
-        print(f"MongoDB query (batch {skip//batch_size + 1}): {json.dumps(query)}")
-        
-        # Use projection to only fetch needed fields
+        # Find users who have notifications enabled and at least one token
         users_batch = users_collection.find(
-            query,
+            {
+                "filterPreferences.notifyOnMatchingCourts": True,
+                "tokens": {"$exists": True, "$ne": []},
+                "subscriptions.id": {"$ne": doc_id}  # Not already subscribed
+            },
             projection={
                 "_id": 1, 
                 "tokens": 1, 
@@ -215,190 +191,102 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
         for user in users_batch:
             batch_count += 1
             processed_users += 1
-            
-            print(f"Processing user: {user.get('_id')}")
             user_id = user.get('_id')
-            
-            # Get the most recent token
-            tokens = user.get('tokens', [])
-            if not tokens:
-                print(f"User {user_id} has no tokens, skipping")
-                continue
-                
-            # Sort tokens by lastUsedAt and get the most recent one
-            most_recent_token = max(tokens, key=lambda x: x['lastUsedAt'])
-            token = most_recent_token['token']
+            print(f"Processing user: {user_id}")
             
             # Get user preferences
             filter_prefs = user.get('filterPreferences', {})
             show_unavailable = filter_prefs.get('showUnavailableSlots', False)
             
-            # Find which club matched the user's criteria
-            notification_sent = False
-            for match in matching_criteria:
-                club_id = match.get("club_id")
-                is_available = match.get("available", False)
-                slots = match.get("slots", 0)
-                previous_slots = match.get("previous_slots")
+            # Get their token
+            tokens = user.get('tokens', [])
+            if not tokens:
+                print(f"User {user_id} has no tokens, skipping")
+                continue
                 
-                # Skip this club if user doesn't want to see unavailable courts and court is unavailable
-                if not show_unavailable and not is_available:
-                    print(f"Skipping unavailable club {club_id} for user {user_id} (showUnavailableSlots=False)")
-                    continue
-                
-                # Check user's location preferences
-                if club_id not in filter_prefs.get('locations', []):
-                    print(f"Club {club_id} not in user {user_id}'s preferred locations")
-                    continue
-                
-                # Check if weather conditions match user preferences
-                if not check_weather_match(match.get("weather", {}), filter_prefs):
-                    print(f"Weather conditions for club {club_id} don't match user {user_id}'s preferences")
-                    continue
-                
-                # Craft notification message based on what changed
-                notification_body = get_notification_message(is_available, slots, previous_slots)
-                
-                # Send the notification
-                sent = send_notification_to_user(user, token, title, notification_body, doc_id, club_id)
-                if sent:
-                    total_notifications += 1
-                    batch_notifications += 1
-                    notification_sent = True
-                    print(f"Notification sent to user {user_id} for club {club_id}: {notification_body}")
-                    break  # Only send one notification per user
+            # Get the most recent token
+            most_recent_token = max(tokens, key=lambda x: x['lastUsedAt'])
+            token = most_recent_token['token']
             
-            if not notification_sent:
-                print(f"No matching clubs found for user {user_id}")
-        
+            # Check each club the user is interested in
+            for club_id in filter_prefs.get('locations', []):
+                # Get current and previous club data
+                current_club_data = current_doc.get('clubs', {}).get(club_id)
+                previous_club_data = previous_doc.get('clubs', {}).get(club_id)
+                
+                # Skip if no data for this club
+                if not current_club_data or not previous_club_data:
+                    print(f"Missing data for club {club_id}, skipping")
+                    continue
+                
+                # Check availability
+                current_available = current_club_data.get('available_slots', 0) > 0
+                
+                # Skip unavailable courts if user doesn't want to see them
+                if not current_available and not show_unavailable:
+                    print(f"Skipping unavailable club {club_id} (showUnavailableSlots=False)")
+                    continue
+                
+                # Check if the court previously matched the user's filter
+                previous_match = check_filter_match(previous_club_data, filter_prefs)
+                
+                # Check if the court currently matches the user's filter
+                current_match = check_filter_match(current_club_data, filter_prefs)
+                
+                print(f"Club {club_id} for user {user_id}: Previous match: {previous_match}, Current match: {current_match}")
+                
+                # Only notify if the court previously didn't match but now does
+                if not previous_match and current_match:
+                    notification_body = "New court matches your filter criteria"
+                    print(f"Sending notification for club {club_id} to user {user_id}")
+                    
+                    sent = send_notification_to_user(user, token, title, notification_body, doc_id, club_id)
+                    if sent:
+                        total_notifications += 1
+                        batch_notifications += 1
+                        break  # Only send one notification per user
+            
         print(f"Batch {skip//batch_size + 1} processed: {batch_count} users, {batch_notifications} notifications sent")
         
         # If we got fewer users than the batch size, we're done
         if batch_count < batch_size:
-            print(f"Received fewer users ({batch_count}) than batch size ({batch_size}), stopping pagination")
             break
     
     print(f"Filter notification processing complete. Processed {processed_users} users, sent {total_notifications} notifications")
     return total_notifications
 
-def check_weather_match(weather, filter_prefs):
-    """Check if weather conditions match user preferences"""
-    # If no weather data, assume it matches
+def check_filter_match(club_data, filter_prefs):
+    """Check if club data matches user filter preferences"""
+    # Check availability first
+    available_slots = club_data.get('available_slots', 0)
+    if available_slots == 0 and not filter_prefs.get('showUnavailableSlots', False):
+        return False
+    
+    # Get weather data
+    weather = club_data.get('weather', {})
     if not weather:
-        return True
-        
+        return True  # No weather data means we can't filter on it
+    
     # Check wind speed threshold
     if (weather.get('wind_speed') is not None and 
         filter_prefs.get('wind_speed_threshold') is not None and
         weather.get('wind_speed') > filter_prefs.get('wind_speed_threshold')):
         return False
-        
+    
     # Check precipitation probability threshold
     if (weather.get('precipitation_probability') is not None and
         filter_prefs.get('precipitation_probability_threshold') is not None and
         weather.get('precipitation_probability') > filter_prefs.get('precipitation_probability_threshold')):
         return False
-        
+    
     # Check temperature threshold
     if (weather.get('temperature') is not None and
         filter_prefs.get('temperature_threshold') is not None and
         weather.get('temperature') < filter_prefs.get('temperature_threshold')):
         return False
     
+    # If we passed all checks, it's a match
     return True
-
-def get_notification_message(is_available, slots, previous_slots):
-    """Generate appropriate notification message based on availability change"""
-    if previous_slots is None:
-        # New court added
-        return "New court added to your preferred location"
-    elif not is_available and previous_slots > 0:
-        # Court became unavailable
-        return "Court is now fully booked"
-    elif is_available and previous_slots == 0:
-        # Court became available
-        return "Court now available matching your preferences"
-    elif slots > previous_slots:
-        # More courts available
-        return f"More courts available now ({slots} slots)"
-    elif slots < previous_slots:
-        # Fewer courts available
-        return f"Courts filling up ({slots} slots remaining)"
-    else:
-        # Generic message for other changes
-        return "Court status updated matching your preferences"
-
-def build_efficient_user_query(matching_criteria, doc_id):
-    """Build a query that lets MongoDB do the heavy lifting"""
-    
-    if not matching_criteria:
-        print("No matching criteria provided, returning empty query")
-        return {"_id": None}  # Return empty query if no matching criteria
-    
-    # Base conditions for all users
-    base_condition = {
-        "filterPreferences.notifyOnMatchingCourts": True,
-        "tokens": {"$exists": True, "$ne": []},
-        "subscriptions.id": {"$ne": doc_id}  # Not already subscribed to this time slot
-    }
-    
-    # Build location-specific conditions
-    club_conditions = []
-    for match in matching_criteria:
-        club_id = match.get("club_id")
-        is_available = match.get("available", False)
-        weather = match.get("weather", {})
-        
-        print(f"Building query condition for club: {club_id} (available: {is_available})")
-        
-        # Basic club match condition - user must be interested in this location
-        club_condition = {
-            "filterPreferences.locations": club_id
-        }
-        
-        # Add availability condition based on show_unavailable preference
-        if not is_available:
-            # For unavailable courts, only include users who want to see unavailable slots
-            club_condition["filterPreferences.showUnavailableSlots"] = True
-        
-        # Add weather threshold conditions if the weather data exists
-        weather_conditions = []
-        if weather:
-            # Wind speed threshold
-            if weather.get("wind_speed") is not None:
-                print(f"Adding wind speed condition: {weather.get('wind_speed')}")
-                club_condition["$or"] = [
-                    {"filterPreferences.wind_speed_threshold": {"$exists": False}},
-                    {"filterPreferences.wind_speed_threshold": {"$gte": weather.get("wind_speed")}}
-                ]
-                weather_conditions.append(f"wind_speed <= {weather.get('wind_speed')}")
-            
-            # Precipitation probability threshold
-            if weather.get("precipitation_probability") is not None:
-                print(f"Adding precipitation condition: {weather.get('precipitation_probability')}")
-                club_condition["$or"] = club_condition.get("$or", []) + [
-                    {"filterPreferences.precipitation_probability_threshold": {"$exists": False}},
-                    {"filterPreferences.precipitation_probability_threshold": {"$gte": weather.get("precipitation_probability")}}
-                ]
-                weather_conditions.append(f"precip <= {weather.get('precipitation_probability')}")
-            
-            # Temperature threshold
-            if weather.get("temperature") is not None:
-                print(f"Adding temperature condition: {weather.get('temperature')}")
-                club_condition["$or"] = club_condition.get("$or", []) + [
-                    {"filterPreferences.temperature_threshold": {"$exists": False}},
-                    {"filterPreferences.temperature_threshold": {"$lte": weather.get("temperature")}}
-                ]
-                weather_conditions.append(f"temp >= {weather.get('temperature')}")
-        
-        print(f"Club {club_id} condition with weather checks: {', '.join(weather_conditions) if weather_conditions else 'No weather checks'}")
-        club_conditions.append(club_condition)
-    
-    # Combine with OR - user matches if any of the club conditions match
-    if club_conditions:
-        base_condition["$or"] = club_conditions
-    
-    return base_condition
 
 def send_notification_to_user(user, token, title, body, doc_id, club_id):
     print(f"Preparing to send notification to {user.get('_id')}: {title} - {body}")
