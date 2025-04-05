@@ -32,15 +32,7 @@ window.addEventListener('load', function() {
       // Initialize engine in parallel with first data fetch
       const engineInitializerPromise = engineInitializer.initializeEngine();
       
-      // Prefetch data in parallel with engine initialization
-      try {
-        const prefetchPromise = fetch(
-          'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid?wind_speed_threshold=10.0&precipitation_probability_threshold=50.0&temperature_threshold=0.0&showUnavailableSlots=true&locations='
-        );
-        console.log('Prefetching data for faster startup');
-      } catch (e) {
-        console.log('Prefetch failed, will load data normally', e);
-      }
+
       
       // Wait for engine to be ready
       const appRunner = await engineInitializerPromise;

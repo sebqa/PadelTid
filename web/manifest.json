@@ -20,7 +20,7 @@
             "purpose": "maskable"
         },
         {
-            "src": "assets/icon/notification_icon.png",
+            "src": "assets/icon/badge-icon-96x96.png",
             "sizes": "96x96",
             "type": "image/png",
             "purpose": "notification"

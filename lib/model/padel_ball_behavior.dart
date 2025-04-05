@@ -23,7 +23,7 @@ class PadelBallBehavior {
     const standardPressure = 1013.25; // hPa (standard sea level pressure)
     const standardHumidity = 50.0; // %
     const standardTemp = 8.3; // °C
-    const standardWindSpeed = 2.0; // m/s - light breeze
+    const standardWindSpeed = 4.0; // m/s - light breeze
 
     // --------- PRESSURE EFFECT ON BALL ---------
     // Higher atmospheric pressure = slower ball
@@ -70,17 +70,24 @@ class PadelBallBehavior {
         (airPressure - standardPressure).abs() / standardPressure;
     final tempDeviation = (temperature - standardTemp).abs() / 20;
 
-    // Wind factor: exponential decrease in control as wind increases
+    // Wind factor: better control in low wind, worse in high wind
     final windFactor = windSpeed <= standardWindSpeed
-        ? 0.0
-        : min(pow(windSpeed / standardWindSpeed - 1, 1.5) * 0.5, 0.6);
+        ? max(
+            0.0,
+            (standardWindSpeed - windSpeed) /
+                standardWindSpeed *
+                0.1) // Bonus for low wind
+        : min(pow(windSpeed / standardWindSpeed - 1, 1.5) * 0.5,
+            0.6); // Penalty for high wind
 
     double ballControl = 100 *
         (1 -
             (humidityDeviation * 0.2 +
                 pressureDeviation * 0.2 +
-                tempDeviation * 0.1 +
-                windFactor));
+                tempDeviation * 0.1) +
+            (windSpeed <= standardWindSpeed
+                ? windFactor
+                : -windFactor)); // Apply as bonus or penalty
 
     // Ensure all values stay within our scale
     ballWeight = _boundValue(ballWeight, 80, 120);
