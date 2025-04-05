@@ -196,6 +196,8 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
             
             # Get user preferences
             filter_prefs = user.get('filterPreferences', {})
+            # Add user_id to preferences for logging purposes
+            filter_prefs['_user_id'] = user_id
             show_unavailable = filter_prefs.get('showUnavailableSlots', False)
             
             # Get their token
@@ -211,8 +213,13 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
             # Check each club the user is interested in
             for club_id in filter_prefs.get('locations', []):
                 # Get current and previous club data
-                current_club_data = current_doc.get('clubs', {}).get(club_id)
-                previous_club_data = previous_doc.get('clubs', {}).get(club_id)
+                current_club_data = current_doc.get('clubs', {}).get(club_id, {})
+                previous_club_data = previous_doc.get('clubs', {}).get(club_id, {})
+                
+                if current_club_data:
+                    current_club_data['club_id'] = club_id
+                if previous_club_data:
+                    previous_club_data['club_id'] = club_id
                 
                 # Skip if no data for this club
                 if not current_club_data or not previous_club_data:
@@ -257,35 +264,77 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
 
 def check_filter_match(club_data, filter_prefs):
     """Check if club data matches user filter preferences"""
+    user_id = filter_prefs.get('_user_id', 'unknown')  # For logging purposes
+    club_id = club_data.get('club_id', 'unknown')
+    
+    print(f"Checking filter match for club {club_id} against user {user_id} preferences")
+    
     # Check availability first
     available_slots = club_data.get('available_slots', 0)
-    if available_slots == 0 and not filter_prefs.get('showUnavailableSlots', False):
+    show_unavailable = filter_prefs.get('showUnavailableSlots', False)
+    
+    print(f"  Availability check: slots={available_slots}, showUnavailable={show_unavailable}")
+    if available_slots == 0 and not show_unavailable:
+        print(f"  ❌ Availability check failed: Court has no slots and user doesn't want to see unavailable courts")
         return False
+    else:
+        print(f"  ✅ Availability check passed")
     
     # Get weather data
     weather = club_data.get('weather', {})
     if not weather:
+        print(f"  ℹ️ No weather data available, skipping weather checks")
         return True  # No weather data means we can't filter on it
     
+    print(f"  Weather data: {json.dumps(weather)}")
+    print(f"  User thresholds: wind={filter_prefs.get('wind_speed_threshold')}, " +
+          f"precip={filter_prefs.get('precipitation_probability_threshold')}, " +
+          f"temp={filter_prefs.get('temperature_threshold')}")
+    
     # Check wind speed threshold
-    if (weather.get('wind_speed') is not None and 
-        filter_prefs.get('wind_speed_threshold') is not None and
-        weather.get('wind_speed') > filter_prefs.get('wind_speed_threshold')):
-        return False
+    if weather.get('wind_speed') is not None and filter_prefs.get('wind_speed_threshold') is not None:
+        wind_speed = weather.get('wind_speed')
+        threshold = filter_prefs.get('wind_speed_threshold')
+        print(f"  Wind check: current={wind_speed}, threshold={threshold}")
+        
+        if wind_speed > threshold:
+            print(f"  ❌ Wind check failed: {wind_speed} > {threshold}")
+            return False
+        else:
+            print(f"  ✅ Wind check passed: {wind_speed} <= {threshold}")
+    else:
+        print(f"  ℹ️ Skipping wind check - missing data")
     
     # Check precipitation probability threshold
-    if (weather.get('precipitation_probability') is not None and
-        filter_prefs.get('precipitation_probability_threshold') is not None and
-        weather.get('precipitation_probability') > filter_prefs.get('precipitation_probability_threshold')):
-        return False
+    if weather.get('precipitation_probability') is not None and filter_prefs.get('precipitation_probability_threshold') is not None:
+        precip = weather.get('precipitation_probability')
+        threshold = filter_prefs.get('precipitation_probability_threshold')
+        print(f"  Precipitation check: current={precip}, threshold={threshold}")
+        
+        if precip > threshold:
+            print(f"  ❌ Precipitation check failed: {precip} > {threshold}")
+            return False
+        else:
+            print(f"  ✅ Precipitation check passed: {precip} <= {threshold}")
+    else:
+        print(f"  ℹ️ Skipping precipitation check - missing data")
     
     # Check temperature threshold
-    if (weather.get('temperature') is not None and
-        filter_prefs.get('temperature_threshold') is not None and
-        weather.get('temperature') < filter_prefs.get('temperature_threshold')):
-        return False
+    if weather.get('temperature') is not None and filter_prefs.get('temperature_threshold') is not None:
+        temp = weather.get('temperature')
+        threshold = filter_prefs.get('temperature_threshold')
+        print(f"  Temperature check: current={temp}, threshold={threshold}")
+        
+        if temp < threshold:
+            print(f"  ❌ Temperature check failed: {temp} < {threshold}")
+            return False
+        else:
+            print(f"  ✅ Temperature check passed: {temp} >= {threshold}")
+    else:
+        print(f"  ℹ️ Skipping temperature check - missing data")
     
     # If we passed all checks, it's a match
+    print(f"  🎯 All checks passed - MATCH FOUND")
     return True
 
 def send_notification_to_user(user, token, title, body, doc_id, club_id):
