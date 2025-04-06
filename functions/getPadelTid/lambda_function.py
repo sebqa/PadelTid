@@ -24,16 +24,12 @@ def get_user_subscriptions(user_id):
             
         print(f"Raw subscriptions: {subscriptions}")
         
-        # Handle both old and new subscription formats
+        # Handle the specific subscription format:
+        # [{"id":"20250324120000","preferences":{...}}, {"id":"20250323060000","preferences":{...}}]
         subscription_ids = set()
         for sub in subscriptions:
-            if isinstance(sub, dict):
-                # New format: {"id": "...", "preferences": {...}}
-                if 'id' in sub:
-                    subscription_ids.add(sub['id'])
-            else:
-                # Old format: direct string ID
-                subscription_ids.add(sub)
+            if isinstance(sub, dict) and 'id' in sub:
+                subscription_ids.add(sub['id'])
                 
         print(f"Extracted subscription IDs: {subscription_ids}")
         return subscription_ids
@@ -57,16 +53,126 @@ def get_recommended_times(user_id, locations):
             locations = [loc for loc in locations.split(',') if loc]
         if not locations:
             return {"error": "At least one location must be specified"}, 400
+        
+        # Get user filter preferences
+        filter_prefs = user.get('filterPreferences', {})
+        
+        # Get user subscription data to mark documents as subscribed
+        user_subscriptions = get_user_subscriptions(user_id)
             
-        # TODO: Implement actual recommendation logic here
-        # For now, return placeholder data structure
+        # For now, just get documents that match the user's preferred locations and weather thresholds
+        # In the future, you can implement more sophisticated recommendation logic
+        
+        # Default weather thresholds if not in user preferences
+        default_wind = 10.0  # Default wind threshold (m/s)
+        default_precip = 30.0  # Default precipitation probability (%)
+        default_temp = 5.0  # Default minimum temperature (°C)
+        
+        # Get weather thresholds from user preferences, if available
+        wind_threshold = default_wind
+        precip_threshold = default_precip
+        temp_threshold = default_temp
+        
+        # Get location-specific preferences if available
+        location_prefs = filter_prefs.get('locationPreferences', {})
+        
+        # Get documents matching user preferences for each location
+        recommended_docs = []
+        
         current_time = datetime.now()
         current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
         
-        # Using empty placeholders for now - will be replaced with actual recommendation logic
-        recommended_times = []
+        # Base query - similar to filtered documents but with user-specific thresholds
+        query = {
+            '$expr': {
+                '$and': [
+                    {'$gt': [{'$concat': ['$date', ' ', '$time']}, current_time_str]},
+                    {'$or': [
+                        {'$regexMatch': {'input': '$time', 'regex': '^0[6-9]:'}},
+                        {'$regexMatch': {'input': '$time', 'regex': '^1[0-9]:'}},
+                        {'$regexMatch': {'input': '$time', 'regex': '^2[0-4]:'}}
+                    ]}
+                ]
+            }
+        }
         
-        return recommended_times, 200
+        # Add location and weather conditions
+        club_conditions = []
+        for club in locations:
+            # Get location-specific thresholds if available
+            club_prefs = location_prefs.get(club, {})
+            club_wind = club_prefs.get('wind_threshold', wind_threshold)
+            club_precip = club_prefs.get('precip_threshold', precip_threshold)
+            club_temp = club_prefs.get('min_temp', temp_threshold)
+            
+            # Convert string values to float if needed
+            if isinstance(club_wind, str):
+                club_wind = float(club_wind)
+            if isinstance(club_precip, str):
+                club_precip = float(club_precip)
+            if isinstance(club_temp, str):
+                club_temp = float(club_temp)
+            
+            base_conditions = [
+                {f'clubs.{club}': {'$exists': True}},
+                {f'clubs.{club}.weather.wind_speed': {'$lte': club_wind}},
+                {f'clubs.{club}.weather.precipitation_probability': {'$lte': club_precip}},
+                {f'clubs.{club}.weather.air_temperature': {'$gte': club_temp}},
+                {f'clubs.{club}.available_slots': {'$gt': 0}}  # Only available slots for recommendations
+            ]
+                
+            club_conditions.append({'$and': base_conditions})
+            
+        query['$or'] = club_conditions
+
+        # Create projection
+        projection = {
+            '_id': 0,
+            'date': 1,
+            'time': 1,
+        }
+        # Add only the requested clubs to the projection
+        for club in locations:
+            projection[f'clubs.{club}'] = 1
+
+        # Get results with limit to avoid too many recommendations
+        results = list(collection.find(query, projection).sort([("date", 1), ("time", 1)]).limit(10))
+        
+        # Clean up results and format them
+        cleaned_results = []
+        for doc in results:
+            filtered_clubs = {}
+            
+            for name, data in doc.get('clubs', {}).items():
+                # Skip if club data is missing or not in requested clubs
+                if data is None or name not in locations:
+                    continue
+                
+                # Skip if club doesn't have both weather and availability data
+                if 'weather' not in data or 'available_slots' not in data:
+                    continue
+                    
+                available_slots = data.get('available_slots', 0)
+                if available_slots > 0:
+                    filtered_clubs[name] = data
+            
+            if filtered_clubs:  # Only include document if it has valid clubs
+                # Format date and time for subscription check
+                subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
+                print(f"Checking subscription ID: {subscription_id}")
+                is_subscribed = subscription_id in user_subscriptions if user_id else False
+                if is_subscribed:
+                    print(f"Found subscription match for ID: {subscription_id}")
+                
+                cleaned_doc = {
+                    'date': doc['date'],
+                    'time': doc['time'],
+                    'clubs': filtered_clubs,
+                    'subscribed': is_subscribed
+                }
+                cleaned_results.append(cleaned_doc)
+
+        return cleaned_results, 200
         
     except Exception as e:
         print(f"Error in get_recommended_times: {str(e)}")
@@ -327,11 +433,16 @@ def get_filtered_documents(
         if filtered_clubs:  # Only include document if it has valid clubs
             # Format date and time for subscription check
             subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
+            print(f"Checking subscription ID: {subscription_id}")
+            is_subscribed = subscription_id in user_subscriptions if user_id else False
+            if is_subscribed:
+                print(f"Found subscription match for ID: {subscription_id}")
+            
             cleaned_doc = {
                 'date': doc['date'],
                 'time': doc['time'],
                 'clubs': filtered_clubs,
-                'subscribed': subscription_id in user_subscriptions if user_id else False
+                'subscribed': is_subscribed
             }
             cleaned_results.append(cleaned_doc)
 

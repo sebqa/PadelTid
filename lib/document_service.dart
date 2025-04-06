@@ -84,6 +84,12 @@ class DocumentService {
         };
       }
 
+      // Get subscriptions if user is logged in
+      List<dynamic> subscribedDocs = [];
+      if (user != null) {
+        subscribedDocs = await getSubscribedDocs();
+      }
+
       // Base query parameters
       final baseQueryParams = {
         'wind_speed_threshold': windSpeed.toString(),
@@ -115,7 +121,7 @@ class DocumentService {
         if (needFetchFiltered && responseData.containsKey('filtered')) {
           final List<dynamic> filteredJson = responseData['filtered'];
           filteredDocuments = filteredJson
-              .map((json) => Document.fromJson(json, [],
+              .map((json) => Document.fromJson(json, subscribedDocs,
                   selectedLocations: selectedLocations))
               .where((doc) =>
                   selectedLocations.isEmpty ||
@@ -136,7 +142,7 @@ class DocumentService {
         if (needFetchRecommended && responseData.containsKey('recommended')) {
           final List<dynamic> recommendedJson = responseData['recommended'];
           recommendedDocuments = recommendedJson
-              .map((json) => Document.fromJson(json, [],
+              .map((json) => Document.fromJson(json, subscribedDocs,
                   selectedLocations: selectedLocations))
               .where((doc) =>
                   selectedLocations.isEmpty ||
