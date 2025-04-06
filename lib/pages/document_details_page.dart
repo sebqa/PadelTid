@@ -446,7 +446,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
     final isExpanded = _expandedClubs[clubName] ?? false;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16, left: 16, right: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
