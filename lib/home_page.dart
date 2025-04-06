@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/consent_snackbar.dart';
-import 'package:flutter_application_1/document_service.dart';
 import 'package:flutter_application_1/model/document.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/painters/tennis_ball_painter.dart';
@@ -9,7 +8,7 @@ import 'widgets/skeleton_widgets.dart';
 import 'package:provider/provider.dart';
 import 'services/notification_history_service.dart';
 import 'pages/notifications_page.dart';
-
+import 'package:flutter_application_1/document_service.dart';
 import 'login_page.dart';
 import 'document_widget.dart';
 import 'main_list_view.dart';
@@ -45,9 +44,8 @@ class _HomePageState extends State<HomePage>
   bool showUnavailableSlots = true;
   bool notifyOnMatchingCourts = false;
   late SharedPreferences sharedPreferences;
-  late Future<List<Document>> futureDocuments;
-  late Future<List<Document>>? recommendedDocuments;
-  final DocumentService documentService = DocumentService();
+  late Future<Map<String, List<Document>>> allDocumentsFuture;
+  bool _documentsLoaded = false;
   bool consentShown = false;
   bool _showOnboarding = false;
   List<String> _selectedLocations = [];
@@ -56,6 +54,7 @@ class _HomePageState extends State<HomePage>
   late Animation<Offset> _slideAnimation;
   final TokenService _tokenService = TokenService();
   late LocaleProvider localeProvider;
+  final DocumentService documentService = DocumentService();
 
   @override
   void initState() {
@@ -126,9 +125,7 @@ class _HomePageState extends State<HomePage>
       }
     });
 
-    // Initialize recommended documents with selected locations
-    recommendedDocuments = documentService.fetchDocuments(
-        4.0, 10.0, 10.0, false, true, _selectedLocations);
+    // We'll fetch initial documents in _initializePreferences instead
   }
 
   Future<void> _initializePreferences() async {
@@ -152,15 +149,17 @@ class _HomePageState extends State<HomePage>
   }
 
   void _fetchDocuments() {
-    futureDocuments = documentService.fetchDocuments(
+    allDocumentsFuture = documentService.fetchAllDocuments(
       windSpeedThreshold,
       precipitationProbabilityThreshold,
       temperatureThreshold,
       showUnavailableSlots,
-      false,
       _selectedLocations,
       notifyOnMatchingCourts: notifyOnMatchingCourts,
     );
+    setState(() {
+      _documentsLoaded = true;
+    });
   }
 
   Future<void> updateThresholds() async {
@@ -521,8 +520,8 @@ class _HomePageState extends State<HomePage>
                     initialLocations: _selectedLocations,
                   ),
                 ),
-                if (_selectedLocations.isNotEmpty) ...[
-                  // Show Recommended section header and content
+                if (_selectedLocations.isNotEmpty && _documentsLoaded) ...[
+                  // Show Recommended section
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -540,23 +539,26 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                   // Show loading state or content
-                  if (recommendedDocuments != null)
-                    SliverToBoxAdapter(
-                      child: FutureBuilder<List<Document>>(
-                        future: recommendedDocuments,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return RecommendedListSkeleton();
-                          } else if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          } else {
-                            return recommended_lv_holder(
-                                documents: snapshot.data ?? []);
-                          }
-                        },
-                      ),
+                  SliverToBoxAdapter(
+                    child: FutureBuilder<Map<String, List<Document>>>(
+                      future: allDocumentsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return RecommendedListSkeleton();
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else if (snapshot.hasData) {
+                          final recommendedDocs =
+                              snapshot.data!['recommended'] ?? [];
+                          return recommended_lv_holder(
+                              documents: recommendedDocs);
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      },
                     ),
+                  ),
 
                   // Show All Timeslots section header
                   SliverToBoxAdapter(
@@ -589,8 +591,8 @@ class _HomePageState extends State<HomePage>
 
                   // Show loading state or content for All Timeslots
                   SliverToBoxAdapter(
-                    child: FutureBuilder<List<Document>>(
-                      future: futureDocuments,
+                    child: FutureBuilder<Map<String, List<Document>>>(
+                      future: allDocumentsFuture,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -600,8 +602,9 @@ class _HomePageState extends State<HomePage>
                               child: Text(
                                   '${TranslationHelper.translate('error_prefix', localeProvider.locale.languageCode)} ${snapshot.error}'));
                         } else if (snapshot.hasData) {
+                          final filteredDocs = snapshot.data!['filtered'] ?? [];
                           final groupedDocuments =
-                              _groupDocuments(snapshot.data!);
+                              _groupDocuments(filteredDocs);
                           if (!consentShown) {
                             showConsentSnackbar(context,
                                 onlyShowIfNotSet: true);
@@ -686,41 +689,39 @@ class _HomePageState extends State<HomePage>
 
   Future<void> _refreshData() async {
     setState(() {
-      futureDocuments = documentService.fetchDocuments(
+      allDocumentsFuture = documentService.fetchAllDocuments(
         windSpeedThreshold,
         precipitationProbabilityThreshold,
         temperatureThreshold,
         showUnavailableSlots,
-        false,
         _selectedLocations,
+        notifyOnMatchingCourts: notifyOnMatchingCourts,
       );
-
-      if (_selectedLocations.isNotEmpty) {
-        recommendedDocuments = documentService.fetchDocuments(
-            4.0, 10.0, 10.0, false, true, _selectedLocations);
-      }
     });
   }
 }
 
 class SliverRecommendedLV extends StatelessWidget {
-  const SliverRecommendedLV({Key? key, required this.recommendedDocuments})
+  const SliverRecommendedLV({Key? key, required this.allDocumentsFuture})
       : super(key: key);
 
-  final Future<List<Document>>? recommendedDocuments;
+  final Future<Map<String, List<Document>>>? allDocumentsFuture;
 
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
-      child: FutureBuilder<List<Document>>(
-        future: recommendedDocuments,
+      child: FutureBuilder<Map<String, List<Document>>>(
+        future: allDocumentsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return RecommendedListSkeleton();
           } else if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
+          } else if (snapshot.hasData) {
+            final recommendedDocs = snapshot.data!['recommended'] ?? [];
+            return recommended_lv_holder(documents: recommendedDocs);
           } else {
-            return recommended_lv_holder(documents: snapshot.data!);
+            return const SizedBox.shrink();
           }
         },
       ),

@@ -84,12 +84,6 @@ class DocumentService {
         };
       }
 
-      // Get subscriptions if user is logged in
-      List<dynamic> subscribedDocs = [];
-      if (user != null) {
-        subscribedDocs = await getSubscribedDocs();
-      }
-
       // Base query parameters
       final baseQueryParams = {
         'wind_speed_threshold': windSpeed.toString(),
@@ -113,6 +107,7 @@ class DocumentService {
               'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid')
           .replace(queryParameters: queryParams);
 
+      print('Making combined API request to: ${url.toString()}');
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
@@ -121,7 +116,8 @@ class DocumentService {
         if (needFetchFiltered && responseData.containsKey('filtered')) {
           final List<dynamic> filteredJson = responseData['filtered'];
           filteredDocuments = filteredJson
-              .map((json) => Document.fromJson(json, subscribedDocs,
+              .map((json) => Document.fromJson(
+                  json, [], // No need for subscribedDocs parameter
                   selectedLocations: selectedLocations))
               .where((doc) =>
                   selectedLocations.isEmpty ||
@@ -142,7 +138,8 @@ class DocumentService {
         if (needFetchRecommended && responseData.containsKey('recommended')) {
           final List<dynamic> recommendedJson = responseData['recommended'];
           recommendedDocuments = recommendedJson
-              .map((json) => Document.fromJson(json, subscribedDocs,
+              .map((json) => Document.fromJson(
+                  json, [], // No need for subscribedDocs parameter
                   selectedLocations: selectedLocations))
               .where((doc) =>
                   selectedLocations.isEmpty ||
