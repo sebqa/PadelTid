@@ -432,7 +432,7 @@ def get_filtered_documents(
         
         if filtered_clubs:  # Only include document if it has valid clubs
             # Format date and time for subscription check
-            subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
+            subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') 
             print(f"Checking subscription ID: {subscription_id}")
             is_subscribed = subscription_id in user_subscriptions if user_id else False
             if is_subscribed:
