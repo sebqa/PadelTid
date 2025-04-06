@@ -143,8 +143,8 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
           final forecastTime = DateTime.parse(item['time']);
           // Filter to get -1h, 0h, +1h, +2h relative to document time
           return forecastTime
-                  .isAfter(docDateTime.subtract(Duration(hours: 1))) &&
-              forecastTime.isBefore(docDateTime.add(Duration(hours: 4)));
+                  .isAfter(docDateTime.subtract(Duration(hours: 0))) &&
+              forecastTime.isBefore(docDateTime.add(Duration(hours: 5)));
         }).toList();
 
         // Sort by time to ensure correct order
