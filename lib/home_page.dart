@@ -271,15 +271,10 @@ class _HomePageState extends State<HomePage>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            TranslationHelper.translate(
-                                'notify_on_matching_courts',
-                                localeProvider.locale.languageCode),
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ],
+                      Text(
+                        TranslationHelper.translate('notify_on_matching_courts',
+                            localeProvider.locale.languageCode),
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       Switch(
                         value: notifyOnMatchingCourts,

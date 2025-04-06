@@ -40,7 +40,7 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Set up notification handling for when app is launched from notification
-  await setupInitialNotificationHandling();
+  //await setupInitialNotificationHandling();
 
   // Pre-initialize other services in parallel
   final notificationServiceInit = NotificationService().initialize();

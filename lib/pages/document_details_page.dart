@@ -253,33 +253,21 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
   Widget _buildLoadingUI(BuildContext context) {
     return SingleChildScrollView(
       physics: BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date header skeleton
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildShimmerPlaceholder(height: 24, width: 200),
-                SizedBox(height: 8),
-                _buildShimmerPlaceholder(height: 16, width: 150),
-              ],
+      child: Padding(
+        padding: EdgeInsets.only(top: 16, bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Club skeletons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                children:
+                    List.generate(3, (index) => _buildClubSkeleton(context)),
+              ),
             ),
-          ),
-
-          // Club skeletons
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children:
-                  List.generate(3, (index) => _buildClubSkeleton(context)),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -313,64 +301,41 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
                   ),
                 ),
 
-                // Expand icon placeholder
+                // Availability indicator placeholder
                 _buildShimmerPlaceholder(
-                    height: 24, width: 24, shape: BoxShape.circle),
+                    height: 32, width: 80, borderRadius: 16),
               ],
             ),
           ),
 
-          // Divider
-          Divider(height: 1),
-
-          // Court slots skeleton
+          // Basic weather information placeholder
           Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              children: List.generate(
-                  3,
-                  (index) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Time slot
-                            _buildShimmerPlaceholder(height: 16, width: 80),
-                            SizedBox(height: 8),
-
-                            // Court slots
-                            Row(
-                              children: List.generate(
-                                  4,
-                                  (i) => Expanded(
-                                        child: Padding(
-                                          padding: EdgeInsets.only(
-                                              right: i < 3 ? 8 : 0),
-                                          child: _buildShimmerPlaceholder(
-                                              height: 36,
-                                              width: double.infinity,
-                                              borderRadius: 8),
-                                        ),
-                                      )),
-                            ),
-                          ],
-                        ),
-                      )),
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: _buildShimmerPlaceholder(
+                height: 80, width: double.infinity, borderRadius: 12),
           ),
 
-          // Weather forecast button (collapsed state)
+          SizedBox(height: 16),
+
+          // Weather forecast button (collapsed state only)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: _buildShimmerPlaceholder(
+                height: 40, width: double.infinity, borderRadius: 8),
+          ),
+
+          SizedBox(height: 16),
+
+          // Book court button placeholder
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                _buildShimmerPlaceholder(height: 16, width: 120),
-                Spacer(),
-                _buildShimmerPlaceholder(
-                    height: 24, width: 24, shape: BoxShape.circle),
-              ],
+            child: Center(
+              child: _buildShimmerPlaceholder(
+                  height: 48, width: 200, borderRadius: 8),
             ),
           ),
+
+          SizedBox(height: 8),
         ],
       ),
     );
