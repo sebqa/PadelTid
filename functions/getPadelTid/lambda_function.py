@@ -119,22 +119,78 @@ def save_user_preferences(user_id, preferences):
 
 def lambda_handler(event,context):
     try:
-        # Check if this is a request for recommendations
+        # Get parameters
+        wind_speed_threshold = float(event['queryStringParameters']['wind_speed_threshold'])
+        precipitation_probability_threshold = float(event['queryStringParameters']['precipitation_probability_threshold'])
+        temperature_threshold = float(event['queryStringParameters']['temperature_threshold'])
+        showUnavailableSlots = event['queryStringParameters']['showUnavailableSlots']
+        locations = event['queryStringParameters'].get('locations', '').split(',')
+        locations = [loc for loc in locations if loc]
+        
+        # Get user_id if provided
+        user_id = event['queryStringParameters'].get('user_id')
+        user_subscriptions = get_user_subscriptions(user_id)
+        
+        # Check if this is a combined request (fetch both filtered and recommended)
+        fetch_both = event['queryStringParameters'].get('fetch_both', 'false').lower() == 'true'
+        
+        # Save user preferences if user_id is provided
+        if user_id:
+            preferences = {
+                "wind_speed_threshold": wind_speed_threshold,
+                "precipitation_probability_threshold": precipitation_probability_threshold,
+                "temperature_threshold": temperature_threshold,
+                "showUnavailableSlots": showUnavailableSlots == "true",
+                "locations": locations,
+                "notifyOnMatchingCourts": event['queryStringParameters'].get('notify_on_matching_courts', 'false') == "true"
+            }
+            save_user_preferences(user_id, preferences)
+        
+        # If this is a combined request, we need to fetch both types of data
+        if fetch_both:
+            # Get regular filtered documents
+            filtered_results = get_filtered_documents(
+                wind_speed_threshold, 
+                precipitation_probability_threshold,
+                temperature_threshold,
+                showUnavailableSlots,
+                locations,
+                user_id,
+                user_subscriptions
+            )
+            
+            # Get recommended documents
+            recommended_results = []
+            if user_id:
+                recommended_results, _ = get_recommended_times(user_id, locations)
+            
+            # Return both in the response
+            response_data = {
+                "filtered": filtered_results,
+                "recommended": recommended_results
+            }
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+                },
+                'body': json.dumps(response_data)
+            }
+        
+        # Check if this is a request for recommendations only
         is_recommendation_request = event['queryStringParameters'].get('recommendation', 'false').lower() == 'true'
         
         if is_recommendation_request:
             # Handle recommendation request
-            user_id = event['queryStringParameters'].get('user_id')
             if not user_id:
                 raise ValueError("user_id is required for recommendation requests")
                 
-            locations = event['queryStringParameters'].get('locations', '')
             if not locations:
                 raise ValueError("locations is required for recommendation requests")
                 
-            locations = locations.split(',')
-            locations = [loc for loc in locations if loc]
-            
             recommended_times, status_code = get_recommended_times(user_id, locations)
             
             if status_code != 200:
@@ -158,112 +214,17 @@ def lambda_handler(event,context):
                 'body': json.dumps(recommended_times)
             }
         
-        # Standard request flow continues below
-        wind_speed_threshold = float(event['queryStringParameters']['wind_speed_threshold'])
-        precipitation_probability_threshold = float(event['queryStringParameters']['precipitation_probability_threshold'])
-        temperature_threshold = float(event['queryStringParameters']['temperature_threshold'])
-        showUnavailableSlots = event['queryStringParameters']['showUnavailableSlots']
-        locations = event['queryStringParameters'].get('locations', '').split(',')
-        locations = [loc for loc in locations if loc]
+        # Default case: just get filtered documents
+        filtered_results = get_filtered_documents(
+            wind_speed_threshold, 
+            precipitation_probability_threshold,
+            temperature_threshold,
+            showUnavailableSlots,
+            locations,
+            user_id,
+            user_subscriptions
+        )
         
-        # Get user_id if provided
-        user_id = event['queryStringParameters'].get('user_id')
-        user_subscriptions = get_user_subscriptions(user_id)
-        
-        # Save user preferences if user_id is provided
-        if user_id:
-            preferences = {
-                "wind_speed_threshold": wind_speed_threshold,
-                "precipitation_probability_threshold": precipitation_probability_threshold,
-                "temperature_threshold": temperature_threshold,
-                "showUnavailableSlots": showUnavailableSlots == "true",
-                "locations": locations,
-                "notifyOnMatchingCourts": event['queryStringParameters'].get('notify_on_matching_courts', 'false') == "true"
-            }
-            save_user_preferences(user_id, preferences)
-        
-        current_time = datetime.now()
-        current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Base query
-        query = {
-            '$expr': {
-                '$and': [
-                    {'$gt': [{'$concat': ['$date', ' ', '$time']}, current_time_str]},
-                    {'$or': [
-                        {'$regexMatch': {'input': '$time', 'regex': '^0[6-9]:'}},
-                        {'$regexMatch': {'input': '$time', 'regex': '^1[0-9]:'}},
-                        {'$regexMatch': {'input': '$time', 'regex': '^2[0-4]:'}}
-                    ]}
-                ]
-            }
-        }
-        
-        # Determine which clubs to include
-        clubs_to_check = locations if locations else db_padel_times['clubs'].distinct('name')
-        
-        # Add weather and location conditions
-        club_conditions = []
-        for club in clubs_to_check:
-            base_conditions = [
-                {f'clubs.{club}': {'$exists': True}},
-                {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
-                {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}},
-                {f'clubs.{club}.weather.air_temperature': {'$gte': temperature_threshold}},
-            ]
-            
-            if showUnavailableSlots == "false":
-                base_conditions.append({f'clubs.{club}.available_slots': {'$gt': 0}})
-                
-            club_conditions.append({'$and': base_conditions})
-            
-        query['$or'] = club_conditions
-
-        # Create projection to only return necessary fields
-        projection = {
-            '_id': 0,
-            'date': 1,
-            'time': 1,
-        }
-        # Add only the requested clubs to the projection
-        for club in clubs_to_check:
-            projection[f'clubs.{club}'] = 1
-
-        print("Query:", query)
-        # Add sort to the query - sort by date and time
-        results = list(collection.find(query, projection).sort([("date", 1), ("time", 1)]))
-        
-        # Clean up results to remove empty clubs and handle available slots
-        cleaned_results = []
-        for doc in results:
-            filtered_clubs = {}
-            
-            for name, data in doc.get('clubs', {}).items():
-                # Skip if club data is missing or not in requested clubs
-                if data is None or name not in clubs_to_check:
-                    continue
-                
-                # Skip if club doesn't have both weather and availability data
-                if 'weather' not in data or 'available_slots' not in data:
-                    continue
-                    
-                available_slots = data.get('available_slots', 0)
-                if showUnavailableSlots == "true" or available_slots > 0:
-                    filtered_clubs[name] = data
-            
-            if filtered_clubs:  # Only include document if it has valid clubs
-                # Format date and time for subscription check
-                subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
-                cleaned_doc = {
-                    'date': doc['date'],
-                    'time': doc['time'],
-                    'clubs': filtered_clubs,
-                    'subscribed': subscription_id in user_subscriptions if user_id else False
-                }
-                cleaned_results.append(cleaned_doc)
-
-        print("Results:", cleaned_results)
-
         return {
             'statusCode': 200,
             'headers': {
@@ -271,7 +232,7 @@ def lambda_handler(event,context):
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
-            'body': json.dumps(cleaned_results)
+            'body': json.dumps(filtered_results)
         }
     except Exception as e:
         print("Error:", str(e))
@@ -284,3 +245,94 @@ def lambda_handler(event,context):
             },
             'body': json.dumps({'error': str(e)})
         }
+
+# Extract the document filtering logic to a separate function
+def get_filtered_documents(
+    wind_speed_threshold, 
+    precipitation_probability_threshold,
+    temperature_threshold,
+    showUnavailableSlots,
+    locations,
+    user_id,
+    user_subscriptions
+):
+    current_time = datetime.now()
+    current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Base query
+    query = {
+        '$expr': {
+            '$and': [
+                {'$gt': [{'$concat': ['$date', ' ', '$time']}, current_time_str]},
+                {'$or': [
+                    {'$regexMatch': {'input': '$time', 'regex': '^0[6-9]:'}},
+                    {'$regexMatch': {'input': '$time', 'regex': '^1[0-9]:'}},
+                    {'$regexMatch': {'input': '$time', 'regex': '^2[0-4]:'}}
+                ]}
+            ]
+        }
+    }
+    
+    # Determine which clubs to include
+    clubs_to_check = locations if locations else db_padel_times['clubs'].distinct('name')
+    
+    # Add weather and location conditions
+    club_conditions = []
+    for club in clubs_to_check:
+        base_conditions = [
+            {f'clubs.{club}': {'$exists': True}},
+            {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
+            {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}},
+            {f'clubs.{club}.weather.air_temperature': {'$gte': temperature_threshold}},
+        ]
+        
+        if showUnavailableSlots == "false":
+            base_conditions.append({f'clubs.{club}.available_slots': {'$gt': 0}})
+            
+        club_conditions.append({'$and': base_conditions})
+        
+    query['$or'] = club_conditions
+
+    # Create projection to only return necessary fields
+    projection = {
+        '_id': 0,
+        'date': 1,
+        'time': 1,
+    }
+    # Add only the requested clubs to the projection
+    for club in clubs_to_check:
+        projection[f'clubs.{club}'] = 1
+
+    # Add sort to the query - sort by date and time
+    results = list(collection.find(query, projection).sort([("date", 1), ("time", 1)]))
+    
+    # Clean up results to remove empty clubs and handle available slots
+    cleaned_results = []
+    for doc in results:
+        filtered_clubs = {}
+        
+        for name, data in doc.get('clubs', {}).items():
+            # Skip if club data is missing or not in requested clubs
+            if data is None or name not in clubs_to_check:
+                continue
+            
+            # Skip if club doesn't have both weather and availability data
+            if 'weather' not in data or 'available_slots' not in data:
+                continue
+                
+            available_slots = data.get('available_slots', 0)
+            if showUnavailableSlots == "true" or available_slots > 0:
+                filtered_clubs[name] = data
+        
+        if filtered_clubs:  # Only include document if it has valid clubs
+            # Format date and time for subscription check
+            subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
+            cleaned_doc = {
+                'date': doc['date'],
+                'time': doc['time'],
+                'clubs': filtered_clubs,
+                'subscribed': subscription_id in user_subscriptions if user_id else False
+            }
+            cleaned_results.append(cleaned_doc)
+
+    return cleaned_results
