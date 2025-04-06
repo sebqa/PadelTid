@@ -56,7 +56,7 @@ class NotificationService {
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         print('Notification tapped: ${response.payload}');
         if (response.payload != null && response.payload!.isNotEmpty) {
-          _handleNotificationClick(null, documentId: response.payload);
+          //_handleNotificationClick(null, documentId: response.payload);
         }
       },
     );
@@ -186,7 +186,7 @@ class NotificationService {
           'Notification clicked when app was in background: ${message.messageId}');
       print(
           'Document ID from clicked notification: ${message.data['documentId']}');
-      _handleNotificationClick(message);
+      //_handleNotificationClick(message);
     });
 
     // Check for initial notification that launched the app
@@ -197,10 +197,10 @@ class NotificationService {
         print('App launched from notification: ${message.messageId}');
         print(
             'Document ID from launch notification: ${message.data['documentId']}');
-        _handleNotificationClick(message);
+        //_handleNotificationClick(message);
       }
     });
-
+/*
     // Set up local notification click handling
     _flutterLocalNotificationsPlugin.initialize(
       InitializationSettings(
@@ -216,6 +216,7 @@ class NotificationService {
         }
       },
     );
+*/
   }
 
   // Handle notification clicks
