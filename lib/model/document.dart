@@ -117,34 +117,56 @@ class Document {
       });
     }
 
-    // Create document ID in the format YYYYMMDDHHMMSS
-    final docId = json['date'].replaceAll('-', '') +
-        json['time'].substring(0, 5).replaceAll(':', '') +
-        "00";
+    // First check if 'subscribed' is directly available in the JSON (from the API)
+    bool? isSubscribed =
+        json.containsKey('subscribed') ? json['subscribed'] : null;
 
-    // Find subscription data for this document
-    final subscriptionData = subscribedDocs.firstWhere(
-      (sub) => sub['id'] == docId,
-      orElse: () => null,
-    );
+    // If not available in JSON, fall back to checking subscribedDocs (legacy approach)
+    if (isSubscribed == null && subscribedDocs.isNotEmpty) {
+      // Create document ID in the format YYYYMMDDHHMMSS
+      final docId = json['date'].replaceAll('-', '') +
+          json['time'].substring(0, 5).replaceAll(':', '') +
+          "00";
+
+      // Find subscription data for this document
+      final subscriptionData = subscribedDocs.firstWhere(
+        (sub) => sub['id'] == docId,
+        orElse: () => null,
+      );
+
+      isSubscribed = subscriptionData != null;
+    }
 
     // Get preferences from subscription data if it exists
     NotificationPreferences? preferences;
-    if (subscriptionData != null && subscriptionData['preferences'] != null) {
-      final prefsJson = subscriptionData['preferences'] as Map<String, dynamic>;
-      preferences = NotificationPreferences(
-        notifyOnWeatherChange: prefsJson['notifyOnWeatherChange'] ?? true,
-        notifyWhenAvailable: prefsJson['notifyWhenAvailable'] ?? true,
-        notifyWhenOneLeft: prefsJson['notifyWhenOneLeft'] ?? false,
-        notifyWhenFull: prefsJson['notifyWhenFull'] ?? false,
+    if (subscribedDocs.isNotEmpty) {
+      // Create document ID for lookup
+      final docId = json['date'].replaceAll('-', '') +
+          json['time'].substring(0, 5).replaceAll(':', '') +
+          "00";
+
+      final subscriptionData = subscribedDocs.firstWhere(
+        (sub) => sub['id'] == docId,
+        orElse: () => null,
       );
+
+      if (subscriptionData != null && subscriptionData['preferences'] != null) {
+        final prefsJson =
+            subscriptionData['preferences'] as Map<String, dynamic>;
+        preferences = NotificationPreferences(
+          notifyOnWeatherChange: prefsJson['notifyOnWeatherChange'] ?? true,
+          notifyWhenAvailable: prefsJson['notifyWhenAvailable'] ?? true,
+          notifyWhenOneLeft: prefsJson['notifyWhenOneLeft'] ?? false,
+          notifyWhenFull: prefsJson['notifyWhenFull'] ?? false,
+        );
+      }
     }
 
     return Document(
       date: json['date'],
       time: json['time'].substring(0, 5),
       clubs: clubs,
-      subscribed: subscriptionData != null,
+      subscribed: isSubscribed,
       notificationPreferences: preferences,
       selectedLocations: selectedLocations,
     );
