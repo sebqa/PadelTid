@@ -269,9 +269,11 @@ def check_filter_match(club_data, filter_prefs):
     
     print(f"Checking filter match for club {club_id} against user {user_id} preferences")
     print(f"  Full filter preferences: {json.dumps(filter_prefs)}")
-    
-    # Check availability first
-    available_slots = club_data.get('available_slots', 0)
+    # Check availability first - return False if available_slots is not present
+    available_slots = club_data.get('available_slots')
+    if available_slots is None:
+        print(f"  ❌ Availability check failed: available_slots attribute not present")
+        return False
     show_unavailable = filter_prefs.get('showUnavailableSlots', False)
     
     print(f"  Availability check: slots={available_slots}, showUnavailable={show_unavailable}")
