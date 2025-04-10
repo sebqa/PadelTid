@@ -56,6 +56,18 @@ def send_notification(event):
     
     print(f"Processing document: {doc_id} (date: {date}, time: {time})")
     
+    # Check if the event is in the past
+    try:
+        event_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M:%S")
+        current_datetime = datetime.now()
+        
+        if event_datetime < current_datetime:
+            print(f"Ignoring past event: {date} {time} is earlier than current time {current_datetime}")
+            return "Ignored past event"
+    except Exception as e:
+        print(f"Error checking event datetime: {str(e)}")
+        # Continue processing if we can't parse the datetime
+    
     # Get current and previous states
     current_doc = event['detail']['fullDocument']
     previous_doc = event['detail'].get('fullDocumentBeforeChange', {})
