@@ -23,41 +23,90 @@
     <button id="refreshBtn">Refresh Logs</button>
     <button id="clearBtn">Clear Logs</button>
     <button id="testPushBtn">Send Test Push</button>
+    <button id="forceCreateStoreBtn">Force Create Store</button>
+    <button id="fixIndexDbBtn">Fix IndexedDB Issues</button>
   </div>
   
   <div id="status"></div>
   <div id="logs"></div>
   
   <script>
-    // First ensure the database is properly initialized
+    // Improved database initialization that ensures store is created
     function initializeDatabase() {
       return new Promise((resolve, reject) => {
         const statusEl = document.getElementById('status');
         statusEl.textContent = 'Initializing database...';
         
-        const dbPromise = indexedDB.open('padeltid_debug_logs', 1);
+        // Force a new version to ensure an upgrade
+        let dbVersion = 1;
+        try {
+          // Try to get the current version if possible
+          const req = indexedDB.open('padeltid_debug_logs');
+          req.onsuccess = function(event) {
+            const existingVersion = event.target.result.version;
+            dbVersion = existingVersion + 1; // Increment version to force upgrade
+            event.target.result.close();
+            openWithVersion(dbVersion);
+          };
+          req.onerror = function() {
+            // If error, just use version 1
+            openWithVersion(1);
+          };
+        } catch (e) {
+          console.error('Error checking version:', e);
+          openWithVersion(1);
+        }
         
-        dbPromise.onupgradeneeded = function(event) {
-          statusEl.textContent = 'Creating database schema...';
-          const db = event.target.result;
+        function openWithVersion(version) {
+          statusEl.textContent = `Opening database with version ${version}...`;
+          console.log(`Opening database with version ${version}`);
           
-          // Create the logs store if it doesn't exist
-          if (!db.objectStoreNames.contains('logs')) {
+          const dbPromise = indexedDB.open('padeltid_debug_logs', version);
+          
+          dbPromise.onupgradeneeded = function(event) {
+            statusEl.textContent = 'Creating database schema...';
+            console.log('Upgrade needed, creating stores...');
+            
+            const db = event.target.result;
+            
+            // Delete existing store if it exists
+            if (db.objectStoreNames.contains('logs')) {
+              db.deleteObjectStore('logs');
+            }
+            
+            // Create a new store
             const store = db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
             store.createIndex('timestamp', 'timestamp', { unique: false });
             console.log('Created logs object store');
-          }
-        };
-        
-        dbPromise.onsuccess = function(event) {
-          statusEl.textContent = 'Database ready';
-          resolve(event.target.result);
-        };
-        
-        dbPromise.onerror = function(event) {
-          statusEl.textContent = 'Database error: ' + event.target.error;
-          reject(event.target.error);
-        };
+          };
+          
+          dbPromise.onsuccess = function(event) {
+            const db = event.target.result;
+            
+            // Check if store actually exists
+            if (!db.objectStoreNames.contains('logs')) {
+              statusEl.textContent = 'Error: Store not created - trying again with forced upgrade';
+              console.error('Store not created even after upgrade!');
+              db.close();
+              
+              // Try again with a forced higher version
+              setTimeout(() => {
+                openWithVersion(version + 1);
+              }, 100);
+              return;
+            }
+            
+            statusEl.textContent = `Database ready (version ${db.version})`;
+            console.log(`Database ready (version ${db.version})`);
+            resolve(db);
+          };
+          
+          dbPromise.onerror = function(event) {
+            statusEl.textContent = 'Database error: ' + event.target.error;
+            console.error('Database error:', event.target.error);
+            reject(event.target.error);
+          };
+        }
       });
     }
     
@@ -69,6 +118,12 @@
       try {
         // First initialize the database
         const db = await initializeDatabase();
+        
+        // Safety check - verify store exists
+        if (!db.objectStoreNames.contains('logs')) {
+          logsContainer.innerHTML = 'Error: logs store not found in database!';
+          return;
+        }
         
         // Now we can safely access the stores
         const tx = db.transaction(['logs'], 'readonly');
@@ -119,11 +174,70 @@
       }
     }
     
+    // Function to force create store (for debugging)
+    async function forceCreateStore() {
+      const statusEl = document.getElementById('status');
+      try {
+        statusEl.textContent = 'Force creating store...';
+        
+        // Get current version
+        const req = indexedDB.open('padeltid_debug_logs');
+        req.onsuccess = function(event) {
+          const db = event.target.result;
+          const currentVersion = db.version;
+          db.close();
+          
+          // Now open with incremented version
+          const newVersion = currentVersion + 1;
+          const upgradeReq = indexedDB.open('padeltid_debug_logs', newVersion);
+          
+          upgradeReq.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            
+            // Delete existing store if it exists
+            if (db.objectStoreNames.contains('logs')) {
+              db.deleteObjectStore('logs');
+            }
+            
+            // Create new store
+            const store = db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
+            store.createIndex('timestamp', 'timestamp', { unique: false });
+            
+            statusEl.textContent = 'Store created during forced upgrade';
+          };
+          
+          upgradeReq.onsuccess = function() {
+            statusEl.textContent = 'Force create completed! Version: ' + newVersion;
+            setTimeout(loadLogs, 500);
+          };
+          
+          upgradeReq.onerror = function(event) {
+            statusEl.textContent = 'Force create error: ' + event.target.error;
+          };
+        };
+        
+        req.onerror = function(event) {
+          statusEl.textContent = 'Error getting current version: ' + event.target.error;
+        };
+      } catch (e) {
+        statusEl.textContent = 'Force create error: ' + e.message;
+        console.error('Force create error:', e);
+      }
+    }
+    
+    // Add event listener for force create button
+    document.getElementById('forceCreateStoreBtn').addEventListener('click', forceCreateStore);
+    
     // Function to clear logs
     async function clearLogs() {
       try {
         // First initialize the database
         const db = await initializeDatabase();
+        
+        if (!db.objectStoreNames.contains('logs')) {
+          alert('Error: logs store not found!');
+          return;
+        }
         
         const tx = db.transaction(['logs'], 'readwrite');
         const store = tx.objectStore('logs');
@@ -204,13 +318,21 @@
       }
     }
     
-    // Function to view stored notifications in IndexedDB
+    // Function to view stored notifications in IndexedDB (FIXED VERSION)
     async function viewStoredNotifications() {
       const logsContainer = document.getElementById('logs');
       logsContainer.innerHTML = 'Checking stored notifications...';
       
       try {
         const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        
+        dbPromise.onupgradeneeded = function(event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('notifications')) {
+            const store = db.createObjectStore('notifications', { keyPath: 'id' });
+            // Do not create the index here, as we're just reading existing data
+          }
+        };
         
         dbPromise.onsuccess = function(event) {
           const db = event.target.result;
@@ -221,37 +343,67 @@
             return;
           }
           
-          const tx = db.transaction(['notifications'], 'readonly');
-          const store = tx.objectStore('notifications');
-          
-          const request = store.getAll();
-          
-          request.onsuccess = function() {
-            const notifications = request.result || [];
+          try {
+            // Just get ALL notifications instead of using the index
+            const tx = db.transaction(['notifications'], 'readonly');
+            const store = tx.objectStore('notifications');
             
-            if (notifications.length === 0) {
-              logsContainer.innerHTML = 'No stored notifications found.';
-            } else {
-              logsContainer.innerHTML = `<h3>Found ${notifications.length} stored notifications:</h3>`;
+            // Get all notifications without using the index
+            const request = store.getAll();
+            
+            request.onsuccess = function() {
+              const allNotifications = request.result || [];
               
-              notifications.forEach(notification => {
-                const notifDiv = document.createElement('div');
-                notifDiv.className = 'log-entry';
-                notifDiv.innerHTML = `
-                  <strong>${new Date(notification.timestamp).toISOString()}</strong>
-                  <p>${notification.title}</p>
-                  <p>${notification.body}</p>
-                  <p>Document ID: ${notification.documentId || 'none'}</p>
-                  <p>Processed: ${notification.processed ? 'Yes' : 'No'}</p>
+              if (allNotifications.length === 0) {
+                logsContainer.innerHTML = 'No stored notifications found.';
+              } else {
+                // Filter in JavaScript instead of using the index
+                const unprocessedCount = allNotifications.filter(n => n.processed === false).length;
+                const processedCount = allNotifications.filter(n => n.processed === true).length;
+                
+                logsContainer.innerHTML = `
+                  <h3>Found ${allNotifications.length} total notifications:</h3>
+                  <p>${unprocessedCount} unprocessed, ${processedCount} processed</p>
                 `;
-                logsContainer.appendChild(notifDiv);
-              });
-            }
-          };
-          
-          request.onerror = function(event) {
-            logsContainer.innerHTML = 'Error reading notifications: ' + event.target.error;
-          };
+                
+                allNotifications.forEach(notification => {
+                  const notifDiv = document.createElement('div');
+                  notifDiv.className = 'log-entry';
+                  
+                  // Make unprocessed notifications stand out
+                  if (notification.processed !== true) {
+                    notifDiv.style.borderLeft = '5px solid #e74c3c';
+                  }
+                  
+                  notifDiv.innerHTML = `
+                    <strong>${new Date(notification.timestamp).toISOString()}</strong>
+                    <p><b>${notification.title}</b></p>
+                    <p>${notification.body}</p>
+                    <p>Document ID: ${notification.documentId || 'none'}</p>
+                    <p>Processed: ${notification.processed === true ? 'Yes' : 'No'}</p>
+                    <p>ID: ${notification.id}</p>
+                  `;
+                  logsContainer.appendChild(notifDiv);
+                });
+                
+                // Add a process-all button if there are unprocessed notifications
+                if (unprocessedCount > 0) {
+                  const processAllBtn = document.createElement('button');
+                  processAllBtn.textContent = 'Process All Notifications';
+                  processAllBtn.style.marginTop = '20px';
+                  processAllBtn.onclick = processAllNotifications;
+                  logsContainer.prepend(processAllBtn);
+                }
+              }
+            };
+            
+            request.onerror = function(event) {
+              logsContainer.innerHTML = 'Error reading notifications: ' + event.target.error;
+            };
+          } catch (e) {
+            logsContainer.innerHTML = 'Error: ' + e.message;
+            console.error('Transaction error:', e);
+          }
         };
         
         dbPromise.onerror = function(event) {
@@ -259,6 +411,45 @@
         };
       } catch (e) {
         logsContainer.innerHTML = 'Error: ' + e.message;
+        console.error('Error viewing notifications:', e);
+      }
+    }
+    
+    // Helper function to process all notifications
+    function processAllNotifications() {
+      try {
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          const tx = db.transaction(['notifications'], 'readwrite');
+          const store = tx.objectStore('notifications');
+          
+          // Get all notifications
+          const request = store.getAll();
+          
+          request.onsuccess = function() {
+            const notifications = request.result || [];
+            let updated = 0;
+            
+            // Update each unprocessed notification
+            notifications.forEach(notification => {
+              if (notification.processed !== true) {
+                notification.processed = true;
+                store.put(notification);
+                updated++;
+              }
+            });
+            
+            tx.oncomplete = function() {
+              alert(`Processed ${updated} notifications`);
+              viewStoredNotifications(); // Refresh the view
+            };
+          };
+        };
+      } catch (e) {
+        console.error('Error processing notifications:', e);
+        alert('Error processing notifications: ' + e.message);
       }
     }
     
@@ -276,8 +467,154 @@
     // Load logs on page load
     window.addEventListener('load', function() {
       checkServiceWorkerStatus();
-      loadLogs();
+      // Add a short delay to ensure DOM is fully loaded
+      setTimeout(loadLogs, 200);
     });
+    
+    // Function to fix common IndexedDB issues
+    async function fixIndexedDBIssues() {
+      const statusEl = document.getElementById('status');
+      const logsContainer = document.getElementById('logs');
+      
+      statusEl.textContent = 'Attempting to fix IndexedDB issues...';
+      logsContainer.innerHTML = 'Checking for problematic databases...';
+      
+      try {
+        // 1. Fix the notifications database schema
+        await fixNotificationsDb();
+        
+        // 2. Check for any other problematic databases
+        await checkAllDatabases();
+        
+        // 3. Add a global error handler for IndexedDB
+        addGlobalIndexedDBErrorHandler();
+        
+        statusEl.textContent = 'IndexedDB fixes applied';
+        logsContainer.innerHTML += '<p>All known IndexedDB issues should be fixed. Refresh the page to verify.</p>';
+      } catch (e) {
+        statusEl.textContent = 'Error fixing IndexedDB: ' + e.message;
+        console.error('Error in fix operation:', e);
+      }
+    }
+    
+    // Fix the notifications database schema
+    async function fixNotificationsDb() {
+      return new Promise((resolve, reject) => {
+        const dbName = 'padeltid_notifications_db';
+        const dbPromise = indexedDB.open(dbName);
+        
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          const version = db.version;
+          db.close();
+          
+          // Reopen with increased version to force schema update
+          const upgradePromise = indexedDB.open(dbName, version + 1);
+          
+          upgradePromise.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            
+            // First try to delete any problematic indexes
+            try {
+              if (db.objectStoreNames.contains('notifications')) {
+                const store = event.target.transaction.objectStore('notifications');
+                
+                if (store.indexNames.contains('processed')) {
+                  store.deleteIndex('processed');
+                  console.log('Deleted problematic processed index');
+                }
+                
+                // Make sure notification data is correct - add a filter schema field
+                // This will help us filter without using the index
+                const cursorRequest = store.openCursor();
+                cursorRequest.onsuccess = function(event) {
+                  const cursor = event.target.result;
+                  if (cursor) {
+                    const notification = cursor.value;
+                    
+                    // Convert boolean processed to number for better compatibility
+                    if (notification.processed === true || notification.processed === false) {
+                      notification.processedStatus = notification.processed ? 1 : 0;
+                      cursor.update(notification);
+                    }
+                    
+                    cursor.continue();
+                  }
+                };
+              }
+            } catch (e) {
+              console.error('Error updating schema:', e);
+            }
+          };
+          
+          upgradePromise.onsuccess = function() {
+            console.log('Successfully updated notifications database schema');
+            resolve();
+          };
+          
+          upgradePromise.onerror = function(event) {
+            console.error('Error upgrading database:', event.target.error);
+            reject(event.target.error);
+          };
+        };
+        
+        dbPromise.onerror = function(event) {
+          reject(event.target.error);
+        };
+      });
+    }
+    
+    // Check all databases for issues
+    async function checkAllDatabases() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB.databases) {
+          console.log('IndexedDB.databases not supported in this browser');
+          resolve();
+          return;
+        }
+        
+        window.indexedDB.databases().then(databases => {
+          console.log('Found databases:', databases);
+          resolve();
+        }).catch(error => {
+          console.error('Error listing databases:', error);
+          resolve();
+        });
+      });
+    }
+    
+    // Add a global error handler for IndexedDB
+    function addGlobalIndexedDBErrorHandler() {
+      // Patch the IDBKeyRange.only method to handle booleans
+      try {
+        const originalOnly = IDBKeyRange.only;
+        IDBKeyRange.only = function(value) {
+          // Convert boolean to number for IndexedDB compatibility
+          if (typeof value === 'boolean') {
+            console.warn('Boolean used in IDBKeyRange.only - converting to number');
+            return originalOnly.call(this, value ? 1 : 0);
+          }
+          return originalOnly.call(this, value);
+        };
+        console.log('Patched IDBKeyRange.only to handle booleans');
+      } catch (e) {
+        console.error('Failed to patch IDBKeyRange:', e);
+      }
+      
+      // Also add general window error handler to catch and log issues
+      window.addEventListener('error', function(event) {
+        if (event.message && event.message.includes('IDBKeyRange')) {
+          console.error('IndexedDB error caught by global handler:', event);
+          
+          // You could add custom handling here
+          document.getElementById('status').textContent = 
+            'IndexedDB error detected: ' + event.message;
+        }
+      });
+    }
+    
+    // Add listener for the fix button
+    document.getElementById('fixIndexDbBtn').addEventListener('click', fixIndexedDBIssues);
   </script>
 </body>
 </html> 

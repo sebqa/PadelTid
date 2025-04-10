@@ -641,7 +641,7 @@
       }
     }
     
-    // Clear processed notifications
+    // Clear processed notifications - FIX FOR IDBKeyRange ISSUE
     window.clearProcessedNotifications = function() {
       try {
         // Clear from localStorage
@@ -651,25 +651,48 @@
         localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(remaining));
         localStorage.setItem('notification_count', remaining.length);
         
-        // Clear from IndexedDB too
+        // Clear from IndexedDB too - FIXED VERSION
         const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
         dbPromise.onsuccess = function(event) {
           const db = event.target.result;
+          
+          // Make sure the store exists
+          if (!db.objectStoreNames.contains('notifications')) {
+            console.log('[Client] No notifications store found in DB');
+            return;
+          }
+          
           const tx = db.transaction('notifications', 'readwrite');
           const store = tx.objectStore('notifications');
           
-          const index = store.index('processed');
-          const req = index.openCursor(IDBKeyRange.only(true));
+          // Use getAllKeys to get all notification IDs first
+          const req = store.getAllKeys();
           
           req.onsuccess = function(event) {
-            const cursor = event.target.result;
-            if (cursor) {
-              cursor.delete();
-              cursor.continue();
-            }
+            const allKeys = event.target.result || [];
+            console.log('[Client] Found ' + allKeys.length + ' notifications to check for deletion');
+            
+            if (allKeys.length === 0) return;
+            
+            // For each key, get the notification and check if processed
+            const deletePromises = [];
+            
+            allKeys.forEach(key => {
+              const getReq = store.get(key);
+              
+              getReq.onsuccess = function() {
+                const notification = getReq.result;
+                // Only delete if processed is true
+                if (notification && notification.processed === true) {
+                  store.delete(key);
+                  console.log('[Client] Deleted processed notification: ' + key);
+                }
+              };
+            });
           };
           
           tx.oncomplete = function() {
+            console.log('[Client] Completed notification cleanup');
             db.close();
           };
         };
@@ -684,7 +707,7 @@
       return count > 0;
     };
     
-    // Check IndexedDB for notifications
+    // Function to check IndexedDB for notifications
     function checkIndexedDBNotifications() {
       try {
         const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
@@ -693,8 +716,7 @@
           const db = event.target.result;
           if (!db.objectStoreNames.contains('notifications')) {
             const store = db.createObjectStore('notifications', { keyPath: 'id' });
-            store.createIndex('processed', 'processed', { unique: false });
-            store.createIndex('timestamp', 'timestamp', { unique: false });
+            // DO NOT create the 'processed' index - we'll use JavaScript filtering instead
           }
         };
         
@@ -703,18 +725,20 @@
           const tx = db.transaction('notifications', 'readwrite');
           const store = tx.objectStore('notifications');
           
-          // Get unprocessed notifications
-          const index = store.index('processed');
-          const req = index.getAll(IDBKeyRange.only(false));
+          // Get ALL notifications - don't use index to filter
+          const req = store.getAll();
           
           req.onsuccess = function() {
-            const dbNotifications = req.result || [];
-            console.log('[Client] Found notifications in IndexedDB:', dbNotifications.length);
+            const allNotifications = req.result || [];
+            console.log('[Client] Found notifications in IndexedDB:', allNotifications.length);
             
-            if (dbNotifications.length > 0) {
+            // Filter in JavaScript instead of using the index
+            const unprocessedNotifications = allNotifications.filter(notif => notif.processed !== true);
+            
+            if (unprocessedNotifications.length > 0) {
               // Merge with localStorage notifications
               const existingNotifications = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]');
-              const combinedNotifications = [...existingNotifications, ...dbNotifications];
+              const combinedNotifications = [...existingNotifications, ...unprocessedNotifications];
               
               // Update localStorage
               localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(combinedNotifications));
@@ -723,7 +747,7 @@
               console.log('[Client] Merged notifications from IndexedDB to localStorage');
               
               // Mark these as processed in IndexedDB
-              dbNotifications.forEach(notification => {
+              unprocessedNotifications.forEach(notification => {
                 notification.processed = true;
                 store.put(notification);
               });
