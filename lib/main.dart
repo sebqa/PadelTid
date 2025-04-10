@@ -47,10 +47,10 @@ Future<void> main() async {
   final notificationHistoryService = NotificationHistoryService();
   await notificationHistoryService.initialize();
 
-  // Initialize web notification bridge for PWAs (simplified version)
+  // Initialize web notification bridge for PWAs with polling
   if (kIsWeb) {
     await WebNotificationBridge().initialize();
-    print('Using simplified notification bridge for web');
+    print('Using polling-based notification bridge for web');
   } else {
     await notificationHistoryService.processPendingBackgroundNotifications();
   }

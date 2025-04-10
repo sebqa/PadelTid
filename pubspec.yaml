@@ -52,7 +52,6 @@ dependencies:
   shimmer: ^3.0.0
   uni_links_web: ^0.1.0
   path_provider: ^2.1.5
-  js: ^0.6.7
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

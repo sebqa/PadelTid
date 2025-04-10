@@ -174,12 +174,24 @@ async function saveNotification(notification) {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     
-    // Add timestamp and unique ID
+    // Add timestamp, unique ID and status
     notification.id = `bg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     notification.timestamp = Date.now();
     notification.processed = false;
+    notification.isPendingBackgroundNotification = true; // Clear marker for SharedPreferences check
     
     store.add(notification);
+    
+    // Also write a marker to localStorage as a backup mechanism
+    try {
+      // Get existing pending count
+      let pendingCount = parseInt(localStorage.getItem('pending_notification_count') || '0');
+      // Increment and save back
+      localStorage.setItem('pending_notification_count', (pendingCount + 1).toString());
+      localStorage.setItem('last_notification_timestamp', Date.now().toString());
+    } catch (e) {
+      console.error('Error updating localStorage markers', e);
+    }
     
     return new Promise((resolve, reject) => {
       tx.oncomplete = () => {
