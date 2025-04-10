@@ -5,7 +5,7 @@ import '../model/notification_item.dart';
 import 'notification_history_service.dart';
 import 'dart:js' as js;
 
-/// Bridge for web notifications with improved IndexedDB support
+/// Simple direct bridge for web notifications
 class WebNotificationBridge {
   static final WebNotificationBridge _instance =
       WebNotificationBridge._internal();
@@ -19,129 +19,83 @@ class WebNotificationBridge {
     if (!kIsWeb || _initialized) return;
 
     _initialized = true;
-    print('WebNotificationBridge initialized with IndexedDB support');
+    print('[WebBridge] Initializing with simplified approach');
 
-    // First check IndexedDB asynchronously
-    await _checkIndexedDBForNotifications();
+    // Check for notifications on startup
+    await _processPendingNotifications();
 
-    // Then check regular localStorage
-    await _checkForPendingNotifications();
-
-    // Set up polling timer to check periodically
-    _pollingTimer = Timer.periodic(Duration(seconds: 15), (_) async {
-      await _checkForPendingNotifications();
+    // Set up polling timer
+    _pollingTimer = Timer.periodic(Duration(seconds: 10), (_) async {
+      await _processPendingNotifications();
     });
   }
 
-  Future<void> _checkIndexedDBForNotifications() async {
+  Future<void> _processPendingNotifications() async {
     if (!kIsWeb) return;
 
     try {
-      print('Checking IndexedDB for background notifications');
-      // This will trigger the JS function that migrates IndexedDB → localStorage
-      js.context.callMethod(
-          'eval', ['window.checkForBackgroundNotificationsInIndexedDB()']);
+      // Direct JS eval to get notifications, which also initiates IndexedDB check
+      final notificationsJson =
+          js.context.callMethod('eval', ['window.checkPendingNotifications()']);
 
-      // Wait a moment for the async operation to complete
-      await Future.delayed(Duration(milliseconds: 500));
+      if (notificationsJson == null || notificationsJson.toString().isEmpty) {
+        return;
+      }
 
-      // Now the localStorage should be populated if there were any notifications
-    } catch (e) {
-      print('Error checking IndexedDB: $e');
-    }
-  }
-
-  Future<void> _checkForPendingNotifications() async {
-    try {
-      // Only proceed if we have pending notifications
-      if (!_hasPendingNotifications()) return;
-
-      print('Detected pending notifications in web storage');
-
-      // Get individual notifications from JS
-      final notificationsJson = _getPendingNotifications();
-      if (notificationsJson == null || notificationsJson.isEmpty) return;
-
+      final List<dynamic> notifications;
       try {
-        // Parse the JSON array of notifications
-        final notificationsList = jsonDecode(notificationsJson) as List;
-        if (notificationsList.isEmpty) return;
+        notifications = jsonDecode(notificationsJson.toString());
+        if (notifications.isEmpty) return;
 
-        print('Retrieved ${notificationsList.length} individual notifications');
+        print('[WebBridge] Processing ${notifications.length} notifications');
 
         // Process each notification
-        for (final item in notificationsList) {
-          try {
-            final notificationData = item as Map<String, dynamic>;
-
-            // Create a notification item
-            final timestamp = DateTime.fromMillisecondsSinceEpoch(
-                notificationData['timestamp'] ??
-                    DateTime.now().millisecondsSinceEpoch);
-
-            final title = notificationData['title'] ?? 'New Notification';
-            final body = notificationData['body'] ?? '';
-            final documentId = notificationData['documentId'];
-
-            // Generate a consistent ID
-            final id =
-                'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}';
-
-            final notification = NotificationItem(
-              id: id,
-              title: title,
-              body: body,
-              documentId: documentId,
-              timestamp: timestamp,
-              isRead: false,
-            );
-
-            // Add to notification history
-            await NotificationHistoryService().addNotification(notification);
-            print(
-                'Added individual notification: $title for document: $documentId');
-          } catch (e) {
-            print('Error processing individual notification: $e');
+        for (final notificationData in notifications) {
+          if (notificationData is Map<String, dynamic>) {
+            await _processNotification(notificationData);
           }
         }
 
-        // We've processed all notifications, so they're already cleared
+        // Clear processed notifications
+        js.context.callMethod('eval', ['window.clearProcessedNotifications()']);
       } catch (e) {
-        print('Error parsing notifications JSON: $e');
+        print('[WebBridge] Error parsing notifications: $e');
       }
     } catch (e) {
-      print('Error checking for pending web notifications: $e');
+      print('[WebBridge] Error retrieving notifications: $e');
     }
   }
 
-  bool _hasPendingNotifications() {
-    if (!kIsWeb) return false;
-
+  Future<void> _processNotification(Map<String, dynamic> data) async {
     try {
-      final result =
-          js.context.callMethod('eval', ['window.hasPendingNotifications()']);
-      return result == true;
+      final notificationHistoryService = NotificationHistoryService();
+
+      // Extract notification data
+      final id =
+          data['id'] ?? 'notification_${DateTime.now().millisecondsSinceEpoch}';
+      final title = data['title'] ?? 'New Notification';
+      final body = data['body'] ?? '';
+      final documentId = data['documentId'];
+      final timestamp = DateTime.fromMillisecondsSinceEpoch(
+          data['timestamp'] ?? DateTime.now().millisecondsSinceEpoch);
+
+      // Create notification object
+      final notification = NotificationItem(
+        id: id,
+        title: title,
+        body: body,
+        documentId: documentId,
+        timestamp: timestamp,
+        isRead: false,
+      );
+
+      // Add to notification history
+      final added =
+          await notificationHistoryService.addNotification(notification);
+      print(
+          '[WebBridge] Added notification: $added - $title for document $documentId');
     } catch (e) {
-      print('Error checking pending notifications: $e');
-      return false;
-    }
-  }
-
-  String? _getPendingNotifications() {
-    if (!kIsWeb) return null;
-
-    try {
-      // Use the sync version for direct JS interop
-      final result = js.context
-          .callMethod('eval', ['window.getPendingNotificationsSync()']);
-
-      // Also trigger the async version for next time
-      js.context.callMethod('eval', ['window.getPendingNotifications()']);
-
-      return result?.toString();
-    } catch (e) {
-      print('Error getting pending notifications: $e');
-      return null;
+      print('[WebBridge] Error processing notification: $e');
     }
   }
 

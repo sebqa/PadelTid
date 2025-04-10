@@ -25,6 +25,9 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize SharedPreferences early
+  await SharedPreferences.getInstance();
+
   // Update status bar style to use primary color
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: const Color(0xFF00875A), // Use primary color

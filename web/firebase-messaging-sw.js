@@ -43,43 +43,71 @@ function showDebugNotification(source) {
 
 // Handle notification clicks more gracefully
 self.addEventListener('notificationclick', function(event) {
-  console.log('Notification clicked:', event);
+  console.log('[SW] Notification clicked:', event);
   
-  try {
-    const notification = event.notification;
-    notification.close();
-    
-    // Get the document ID from the notification data
-    const documentId = notification.data && notification.data.documentId;
-    
-    // Create a URL to navigate to
-    let url = '/';
-    
-    // Focus on existing tab if available, otherwise open new one
-    event.waitUntil(
-      clients.matchAll({type: 'window', includeUncontrolled: true})
-        .then(function(clientList) {
-          for (let i = 0; i < clientList.length; i++) {
-            const client = clientList[i];
-            if ('focus' in client) {
-              client.focus();
-              client.navigate(url);
-              return;
-            }
+  const notification = event.notification;
+  notification.close();
+  
+  // Get the document ID from the notification data
+  const documentId = notification.data && notification.data.documentId;
+  const notificationId = notification.data && notification.data.notificationId;
+  
+  // Mark notification as clicked if we have an ID
+  if (notificationId) {
+    try {
+      const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+      dbPromise.onsuccess = function(event) {
+        const db = event.target.result;
+        const tx = db.transaction('notifications', 'readwrite');
+        const store = tx.objectStore('notifications');
+        
+        const req = store.get(notificationId);
+        req.onsuccess = function() {
+          const notification = req.result;
+          if (notification) {
+            notification.clicked = true;
+            notification.processed = true;
+            store.put(notification);
           }
-          
-          // No existing window/tab, open a new one
-          if (clients.openWindow) {
-            return clients.openWindow(url);
-          }
-        })
-        .catch(function(error) {
-          console.error('Error handling notification click:', error);
-        })
-    );
-  } catch (error) { 
-    console.error('Error in notification click handler:', error);
+        };
+        
+        tx.oncomplete = function() {
+          db.close();
+        };
+      };
+    } catch (e) {
+      console.error('[SW] Error marking notification as clicked:', e);
+    }
   }
+  
+  // Handle navigation
+  let url = '/';
+  if (documentId) {
+    url = `/document/${documentId}`;
+  }
+  
+  // Focus or open window
+  event.waitUntil(
+    clients.matchAll({type: 'window', includeUncontrolled: true})
+      .then(clientList => {
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.focus();
+            client.postMessage({
+              type: 'NOTIFICATION_CLICKED',
+              documentId: documentId,
+              notificationId: notificationId
+            });
+            return;
+          }
+        }
+        
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
+  );
 });
 
 // Add this helper function
@@ -87,80 +115,129 @@ function isIOSDevice() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 
-// Add this to your service worker file
-self.addEventListener('push', (event) => {
-  console.log('Push message received', event);
-  
-  let title = 'PADELTID';
-  let options = {
-    body: 'You have a new notification',
-    icon: './assets/icon/logo.svg',
-    badge: './assets/icon/badge-icon-96x96.png',
-    vibrate: [200, 100, 200, 100, 400],
-    data: {
-      url: self.location.origin,
-      documentId: null,
-      timestamp: Date.now()
-    },
-    tag: 'padeltid-' + Date.now()
+// Add this to the top of your service worker
+function debugLog(message, data) {
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    message: message,
+    data: JSON.stringify(data || {}),
   };
   
-  // Parse data from the push event
+  console.log(`[SW DEBUG] ${logEntry.timestamp}: ${message}`, data || '');
+  
+  // Also save to IndexedDB for persistent logging
+  saveLogToIndexedDB(logEntry);
+}
+
+// Function to save logs to IndexedDB
+function saveLogToIndexedDB(logEntry) {
+  try {
+    const dbPromise = indexedDB.open('padeltid_debug_logs', 1);
+    
+    dbPromise.onupgradeneeded = function(event) {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('logs')) {
+        const store = db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+    };
+    
+    dbPromise.onsuccess = function(event) {
+      const db = event.target.result;
+      const tx = db.transaction('logs', 'readwrite');
+      const store = tx.objectStore('logs');
+      
+      store.add(logEntry);
+      
+      tx.oncomplete = function() {
+        db.close();
+      };
+    };
+  } catch (e) {
+    console.error('Error saving log to IndexedDB:', e);
+  }
+}
+
+// Add this to your service worker file
+self.addEventListener('push', (event) => {
+  debugLog('Push event received', event.data ? event.data.json() : null);
+  
+  // Default notification data
+  let title = 'PADELTID';
+  let body = 'You have a new notification';
+  let documentId = null;
+  
   try {
     if (event.data) {
       const data = event.data.json();
+      console.log('[SW] Push data:', data);
       
       if (data.notification) {
         title = data.notification.title || title;
-        options.body = data.notification.body || options.body;
+        body = data.notification.body || body;
       }
       
-      if (data.data) {
-        options.data = { ...options.data, ...data.data };
+      if (data.data && data.data.documentId) {
+        documentId = data.data.documentId;
       }
-      
-      // Create notification data object to store
-      const notificationData = {
-        title: title,
-        body: options.body,
-        documentId: options.data.documentId,
-        timestamp: Date.now()
-      };
-      
-      // iOS may have issues with complex IndexedDB operations
-      if (isIOSDevice()) {
-        // For iOS, make the stored notification simpler
-        notificationData.platformInfo = 'ios'; // Mark it came from iOS
-        console.log('Optimized notification storage for iOS');
-      }
-      
-      // First try to send to any active clients
-      const clientsPromise = self.clients.matchAll({type: 'window'})
-        .then(clients => {
-          if (clients.length > 0) {
-            // App is running, send to client
-            clients[0].postMessage({
-              type: 'NOTIFICATION_RECEIVED_BACKGROUND',
-              notificationData: notificationData
-            });
-            return true; // Notification sent to client
-          }
-          return false; // No clients available
-        });
-      
-      // Then save to IndexedDB if needed
-      event.waitUntil(
-        clientsPromise.then(sentToClient => {
-          if (!sentToClient) {
-            // No clients active, store in IndexedDB
-            return saveBackgroundNotification(notificationData);
-          }
-        })
-      );
     }
   } catch (e) {
-    console.error('Error processing push data:', e);
+    console.error('[SW] Error parsing push data:', e);
   }
+  
+  // CRITICAL: Store this notification reliably with a unique ID
+  const timestamp = Date.now();
+  const notificationId = `notification_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Create notification payload to store
+  const notificationData = {
+    id: notificationId,
+    title: title, 
+    body: body,
+    documentId: documentId,
+    timestamp: timestamp,
+    processed: false
+  };
+  
+  // STORE USING A DIRECT TECHNIQUE
+  // Convert to URI-safe string and store in localStorage
+  try {
+    // Get existing notifications array
+    let storedNotifications = [];
+    try {
+      const existingData = self.clients.matchAll().then(clients => {
+        if (clients.length > 0) {
+          clients[0].postMessage({
+            type: 'STORE_BACKGROUND_NOTIFICATION',
+            notificationData: notificationData
+          });
+          console.log('[SW] Sent notification directly to client');
+        } else {
+          console.log('[SW] No active clients, storing in db...');
+          // Store in IndexedDB for retrieval later
+          storeNotificationInIndexedDB(notificationData);
+        }
+      });
+    } catch (e) {
+      console.error('[SW] Error with client messaging:', e);
+      storeNotificationInIndexedDB(notificationData);
+    }
+  } catch (e) {
+    console.error('[SW] Error storing notification:', e);
+  }
+  
+  // Prepare notification options
+  const options = {
+    body: body,
+    icon: './assets/icon/logo.svg',
+    badge: './assets/icon/badge-icon-96x96.png',
+    data: {
+      documentId: documentId,
+      notificationId: notificationId,
+      timestamp: timestamp
+    },
+    tag: 'padeltid-notification'
+  };
   
   // Show the notification
   event.waitUntil(
@@ -168,51 +245,68 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Save notification to IndexedDB for background storage
-function saveBackgroundNotification(notification) {
-  return new Promise((resolve, reject) => {
-    const DB_NAME = 'background_notifications_db';
-    const STORE_NAME = 'notifications';
-    const dbRequest = indexedDB.open(DB_NAME, 1);
+// IndexedDB storage helper function
+function storeNotificationInIndexedDB(notification) {
+  console.log('[SW] Storing notification in IndexedDB:', notification);
+  
+  try {
+    const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
     
-    dbRequest.onupgradeneeded = function(event) {
+    dbPromise.onupgradeneeded = function(event) {
       const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+      if (!db.objectStoreNames.contains('notifications')) {
+        const store = db.createObjectStore('notifications', { keyPath: 'id' });
+        store.createIndex('processed', 'processed', { unique: false });
+        store.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
     
-    dbRequest.onerror = function(event) {
-      console.error('Error opening IndexedDB:', event.target.error);
-      reject(event.target.error);
+    dbPromise.onsuccess = function(event) {
+      const db = event.target.result;
+      const tx = db.transaction('notifications', 'readwrite');
+      const store = tx.objectStore('notifications');
+      
+      store.put(notification);
+      
+      tx.oncomplete = function() {
+        console.log('[SW] Successfully stored notification in IndexedDB');
+        db.close();
+      };
     };
     
-    dbRequest.onsuccess = function(event) {
-      try {
-        const db = event.target.result;
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        
-        // Add notification to store
-        const request = store.add(notification);
-        
-        request.onsuccess = function() {
-          console.log('Successfully stored background notification in IndexedDB');
-          resolve();
-        };
-        
-        request.onerror = function(event) {
-          console.error('Error storing notification:', event.target.error);
-          reject(event.target.error);
-        };
-        
-        transaction.oncomplete = function() {
-          db.close();
-        };
-      } catch (e) {
-        console.error('Error in IndexedDB transaction:', e);
-        reject(e);
-      }
+    dbPromise.onerror = function(event) {
+      console.error('[SW] IndexedDB error:', event.target.error);
     };
-  });
+  } catch (e) {
+    console.error('[SW] Error in IndexedDB storage:', e);
+  }
 }
+
+// Add this to your service worker to support synthetic test pushes
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'DEBUG_TEST_PUSH') {
+    debugLog('Received test push message', event.data);
+    
+    // Process this as if it were a real push
+    const notificationData = {
+      id: `test_${Date.now()}`,
+      title: event.data.notification.title,
+      body: event.data.notification.body,
+      documentId: event.data.data.documentId,
+      timestamp: event.data.data.timestamp,
+      processed: false
+    };
+    
+    // Store the notification
+    storeNotificationInIndexedDB(notificationData);
+    
+    // Show the notification
+    self.registration.showNotification(
+      event.data.notification.title, 
+      {
+        body: event.data.notification.body,
+        data: event.data.data
+      }
+    );
+  }
+});

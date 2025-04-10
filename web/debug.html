@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PWA Debug Logs</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .log-entry { 
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #f8f8f8;
+    }
+    pre { white-space: pre-wrap; }
+    .controls { margin-bottom: 20px; }
+    button { padding: 8px 16px; margin-right: 10px; }
+    #status { color: #777; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>PWA Debug Logs</h1>
+  
+  <div class="controls">
+    <button id="refreshBtn">Refresh Logs</button>
+    <button id="clearBtn">Clear Logs</button>
+    <button id="testPushBtn">Send Test Push</button>
+  </div>
+  
+  <div id="status"></div>
+  <div id="logs"></div>
+  
+  <script>
+    // First ensure the database is properly initialized
+    function initializeDatabase() {
+      return new Promise((resolve, reject) => {
+        const statusEl = document.getElementById('status');
+        statusEl.textContent = 'Initializing database...';
+        
+        const dbPromise = indexedDB.open('padeltid_debug_logs', 1);
+        
+        dbPromise.onupgradeneeded = function(event) {
+          statusEl.textContent = 'Creating database schema...';
+          const db = event.target.result;
+          
+          // Create the logs store if it doesn't exist
+          if (!db.objectStoreNames.contains('logs')) {
+            const store = db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
+            store.createIndex('timestamp', 'timestamp', { unique: false });
+            console.log('Created logs object store');
+          }
+        };
+        
+        dbPromise.onsuccess = function(event) {
+          statusEl.textContent = 'Database ready';
+          resolve(event.target.result);
+        };
+        
+        dbPromise.onerror = function(event) {
+          statusEl.textContent = 'Database error: ' + event.target.error;
+          reject(event.target.error);
+        };
+      });
+    }
+    
+    // Function to load and display logs
+    async function loadLogs() {
+      const logsContainer = document.getElementById('logs');
+      logsContainer.innerHTML = 'Loading logs...';
+      
+      try {
+        // First initialize the database
+        const db = await initializeDatabase();
+        
+        // Now we can safely access the stores
+        const tx = db.transaction(['logs'], 'readonly');
+        const store = tx.objectStore('logs');
+        
+        // Check if the timestamp index exists before using it
+        let request;
+        if (store.indexNames.contains('timestamp')) {
+          const index = store.index('timestamp');
+          request = index.openCursor(null, 'prev'); // Sort newest first
+        } else {
+          request = store.openCursor(null, 'prev');
+        }
+        
+        const logs = [];
+        
+        request.onsuccess = function(event) {
+          const cursor = event.target.result;
+          if (cursor) {
+            logs.push(cursor.value);
+            cursor.continue();
+          } else {
+            // Display all logs
+            if (logs.length === 0) {
+              logsContainer.innerHTML = 'No logs found.';
+            } else {
+              logsContainer.innerHTML = '';
+              logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.innerHTML = `
+                  <strong>${log.timestamp || new Date().toISOString()}</strong>
+                  <p>${log.message || 'No message'}</p>
+                  <pre>${log.data || '{}'}</pre>
+                `;
+                logsContainer.appendChild(logEntry);
+              });
+            }
+          }
+        };
+        
+        request.onerror = function(event) {
+          logsContainer.innerHTML = 'Error reading logs: ' + event.target.error;
+        };
+      } catch (e) {
+        logsContainer.innerHTML = 'Error: ' + e.message;
+        console.error('Error loading logs:', e);
+      }
+    }
+    
+    // Function to clear logs
+    async function clearLogs() {
+      try {
+        // First initialize the database
+        const db = await initializeDatabase();
+        
+        const tx = db.transaction(['logs'], 'readwrite');
+        const store = tx.objectStore('logs');
+        
+        const request = store.clear();
+        
+        request.onsuccess = function() {
+          alert('Logs cleared successfully');
+          loadLogs();
+        };
+        
+        request.onerror = function(event) {
+          alert('Error clearing logs: ' + event.target.error);
+        };
+      } catch (e) {
+        alert('Error: ' + e.message);
+        console.error('Error clearing logs:', e);
+      }
+    }
+    
+    // Function to check service worker state
+    function checkServiceWorkerStatus() {
+      const statusEl = document.getElementById('status');
+      
+      if ('serviceWorker' in navigator) {
+        statusEl.textContent = 'Checking service worker status...';
+        
+        navigator.serviceWorker.getRegistration().then(registration => {
+          if (registration) {
+            statusEl.textContent = 'Service Worker active: ' + registration.scope;
+            console.log('Service Worker registered:', registration);
+            
+            // Check pushManager status
+            registration.pushManager.getSubscription().then(subscription => {
+              if (subscription) {
+                console.log('Push subscription active:', subscription);
+              } else {
+                console.log('No push subscription found');
+              }
+            });
+          } else {
+            statusEl.textContent = 'No service worker registration found';
+            console.log('No service worker registration found');
+          }
+        }).catch(err => {
+          statusEl.textContent = 'Service worker error: ' + err.message;
+          console.error('Service worker error:', err);
+        });
+      } else {
+        statusEl.textContent = 'Service Worker not supported';
+      }
+    }
+    
+    // Function to send a test push
+    function sendTestPush() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+          // Create a synthetic push event
+          registration.active.postMessage({
+            type: 'DEBUG_TEST_PUSH',
+            notification: {
+              title: 'Test Notification',
+              body: 'This is a test push notification'
+            },
+            data: {
+              documentId: 'test-doc-123',
+              timestamp: Date.now()
+            }
+          });
+          
+          alert('Test notification sent to service worker');
+        }).catch(err => {
+          alert('Error sending test notification: ' + err.message);
+          console.error('Error sending test notification:', err);
+        });
+      } else {
+        alert('Service Worker not supported');
+      }
+    }
+    
+    // Function to view stored notifications in IndexedDB
+    async function viewStoredNotifications() {
+      const logsContainer = document.getElementById('logs');
+      logsContainer.innerHTML = 'Checking stored notifications...';
+      
+      try {
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          
+          // Check if the notifications store exists
+          if (!db.objectStoreNames.contains('notifications')) {
+            logsContainer.innerHTML = 'No notifications store found in database.';
+            return;
+          }
+          
+          const tx = db.transaction(['notifications'], 'readonly');
+          const store = tx.objectStore('notifications');
+          
+          const request = store.getAll();
+          
+          request.onsuccess = function() {
+            const notifications = request.result || [];
+            
+            if (notifications.length === 0) {
+              logsContainer.innerHTML = 'No stored notifications found.';
+            } else {
+              logsContainer.innerHTML = `<h3>Found ${notifications.length} stored notifications:</h3>`;
+              
+              notifications.forEach(notification => {
+                const notifDiv = document.createElement('div');
+                notifDiv.className = 'log-entry';
+                notifDiv.innerHTML = `
+                  <strong>${new Date(notification.timestamp).toISOString()}</strong>
+                  <p>${notification.title}</p>
+                  <p>${notification.body}</p>
+                  <p>Document ID: ${notification.documentId || 'none'}</p>
+                  <p>Processed: ${notification.processed ? 'Yes' : 'No'}</p>
+                `;
+                logsContainer.appendChild(notifDiv);
+              });
+            }
+          };
+          
+          request.onerror = function(event) {
+            logsContainer.innerHTML = 'Error reading notifications: ' + event.target.error;
+          };
+        };
+        
+        dbPromise.onerror = function(event) {
+          logsContainer.innerHTML = 'Error opening notifications database: ' + event.target.error;
+        };
+      } catch (e) {
+        logsContainer.innerHTML = 'Error: ' + e.message;
+      }
+    }
+    
+    // Add button for viewing stored notifications
+    const viewNotificationsBtn = document.createElement('button');
+    viewNotificationsBtn.textContent = 'View Stored Notifications';
+    viewNotificationsBtn.addEventListener('click', viewStoredNotifications);
+    document.querySelector('.controls').appendChild(viewNotificationsBtn);
+    
+    // Set up event listeners
+    document.getElementById('refreshBtn').addEventListener('click', loadLogs);
+    document.getElementById('clearBtn').addEventListener('click', clearLogs);
+    document.getElementById('testPushBtn').addEventListener('click', sendTestPush);
+    
+    // Load logs on page load
+    window.addEventListener('load', function() {
+      checkServiceWorkerStatus();
+      loadLogs();
+    });
+  </script>
+</body>
+</html> 

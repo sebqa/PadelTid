@@ -53,48 +53,43 @@ class NotificationHistoryService extends ChangeNotifier {
   }
 
   // Modify the addNotification method with stronger deduplication
-  Future<void> addNotification(NotificationItem notification,
-      {bool checkDuplicates = true}) async {
-    // First check if we've recently processed this exact ID
-    if (_recentlyProcessedIds.contains(notification.id)) {
-      print('Ignoring already processed notification ID: ${notification.id}');
-      return;
-    }
+  Future<bool> addNotification(NotificationItem notification) async {
+    try {
+      print('Adding notification to history: ${notification.title}');
 
-    // Add to recently processed set with automatic cleanup after 30 seconds
-    _recentlyProcessedIds.add(notification.id);
-    Future.delayed(Duration(seconds: 30), () {
-      _recentlyProcessedIds.remove(notification.id);
-    });
+      // Check if notification already exists
+      if (_recentlyProcessedIds.contains(notification.id) ||
+          _notifications.any((n) => n.id == notification.id)) {
+        print('Notification already exists: ${notification.id}');
+        return false;
+      }
 
-    // Check for exact ID duplicates in stored notifications
-    final existingIndex =
-        _notifications.indexWhere((n) => n.id == notification.id);
+      // Add to static set to prevent duplicates
+      _recentlyProcessedIds.add(notification.id);
 
-    if (existingIndex >= 0) {
-      // Update existing notification
-      _notifications[existingIndex] = notification;
-    } else if (checkDuplicates &&
-        hasRecentDuplicate(notification.title, notification.documentId)) {
-      // Skip adding if it's a duplicate by content
-      print(
-          'Skipping duplicate notification by content: ${notification.title}');
-      return;
-    } else {
-      // Add new notification
+      // Add to in-memory list
       _notifications.add(notification);
+
+      // Sort by most recent first
+      _notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+      // Cap the list size if needed
+      if (_notifications.length > 100) {
+        _notifications = _notifications.sublist(0, 100);
+      }
+
+      // Save to storage
+      await _saveNotifications();
+
+      // Notify listeners
+      notifyListeners();
+
+      print('Successfully added notification: ${notification.id}');
+      return true;
+    } catch (e) {
+      print('Error adding notification: $e');
+      return false;
     }
-
-    // Sort by timestamp (newest first)
-    _notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-    // Limit to 50 notifications
-    if (_notifications.length > 50) {
-      _notifications = _notifications.sublist(0, 50);
-    }
-
-    await _saveNotifications();
-    notifyListeners();
   }
 
   // Mark a notification as read
