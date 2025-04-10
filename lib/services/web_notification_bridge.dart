@@ -34,6 +34,26 @@ class WebNotificationBridge {
     if (!kIsWeb) return;
 
     try {
+      // First check if any notifications were explicitly cleared
+      // to avoid re-adding them back
+      bool wasClearedRecently = false;
+      try {
+        final clearedRecently = js.context.callMethod('eval', [
+          'window.wasNotificationsClearedRecently ? window.wasNotificationsClearedRecently() : false'
+        ]);
+        wasClearedRecently =
+            clearedRecently == true || clearedRecently.toString() == 'true';
+      } catch (e) {
+        print('[WebBridge] Error checking if notifications were cleared: $e');
+      }
+
+      // If notifications were cleared, don't reprocess them
+      if (wasClearedRecently) {
+        print(
+            '[WebBridge] Notifications were cleared recently, skipping processing');
+        return;
+      }
+
       // Direct JS eval to get notifications, which also initiates IndexedDB check
       final notificationsJson =
           js.context.callMethod('eval', ['window.checkPendingNotifications()']);

@@ -766,5 +766,88 @@
     // Run an initial check on page load
     checkIndexedDBNotifications();
   </script>
+  <script>
+    // Function to completely clear all notifications in IndexedDB and localStorage
+    window.clearAllNotifications = function() {
+      try {
+        console.log('[Client] Clearing ALL notifications from storage');
+        
+        // 1. Clear from localStorage
+        localStorage.setItem(NOTIFICATIONS_KEY, '[]');
+        localStorage.setItem('notification_count', '0');
+        localStorage.setItem('pending_notifications', '[]');
+        localStorage.setItem('pending_notification_count', '0');
+        
+        // 2. Clear from older format if it exists
+        localStorage.removeItem('notification_history');
+        
+        // 3. Clear from IndexedDB
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          
+          // Check if store exists
+          if (!db.objectStoreNames.contains('notifications')) {
+            return;
+          }
+          
+          const tx = db.transaction('notifications', 'readwrite');
+          const store = tx.objectStore('notifications');
+          
+          // Clear the entire store
+          const clearReq = store.clear();
+          
+          clearReq.onsuccess = function() {
+            console.log('[Client] Successfully cleared all notifications from IndexedDB');
+          };
+          
+          tx.oncomplete = function() {
+            db.close();
+          };
+        };
+        
+        // Also clear any notifications in the debug logs DB
+        try {
+          const logsDb = indexedDB.open('padeltid_debug_logs', 1);
+          logsDb.onsuccess = function(event) {
+            const db = event.target.result;
+            if (db.objectStoreNames.contains('logs')) {
+              const tx = db.transaction('logs', 'readwrite');
+              const store = tx.objectStore('logs');
+              store.clear();
+            }
+            db.close();
+          };
+        } catch (e) {
+          console.error('[Client] Error clearing debug logs:', e);
+        }
+        
+        return true;
+      } catch (e) {
+        console.error('[Client] Error in clearAllNotifications:', e);
+        return false;
+      }
+    };
+  </script>
+  <script>
+    // Flag to track if notifications were recently cleared
+    let notificationsClearedTimestamp = 0;
+    
+    // When clearing all notifications, also set this flag
+    const originalClearAll = window.clearAllNotifications;
+    window.clearAllNotifications = function() {
+      const result = originalClearAll ? originalClearAll() : true;
+      notificationsClearedTimestamp = Date.now();
+      return result;
+    };
+    
+    // Helper to check if notifications were cleared recently
+    window.wasNotificationsClearedRecently = function() {
+      // Consider "recently" as within the last minute
+      const ONE_MINUTE = 60 * 1000;
+      return (Date.now() - notificationsClearedTimestamp) < ONE_MINUTE;
+    };
+  </script>
 </body>
 </html>

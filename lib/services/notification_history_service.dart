@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'dart:js' as js;
 
 class NotificationHistoryService extends ChangeNotifier {
   static final NotificationHistoryService _instance =
@@ -215,6 +216,60 @@ class NotificationHistoryService extends ChangeNotifier {
       }
     } catch (e) {
       print('Error processing background notifications: $e');
+    }
+  }
+
+  // Clear all notifications from all storage mechanisms
+  Future<void> clearAllNotifications() async {
+    print('Clearing all notifications from everywhere');
+
+    // 1. Clear in-memory notifications
+    _notifications.clear();
+
+    // 2. Clear notifications in SharedPreferences
+    await _saveNotifications();
+
+    // 3. Clear notifications in IndexedDB (for web)
+    if (kIsWeb) {
+      await _clearWebNotifications();
+    }
+
+    // 4. Notify listeners that notifications are cleared
+    notifyListeners();
+  }
+
+  // Helper to clear notifications from IndexedDB (web only)
+  Future<void> _clearWebNotifications() async {
+    if (!kIsWeb) return;
+
+    try {
+      // Call the JS function to clear notifications
+      js.context.callMethod('eval',
+          ['window.clearAllNotifications && window.clearAllNotifications()']);
+      print('Called clearAllNotifications in JS');
+    } catch (e) {
+      print('Error clearing web notifications: $e');
+    }
+  }
+
+  // Use this method to mark a notification as read
+  Future<void> markNotificationRead(String id) async {
+    final index = _notifications.indexWhere((n) => n.id == id);
+    if (index >= 0) {
+      _notifications[index].isRead = true;
+
+      // Also mark as processed in web storage if on web
+      if (kIsWeb) {
+        try {
+          js.context
+              .callMethod('eval', ['window.markNotificationProcessed("$id")']);
+        } catch (e) {
+          print('Error marking web notification as read: $e');
+        }
+      }
+
+      await _saveNotifications();
+      notifyListeners();
     }
   }
 }

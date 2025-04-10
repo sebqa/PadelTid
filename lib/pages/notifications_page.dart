@@ -25,7 +25,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             PopupMenuButton<String>(
               onSelected: (value) {
                 if (value == 'clear_all') {
-                  _showClearConfirmationDialog(context);
+                  _clearAllNotifications();
                 } else if (value == 'mark_all_read') {
                   notificationService.markAllAsRead();
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -137,29 +137,50 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  void _showClearConfirmationDialog(BuildContext context) {
-    showDialog(
+  void _clearAllNotifications() async {
+    // Confirm with the user
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Clear all notifications?'),
         content: Text('This action cannot be undone.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(context).pop(false),
             child: Text('CANCEL'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Provider.of<NotificationHistoryService>(context, listen: false)
-                  .clearAll();
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('All notifications cleared')));
-            },
-            child: Text('CLEAR'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('CONFIRM'),
           ),
         ],
       ),
     );
+
+    if (confirmed == true) {
+      // Use the improved method that clears everything
+      await NotificationHistoryService().clearAllNotifications();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('All notifications cleared')),
+      );
+    }
   }
+}
+
+// Add a temporary localization class
+class AppLocalizations {
+  final BuildContext context;
+
+  AppLocalizations(this.context);
+
+  static AppLocalizations of(BuildContext context) {
+    return AppLocalizations(context);
+  }
+
+  String get clearNotifications => 'Clear all notifications?';
+  String get confirmClearNotifications => 'This action cannot be undone.';
+  String get cancel => 'CANCEL';
+  String get confirm => 'CONFIRM';
+  String get notificationsCleared => 'All notifications cleared';
 }
