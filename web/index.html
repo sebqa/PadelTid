@@ -355,66 +355,74 @@
     }
   </script>
   <script>
-    // Simple API to check if there are pending notifications
+    // Simplified notification tracking functions
+    
+    // Check if there are pending notifications
     window.hasPendingNotifications = function() {
-      // Check localStorage first (simplest)
-      const pendingCount = parseInt(localStorage.getItem('pending_notification_count') || '0');
-      if (pendingCount > 0) {
-        return true;
-      }
-      
-      // Return false for now, will be updated after async check
-      return false;
-    };
-    
-    // Create a function to reset the pending count (called after Flutter processes notifications)
-    window.resetPendingNotificationsCount = function() {
-      localStorage.setItem('pending_notification_count', '0');
-    };
-    
-    // Function to check IndexedDB for pending notifications and mark them for Flutter
-    window.checkAndMarkPendingNotifications = function() {
-      if (!window.indexedDB) return;
-      
-      const DB_NAME = 'notifications_db';
-      const STORE_NAME = 'background_notifications';
-      
       try {
-        const request = indexedDB.open(DB_NAME, 1);
-        
-        request.onerror = function(event) {
-          console.error('Error opening IndexedDB:', event.target.error);
-        };
-        
-        request.onsuccess = function(event) {
-          const db = event.target.result;
-          
-          try {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const countRequest = store.count();
-            
-            countRequest.onsuccess = function() {
-              const count = countRequest.result;
-              console.log(`Found ${count} pending notifications in IndexedDB`);
-              
-              if (count > 0) {
-                // Update localStorage marker
-                localStorage.setItem('pending_notification_count', count.toString());
-                localStorage.setItem('last_notification_timestamp', Date.now().toString());
-              }
-            };
-          } catch (e) {
-            console.log('No pending notifications store exists yet');
-          }
-        };
+        // Check localStorage for simplicity
+        const count = parseInt(localStorage.getItem('pending_notification_count') || '0');
+        console.log('Checked for pending notifications, found:', count);
+        return count > 0;
       } catch (e) {
-        console.error('Error checking IndexedDB:', e);
+        console.error('Error checking pending notifications:', e);
+        return false;
       }
     };
     
-    // Run the check when page loads
-    window.checkAndMarkPendingNotifications();
+    // Reset notification count
+    window.resetPendingNotificationsCount = function() {
+      try {
+        localStorage.setItem('pending_notification_count', '0');
+        console.log('Reset pending notification count');
+        return true;
+      } catch (e) {
+        console.error('Error resetting notification count:', e);
+        return false;
+      }
+    };
+  </script>
+  <script>
+    // Listen for direct messages from service worker
+    navigator.serviceWorker.addEventListener('message', function(event) {
+      console.log('Received message from service worker:', event.data);
+      
+      if (event.data && event.data.type === 'NOTIFICATION_RECEIVED_BACKGROUND') {
+        // Handle detailed notification data
+        if (event.data.notificationData) {
+          // Get existing notifications
+          let storedNotifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+          
+          // Add the new notification
+          storedNotifications.push(event.data.notificationData);
+          
+          // Save back to localStorage
+          localStorage.setItem('pending_notifications', JSON.stringify(storedNotifications));
+          localStorage.setItem('pending_notification_count', storedNotifications.length.toString());
+          
+          console.log('Saved detailed notification from service worker');
+        } else {
+          // Backward compatibility - increment simple counter
+          const pendingCount = parseInt(localStorage.getItem('pending_notification_count') || '0');
+          localStorage.setItem('pending_notification_count', (pendingCount + 1).toString());
+        }
+      }
+    });
+    
+    // Create a function to get and clear pending notifications
+    window.getPendingNotifications = function() {
+      try {
+        const notifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+        // Clear after retrieving
+        localStorage.setItem('pending_notifications', '[]');
+        localStorage.setItem('pending_notification_count', '0');
+        console.log('Retrieved and cleared pending notifications:', notifications);
+        return JSON.stringify(notifications);
+      } catch (e) {
+        console.error('Error retrieving notifications:', e);
+        return '[]';
+      }
+    };
   </script>
 </body>
 </html>

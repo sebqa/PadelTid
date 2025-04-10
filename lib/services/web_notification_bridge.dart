@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html;
 import '../model/notification_item.dart';
 import 'notification_history_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:js' as js;
 
-/// A simple bridge for web notifications that uses polling and localStorage
+/// Bridge for web notifications using direct js evaluation
 class WebNotificationBridge {
   static final WebNotificationBridge _instance =
       WebNotificationBridge._internal();
@@ -20,47 +19,75 @@ class WebNotificationBridge {
     if (!kIsWeb || _initialized) return;
 
     _initialized = true;
-    print('WebNotificationBridge initialized in simple polling mode');
+    print(
+        'WebNotificationBridge initialized with individual notifications support');
 
     // Check for pending notifications immediately
     await _checkForPendingNotifications();
 
-    // Set up polling timer to check every 30 seconds
-    _pollingTimer = Timer.periodic(Duration(seconds: 30), (_) async {
+    // Set up polling timer to check every 15 seconds
+    _pollingTimer = Timer.periodic(Duration(seconds: 15), (_) async {
       await _checkForPendingNotifications();
     });
   }
 
   Future<void> _checkForPendingNotifications() async {
     try {
-      // Check if there are pending notifications using localStorage
-      final hasPendingNotifications = await _hasPendingNotifications();
+      // Only proceed if we have pending notifications
+      if (!_hasPendingNotifications()) return;
 
-      if (hasPendingNotifications) {
-        print('Detected pending notifications in web storage');
+      print('Detected pending notifications in web storage');
 
-        // Generate a simple notification
-        final timestamp = DateTime.now();
-        final id =
-            'background_notification_${timestamp.millisecondsSinceEpoch}';
+      // Get individual notifications from JS
+      final notificationsJson = _getPendingNotifications();
+      if (notificationsJson == null || notificationsJson.isEmpty) return;
 
-        final notification = NotificationItem(
-          id: id,
-          title: 'New Notifications',
-          body: 'You have new notifications to view',
-          documentId: null, // No specific document
-          timestamp: timestamp,
-          isRead: false,
-        );
+      try {
+        // Parse the JSON array of notifications
+        final notificationsList = jsonDecode(notificationsJson) as List;
+        if (notificationsList.isEmpty) return;
 
-        // Add to notification history
-        final notificationService = NotificationHistoryService();
-        await notificationService.addNotification(notification);
+        print('Retrieved ${notificationsList.length} individual notifications');
 
-        // Reset the pending count
-        _resetPendingNotificationsCount();
+        // Process each notification
+        for (final item in notificationsList) {
+          try {
+            final notificationData = item as Map<String, dynamic>;
 
-        print('Created generic notification for background notifications');
+            // Create a notification item
+            final timestamp = DateTime.fromMillisecondsSinceEpoch(
+                notificationData['timestamp'] ??
+                    DateTime.now().millisecondsSinceEpoch);
+
+            final title = notificationData['title'] ?? 'New Notification';
+            final body = notificationData['body'] ?? '';
+            final documentId = notificationData['documentId'];
+
+            // Generate a consistent ID
+            final id =
+                'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}';
+
+            final notification = NotificationItem(
+              id: id,
+              title: title,
+              body: body,
+              documentId: documentId,
+              timestamp: timestamp,
+              isRead: false,
+            );
+
+            // Add to notification history
+            await NotificationHistoryService().addNotification(notification);
+            print(
+                'Added individual notification: $title for document: $documentId');
+          } catch (e) {
+            print('Error processing individual notification: $e');
+          }
+        }
+
+        // We've processed all notifications, so they're already cleared on JS side
+      } catch (e) {
+        print('Error parsing notifications JSON: $e');
       }
     } catch (e) {
       print('Error checking for pending web notifications: $e');
@@ -68,19 +95,28 @@ class WebNotificationBridge {
   }
 
   bool _hasPendingNotifications() {
+    if (!kIsWeb) return false;
+
     try {
-      return html.window.callMethod('hasPendingNotifications') ?? false;
+      final result =
+          js.context.callMethod('eval', ['window.hasPendingNotifications()']);
+      return result == true;
     } catch (e) {
       print('Error checking pending notifications: $e');
       return false;
     }
   }
 
-  void _resetPendingNotificationsCount() {
+  String? _getPendingNotifications() {
+    if (!kIsWeb) return null;
+
     try {
-      html.window.callMethod('resetPendingNotificationsCount');
+      final result =
+          js.context.callMethod('eval', ['window.getPendingNotifications()']);
+      return result?.toString();
     } catch (e) {
-      print('Error resetting pending notifications count: $e');
+      print('Error getting pending notifications: $e');
+      return null;
     }
   }
 

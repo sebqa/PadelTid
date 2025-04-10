@@ -87,7 +87,6 @@ self.addEventListener('notificationclick', function(event) {
 self.addEventListener('push', (event) => {
   console.log('Push message received', event);
   
-  // Ensure we show something even if the format is unexpected
   let title = 'PADELTID';
   let options = {
     body: 'You have a new notification',
@@ -102,9 +101,55 @@ self.addEventListener('push', (event) => {
     tag: 'padeltid-' + Date.now()
   };
   
-  let notificationData = {};
+  // First, update localStorage directly
+  try {
+    // Get pending count from localStorage
+    self.clients.matchAll({type: 'window'})
+      .then(clients => {
+        if (clients.length > 0) {
+          // App is running, send the actual notification details
+          console.log('Client is active, sending detailed message');
+          clients[0].postMessage({
+            type: 'NOTIFICATION_RECEIVED_BACKGROUND',
+            notificationData: {
+              title: title,
+              body: options.body,
+              documentId: options.data.documentId,
+              timestamp: Date.now()
+            }
+          });
+        } else {
+          // No clients active, store notification details in localStorage
+          try {
+            // Get existing notifications array or create new one
+            let storedNotifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+            
+            // Add new notification
+            storedNotifications.push({
+              title: title,
+              body: options.body,
+              documentId: options.data.documentId,
+              timestamp: Date.now()
+            });
+            
+            // Store back in localStorage
+            localStorage.setItem('pending_notifications', JSON.stringify(storedNotifications));
+            
+            // Update count for simple checks
+            localStorage.setItem('pending_notification_count', storedNotifications.length.toString());
+            localStorage.setItem('last_notification_timestamp', Date.now().toString());
+            
+            console.log('Stored detailed notification in localStorage');
+          } catch (e) {
+            console.error('Error storing notification details:', e);
+          }
+        }
+      });
+  } catch (e) {
+    console.error('Error handling notification:', e);
+  }
   
-  // Try to parse the event data
+  // Try to parse event data
   try {
     if (event.data) {
       const data = event.data.json();
@@ -114,21 +159,9 @@ self.addEventListener('push', (event) => {
         options.body = data.notification.body || options.body;
       }
       
-      // Store document data from the notification payload
       if (data.data) {
         options.data = { ...options.data, ...data.data };
       }
-      
-      // Save notification data for later processing
-      notificationData = {
-        title: title,
-        body: options.body,
-        documentId: options.data.documentId,
-        messageId: data.messageId || null
-      };
-      
-      // Save to IndexedDB for later processing
-      event.waitUntil(saveNotification(notificationData));
     }
   } catch (e) {
     console.error('Error parsing push data', e);
