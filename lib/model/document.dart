@@ -137,9 +137,19 @@ class Document {
       isSubscribed = subscriptionData != null;
     }
 
-    // Get preferences from subscription data if it exists
+    // Get preferences - first try from direct JSON, then fallback to subscribedDocs
     NotificationPreferences? preferences;
-    if (subscribedDocs.isNotEmpty) {
+    if (json.containsKey('preferences') && json['preferences'] != null) {
+      // Get preferences directly from the API response
+      final prefsJson = json['preferences'] as Map<String, dynamic>;
+      preferences = NotificationPreferences(
+        notifyOnWeatherChange: prefsJson['notifyOnWeatherChange'] ?? true,
+        notifyWhenAvailable: prefsJson['notifyWhenAvailable'] ?? true,
+        notifyWhenOneLeft: prefsJson['notifyWhenOneLeft'] ?? false,
+        notifyWhenFull: prefsJson['notifyWhenFull'] ?? false,
+      );
+    } else if (subscribedDocs.isNotEmpty) {
+      // Legacy approach - get from subscribedDocs
       // Create document ID for lookup
       final docId = json['date'].replaceAll('-', '') +
           json['time'].substring(0, 5).replaceAll(':', '') +

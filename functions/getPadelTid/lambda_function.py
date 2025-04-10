@@ -160,9 +160,14 @@ def get_recommended_times(user_id, locations):
                 # Format date and time for subscription check
                 subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
                 print(f"Checking subscription ID: {subscription_id}")
-                is_subscribed = subscription_id in user_subscriptions if user_id else False
-                if is_subscribed:
-                    print(f"Found subscription match for ID: {subscription_id}")
+                is_subscribed = False
+                
+                if user_id:
+                    # Only check if subscribed, don't need preferences
+                    for sub in user_subscriptions:
+                        if isinstance(sub, dict) and sub.get('id') == subscription_id:
+                            is_subscribed = True
+                            break
                 
                 cleaned_doc = {
                     'date': doc['date'],
@@ -170,6 +175,7 @@ def get_recommended_times(user_id, locations):
                     'clubs': filtered_clubs,
                     'subscribed': is_subscribed
                 }
+                
                 cleaned_results.append(cleaned_doc)
 
         return cleaned_results, 200
@@ -434,9 +440,14 @@ def get_filtered_documents(
             # Format date and time for subscription check
             subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') 
             print(f"Checking subscription ID: {subscription_id}")
-            is_subscribed = subscription_id in user_subscriptions if user_id else False
-            if is_subscribed:
-                print(f"Found subscription match for ID: {subscription_id}")
+            is_subscribed = False
+            
+            if user_id:
+                # Find this document in user's subscriptions
+                for sub in user_subscriptions:
+                    if isinstance(sub, dict) and sub.get('id') == subscription_id:
+                        is_subscribed = True
+                        break
             
             cleaned_doc = {
                 'date': doc['date'],
@@ -444,6 +455,7 @@ def get_filtered_documents(
                 'clubs': filtered_clubs,
                 'subscribed': is_subscribed
             }
+            
             cleaned_results.append(cleaned_doc)
 
     return cleaned_results
