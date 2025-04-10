@@ -17,6 +17,7 @@ import 'l10n/app_localizations.dart';
 import 'pages/document_details_page.dart';
 import 'services/notification_handler.dart';
 import 'services/notification_history_service.dart';
+import 'services/web_notification_bridge.dart';
 
 // Add this at the top level
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -39,16 +40,20 @@ Future<void> main() async {
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Set up notification handling for when app is launched from notification
-  //await setupInitialNotificationHandling();
-
-  // Initialize the notification service (only once!)
+  // Initialize the notification service
   await NotificationService().initialize();
 
   // Process any pending background notifications
   final notificationHistoryService = NotificationHistoryService();
   await notificationHistoryService.initialize();
-  await notificationHistoryService.processPendingBackgroundNotifications();
+
+  // Initialize web notification bridge for PWAs (simplified version)
+  if (kIsWeb) {
+    await WebNotificationBridge().initialize();
+    print('Using simplified notification bridge for web');
+  } else {
+    await notificationHistoryService.processPendingBackgroundNotifications();
+  }
 
   // Show minimal UI initially while waiting for data
   runApp(LoadingApp());

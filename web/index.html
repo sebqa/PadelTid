@@ -289,5 +289,70 @@
       }
     })();
   </script>
+  <script>
+    // Function to check for background notifications
+    window.checkForBackgroundNotifications = function() {
+      if (!window.indexedDB) {
+        console.log('IndexedDB not supported');
+        return;
+      }
+      
+      const DB_NAME = 'notifications_db';
+      const STORE_NAME = 'background_notifications';
+      
+      const request = indexedDB.open(DB_NAME, 1);
+      
+      request.onerror = function(event) {
+        console.error('Error opening IndexedDB:', event.target.error);
+      };
+      
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        
+        const getAllRequest = store.getAll();
+        
+        getAllRequest.onsuccess = function(event) {
+          const notifications = event.target.result;
+          console.log(`Found ${notifications.length} background notifications to process`);
+          
+          // Process each notification
+          if (notifications.length > 0) {
+            const deleteRequests = [];
+            
+            notifications.forEach(function(notification) {
+              // Pass to Flutter
+              if (window.processBackgroundNotification) {
+                window.processBackgroundNotification(JSON.stringify(notification));
+                
+                // Mark as processed by deleting
+                const deleteRequest = store.delete(notification.id);
+                deleteRequests.push(deleteRequest);
+              }
+            });
+            
+            // Wait for all deletes to complete
+            Promise.all(deleteRequests.map(req => new Promise((resolve) => {
+              req.onsuccess = resolve;
+            }))).then(() => {
+              console.log('All notifications processed and removed');
+            });
+          }
+        };
+        
+        getAllRequest.onerror = function(event) {
+          console.error('Error getting notifications:', event.target.error);
+        };
+      };
+    };
+    
+    // Check if service worker is active and supports background sync
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(function(registration) {
+        console.log('Service worker is ready');
+      });
+    }
+  </script>
 </body>
 </html>

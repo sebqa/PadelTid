@@ -127,8 +127,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
       final url = Uri.parse(
           'https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${club.latitude}&lon=${club.longitude}');
 
-      final response = await http.get(url,
-          headers: {'User-Agent': 'PadelTid/1.0 (contact@padeltid.com)'});
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

@@ -97,11 +97,12 @@ self.addEventListener('push', (event) => {
     data: {
       url: self.location.origin,
       documentId: null,
-      documentData: null,
       timestamp: Date.now()
     },
     tag: 'padeltid-' + Date.now()
   };
+  
+  let notificationData = {};
   
   // Try to parse the event data
   try {
@@ -118,22 +119,16 @@ self.addEventListener('push', (event) => {
         options.data = { ...options.data, ...data.data };
       }
       
-      // Try to send the notification data to all clients to store in history
-      self.clients.matchAll({
-        type: 'window',
-        includeUncontrolled: true
-      }).then(clients => {
-        if (clients && clients.length) {
-          // Send to first client
-          clients[0].postMessage({
-            type: 'NOTIFICATION_RECEIVED',
-            title: title,
-            body: options.body,
-            documentId: options.data.documentId,
-            timestamp: options.data.timestamp || Date.now()
-          });
-        }
-      });
+      // Save notification data for later processing
+      notificationData = {
+        title: title,
+        body: options.body,
+        documentId: options.data.documentId,
+        messageId: data.messageId || null
+      };
+      
+      // Save to IndexedDB for later processing
+      event.waitUntil(saveNotification(notificationData));
     }
   } catch (e) {
     console.error('Error parsing push data', e);
@@ -144,3 +139,60 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(title, options)
   );
 });
+
+// Add this near the top of your service worker file
+const DB_NAME = 'notifications_db';
+const STORE_NAME = 'background_notifications';
+
+// Initialize the IndexedDB
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    
+    request.onerror = (event) => {
+      console.error('Error opening IndexedDB:', event.target.error);
+      reject(event.target.error);
+    };
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+    
+    request.onsuccess = (event) => {
+      resolve(event.target.result);
+    };
+  });
+}
+
+// Save notification to IndexedDB
+async function saveNotification(notification) {
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    
+    // Add timestamp and unique ID
+    notification.id = `bg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    notification.timestamp = Date.now();
+    notification.processed = false;
+    
+    store.add(notification);
+    
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => {
+        console.log('Notification saved to IndexedDB:', notification);
+        resolve();
+      };
+      
+      tx.onerror = (event) => {
+        console.error('Error saving notification:', event.target.error);
+        reject(event.target.error);
+      };
+    });
+  } catch (error) {
+    console.error('Failed to save notification:', error);
+  }
+}
