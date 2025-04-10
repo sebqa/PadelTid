@@ -251,7 +251,7 @@ class MyApp extends StatelessWidget {
 }
 
 // Add this function to handle initial notification
-Future<void> setupInitialNotificationHandling() async {
+/*Future<void> setupInitialNotificationHandling() async {
   // Only proceed for mobile platforms
   if (kIsWeb) return;
 
@@ -292,4 +292,4 @@ Future<void> setupInitialNotificationHandling() async {
       }
     }
   }
-}
+}*/
