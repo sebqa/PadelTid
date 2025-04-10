@@ -42,7 +42,7 @@ function showDebugNotification(source) {
 // We deliberately don't call showNotification for foreground messages
 
 // Handle notification clicks more gracefully
-self.addEventListener('notificationclick', function(event) {
+/*self.addEventListener('notificationclick', function(event) {
   console.log('Notification clicked:', event);
   
   try {
@@ -83,7 +83,7 @@ self.addEventListener('notificationclick', function(event) {
   } catch (error) {
     console.error('Error in notification click handler:', error);
   }
-});
+});*/
 
 
 // Add this to your service worker file
