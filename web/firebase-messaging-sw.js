@@ -53,7 +53,7 @@ self.addEventListener('notificationclick', function(event) {
   const notificationId = notification.data && notification.data.notificationId;
   
   // Mark notification as clicked if we have an ID
-  if (notificationId) {
+  /*if (notificationId) {
     try {
       const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
       dbPromise.onsuccess = function(event) {
@@ -78,7 +78,7 @@ self.addEventListener('notificationclick', function(event) {
     } catch (e) {
       console.error('[SW] Error marking notification as clicked:', e);
     }
-  }
+  }*/
   
   // Handle navigation
   let url = '/';
