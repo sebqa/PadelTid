@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/notification_item.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 
 class NotificationHistoryService extends ChangeNotifier {
   static final NotificationHistoryService _instance =
@@ -161,21 +163,34 @@ class NotificationHistoryService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Add this method to your NotificationHistoryService class
+  // Add this method to scan for and process notification files
   Future<void> processPendingBackgroundNotifications() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final pendingNotifications =
-          prefs.getStringList('pending_background_notifications');
+      // Get application documents directory
+      final directory = await getApplicationDocumentsDirectory();
 
-      if (pendingNotifications != null && pendingNotifications.isNotEmpty) {
+      // Get all files in directory
+      final dir = Directory(directory.path);
+      final List<FileSystemEntity> entities = await dir.list().toList();
+
+      // Filter for our notification files
+      final notificationFiles = entities
+          .whereType<File>()
+          .where((file) =>
+              file.path.contains('bgn_') && file.path.endsWith('.json'))
+          .toList();
+
+      if (notificationFiles.isNotEmpty) {
         print(
-            'Processing ${pendingNotifications.length} pending background notifications');
+            'Found ${notificationFiles.length} background notification files');
 
-        for (final notificationJson in pendingNotifications) {
+        for (final file in notificationFiles) {
           try {
-            final map = jsonDecode(notificationJson) as Map<String, dynamic>;
+            // Read file content
+            final content = await file.readAsString();
+            final map = jsonDecode(content) as Map<String, dynamic>;
 
+            // Create notification item
             final notification = NotificationItem(
               id: map['id'],
               title: map['title'],
@@ -185,18 +200,23 @@ class NotificationHistoryService extends ChangeNotifier {
               isRead: map['isRead'] ?? false,
             );
 
+            // Add to notification history
             await addNotification(notification);
-            print('Processed pending notification: ${notification.title}');
+            print('Processed notification file: ${file.path}');
+
+            // Delete file after processing
+            await file.delete();
           } catch (e) {
-            print('Error processing individual notification: $e');
+            print('Error processing notification file ${file.path}: $e');
+            // Delete bad files to avoid repeated errors
+            try {
+              await file.delete();
+            } catch (_) {}
           }
         }
-
-        // Clear the pending list after processing
-        await prefs.setStringList('pending_background_notifications', []);
       }
     } catch (e) {
-      print('Error processing pending notifications: $e');
+      print('Error processing background notifications: $e');
     }
   }
 }

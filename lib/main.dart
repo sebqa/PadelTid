@@ -42,34 +42,28 @@ Future<void> main() async {
   // Set up notification handling for when app is launched from notification
   //await setupInitialNotificationHandling();
 
-  // Pre-initialize other services in parallel
-  final notificationServiceInit = NotificationService().initialize();
-  final prefsInit = SharedPreferences.getInstance();
+  // Initialize the notification service (only once!)
+  await NotificationService().initialize();
+
+  // Process any pending background notifications
+  final notificationHistoryService = NotificationHistoryService();
+  await notificationHistoryService.initialize();
+  await notificationHistoryService.processPendingBackgroundNotifications();
 
   // Show minimal UI initially while waiting for data
   runApp(LoadingApp());
-
-  // Wait for critical initializations
-  await notificationServiceInit;
 
   // Perform user auth check and token operations
   if (FirebaseAuth.instance.currentUser != null) {
     TokenService().saveToken();
   }
 
-  // Initialize notification service
-  await NotificationService().initialize();
-
-  // Process any pending background notifications
-  await NotificationHistoryService().processPendingBackgroundNotifications();
-
   // Now launch the full app when ready
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => LocaleProvider()),
-        ChangeNotifierProvider(
-            create: (context) => NotificationHistoryService()),
+        ChangeNotifierProvider(create: (context) => notificationHistoryService),
       ],
       child: const MyApp(),
     ),

@@ -12,6 +12,8 @@ import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
@@ -276,46 +278,40 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   print("Handling a background message: ${message.messageId}");
 
-  // Store notification in history even for background messages
+  // Extract notification data
   final notification = message.notification;
   final data = message.data;
 
   if (notification != null) {
-    final title = notification.title ?? 'New Notification';
-    final body = notification.body ?? '';
-    final documentId = data['documentId'];
-    final timestamp = DateTime.now();
-
     try {
-      // Use direct shared preferences access that works in background
-      final prefs = await SharedPreferences.getInstance();
+      final title = notification.title ?? 'New Notification';
+      final body = notification.body ?? '';
+      final documentId = data['documentId'];
+      final timestamp = DateTime.now();
 
-      // Generate the notification ID consistently
-      final id =
-          'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}';
+      // Create a simple key that we can use to detect this notification was received
+      final notificationKey =
+          'bgn_${message.messageId ?? timestamp.millisecondsSinceEpoch}';
 
-      // Create a serializable notification map
-      final notificationMap = {
-        'id': id,
+      // Use a direct file write approach which is more reliable in background contexts
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$notificationKey.json');
+
+      // Serialize notification data
+      final notificationData = {
+        'id':
+            'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}',
         'title': title,
         'body': body,
         'documentId': documentId,
         'timestamp': timestamp.toIso8601String(),
         'isRead': false,
+        'messageId': message.messageId,
       };
 
-      // Get existing pending notifications or create new list
-      List<String> pendingNotifications =
-          prefs.getStringList('pending_background_notifications') ?? [];
-
-      // Add the new notification as JSON
-      pendingNotifications.add(jsonEncode(notificationMap));
-
-      // Save back to shared preferences
-      await prefs.setStringList(
-          'pending_background_notifications', pendingNotifications);
-
-      print('Saved background notification to pending list: $title');
+      // Write to file
+      await file.writeAsString(jsonEncode(notificationData));
+      print('Saved background notification to file: $notificationKey');
     } catch (e) {
       print('Error storing background notification: $e');
     }
