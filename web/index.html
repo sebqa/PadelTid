@@ -424,5 +424,124 @@
       }
     };
   </script>
+  <script>
+    // Function to migrate notifications from IndexedDB to localStorage
+    window.checkForBackgroundNotificationsInIndexedDB = function() {
+      return new Promise((resolve, reject) => {
+        try {
+          const DB_NAME = 'background_notifications_db';
+          const STORE_NAME = 'notifications';
+          
+          const dbRequest = indexedDB.open(DB_NAME, 1);
+          
+          dbRequest.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            }
+          };
+          
+          dbRequest.onerror = function(event) {
+            console.error('Error opening IndexedDB:', event.target.error);
+            resolve([]); // Return empty array on error
+          };
+          
+          dbRequest.onsuccess = function(event) {
+            try {
+              const db = event.target.result;
+              const transaction = db.transaction([STORE_NAME], 'readwrite');
+              const store = transaction.objectStore(STORE_NAME);
+              
+              const request = store.getAll();
+              
+              request.onsuccess = function() {
+                const notifications = request.result || [];
+                console.log('Retrieved background notifications from IndexedDB:', notifications.length);
+                
+                if (notifications.length > 0) {
+                  // Clear all notifications from store
+                  const clearRequest = store.clear();
+                  clearRequest.onsuccess = function() {
+                    console.log('Successfully cleared IndexedDB notifications after retrieval');
+                  };
+                  
+                  // Add to localStorage for our bridge
+                  const storedNotifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+                  
+                  // Combine notifications
+                  const allNotifications = [...storedNotifications, ...notifications];
+                  
+                  // Save back to localStorage
+                  localStorage.setItem('pending_notifications', JSON.stringify(allNotifications));
+                  localStorage.setItem('pending_notification_count', allNotifications.length.toString());
+                  
+                  console.log('Migrated IndexedDB notifications to localStorage:', notifications.length);
+                }
+                
+                // Return the notifications we found
+                resolve(notifications);
+              };
+              
+              request.onerror = function(event) {
+                console.error('Error retrieving notifications:', event.target.error);
+                resolve([]); // Return empty array on error
+              };
+              
+              transaction.oncomplete = function() {
+                db.close();
+              };
+            } catch (e) {
+              console.error('Error in IndexedDB transaction:', e);
+              resolve([]); // Return empty on error
+            }
+          };
+        } catch (e) {
+          console.error('Error checking IndexedDB notifications:', e);
+          resolve([]); // Return empty on error
+        }
+      });
+    };
+    
+    // Enhanced version of getPendingNotifications that also checks IndexedDB
+    window.getPendingNotifications = function() {
+      return new Promise((resolve) => {
+        // First check IndexedDB and migrate any notifications
+        window.checkForBackgroundNotificationsInIndexedDB().then(() => {
+          try {
+            // Now get the combined notifications from localStorage
+            const notifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+            
+            // Clear after retrieving
+            localStorage.setItem('pending_notifications', '[]');
+            localStorage.setItem('pending_notification_count', '0');
+            
+            console.log('Retrieved and cleared pending notifications:', notifications.length);
+            resolve(JSON.stringify(notifications));
+          } catch (e) {
+            console.error('Error retrieving notifications:', e);
+            resolve('[]');
+          }
+        });
+      });
+    };
+    
+    // Make getPendingNotifications synchronous for JS interop
+    window.getPendingNotificationsSync = function() {
+      try {
+        // Just get notifications from localStorage for sync operation
+        // IndexedDB will be checked separately by our async function
+        const notifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+        return JSON.stringify(notifications);
+      } catch (e) {
+        console.error('Error retrieving notifications synchronously:', e);
+        return '[]';
+      }
+    };
+    
+    // Check IndexedDB on page load
+    if ('indexedDB' in window) {
+      window.checkForBackgroundNotificationsInIndexedDB();
+    }
+  </script>
 </body>
 </html>

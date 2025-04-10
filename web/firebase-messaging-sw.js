@@ -82,6 +82,10 @@ self.addEventListener('notificationclick', function(event) {
   }
 });
 
+// Add this helper function
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
 
 // Add this to your service worker file
 self.addEventListener('push', (event) => {
@@ -101,55 +105,7 @@ self.addEventListener('push', (event) => {
     tag: 'padeltid-' + Date.now()
   };
   
-  // First, update localStorage directly
-  try {
-    // Get pending count from localStorage
-    self.clients.matchAll({type: 'window'})
-      .then(clients => {
-        if (clients.length > 0) {
-          // App is running, send the actual notification details
-          console.log('Client is active, sending detailed message');
-          clients[0].postMessage({
-            type: 'NOTIFICATION_RECEIVED_BACKGROUND',
-            notificationData: {
-              title: title,
-              body: options.body,
-              documentId: options.data.documentId,
-              timestamp: Date.now()
-            }
-          });
-        } else {
-          // No clients active, store notification details in localStorage
-          try {
-            // Get existing notifications array or create new one
-            let storedNotifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
-            
-            // Add new notification
-            storedNotifications.push({
-              title: title,
-              body: options.body,
-              documentId: options.data.documentId,
-              timestamp: Date.now()
-            });
-            
-            // Store back in localStorage
-            localStorage.setItem('pending_notifications', JSON.stringify(storedNotifications));
-            
-            // Update count for simple checks
-            localStorage.setItem('pending_notification_count', storedNotifications.length.toString());
-            localStorage.setItem('last_notification_timestamp', Date.now().toString());
-            
-            console.log('Stored detailed notification in localStorage');
-          } catch (e) {
-            console.error('Error storing notification details:', e);
-          }
-        }
-      });
-  } catch (e) {
-    console.error('Error handling notification:', e);
-  }
-  
-  // Try to parse event data
+  // Parse data from the push event
   try {
     if (event.data) {
       const data = event.data.json();
@@ -162,9 +118,48 @@ self.addEventListener('push', (event) => {
       if (data.data) {
         options.data = { ...options.data, ...data.data };
       }
+      
+      // Create notification data object to store
+      const notificationData = {
+        title: title,
+        body: options.body,
+        documentId: options.data.documentId,
+        timestamp: Date.now()
+      };
+      
+      // iOS may have issues with complex IndexedDB operations
+      if (isIOSDevice()) {
+        // For iOS, make the stored notification simpler
+        notificationData.platformInfo = 'ios'; // Mark it came from iOS
+        console.log('Optimized notification storage for iOS');
+      }
+      
+      // First try to send to any active clients
+      const clientsPromise = self.clients.matchAll({type: 'window'})
+        .then(clients => {
+          if (clients.length > 0) {
+            // App is running, send to client
+            clients[0].postMessage({
+              type: 'NOTIFICATION_RECEIVED_BACKGROUND',
+              notificationData: notificationData
+            });
+            return true; // Notification sent to client
+          }
+          return false; // No clients available
+        });
+      
+      // Then save to IndexedDB if needed
+      event.waitUntil(
+        clientsPromise.then(sentToClient => {
+          if (!sentToClient) {
+            // No clients active, store in IndexedDB
+            return saveBackgroundNotification(notificationData);
+          }
+        })
+      );
     }
   } catch (e) {
-    console.error('Error parsing push data', e);
+    console.error('Error processing push data:', e);
   }
   
   // Show the notification
@@ -173,71 +168,51 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Add this near the top of your service worker file
-const DB_NAME = 'notifications_db';
-const STORE_NAME = 'background_notifications';
-
-// Initialize the IndexedDB
-function openDatabase() {
+// Save notification to IndexedDB for background storage
+function saveBackgroundNotification(notification) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
+    const DB_NAME = 'background_notifications_db';
+    const STORE_NAME = 'notifications';
+    const dbRequest = indexedDB.open(DB_NAME, 1);
     
-    request.onerror = (event) => {
+    dbRequest.onupgradeneeded = function(event) {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    
+    dbRequest.onerror = function(event) {
       console.error('Error opening IndexedDB:', event.target.error);
       reject(event.target.error);
     };
     
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    dbRequest.onsuccess = function(event) {
+      try {
+        const db = event.target.result;
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        
+        // Add notification to store
+        const request = store.add(notification);
+        
+        request.onsuccess = function() {
+          console.log('Successfully stored background notification in IndexedDB');
+          resolve();
+        };
+        
+        request.onerror = function(event) {
+          console.error('Error storing notification:', event.target.error);
+          reject(event.target.error);
+        };
+        
+        transaction.oncomplete = function() {
+          db.close();
+        };
+      } catch (e) {
+        console.error('Error in IndexedDB transaction:', e);
+        reject(e);
       }
     };
-    
-    request.onsuccess = (event) => {
-      resolve(event.target.result);
-    };
   });
-}
-
-// Save notification to IndexedDB
-async function saveNotification(notification) {
-  try {
-    const db = await openDatabase();
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    
-    // Add timestamp, unique ID and status
-    notification.id = `bg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    notification.timestamp = Date.now();
-    notification.processed = false;
-    notification.isPendingBackgroundNotification = true; // Clear marker for SharedPreferences check
-    
-    store.add(notification);
-    
-    // Also write a marker to localStorage as a backup mechanism
-    try {
-      // Get existing pending count
-      let pendingCount = parseInt(localStorage.getItem('pending_notification_count') || '0');
-      // Increment and save back
-      localStorage.setItem('pending_notification_count', (pendingCount + 1).toString());
-      localStorage.setItem('last_notification_timestamp', Date.now().toString());
-    } catch (e) {
-      console.error('Error updating localStorage markers', e);
-    }
-    
-    return new Promise((resolve, reject) => {
-      tx.oncomplete = () => {
-        console.log('Notification saved to IndexedDB:', notification);
-        resolve();
-      };
-      
-      tx.onerror = (event) => {
-        console.error('Error saving notification:', event.target.error);
-        reject(event.target.error);
-      };
-    });
-  } catch (error) {
-    console.error('Failed to save notification:', error);
-  }
 }

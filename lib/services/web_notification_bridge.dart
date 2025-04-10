@@ -5,7 +5,7 @@ import '../model/notification_item.dart';
 import 'notification_history_service.dart';
 import 'dart:js' as js;
 
-/// Bridge for web notifications using direct js evaluation
+/// Bridge for web notifications with improved IndexedDB support
 class WebNotificationBridge {
   static final WebNotificationBridge _instance =
       WebNotificationBridge._internal();
@@ -19,16 +19,36 @@ class WebNotificationBridge {
     if (!kIsWeb || _initialized) return;
 
     _initialized = true;
-    print(
-        'WebNotificationBridge initialized with individual notifications support');
+    print('WebNotificationBridge initialized with IndexedDB support');
 
-    // Check for pending notifications immediately
+    // First check IndexedDB asynchronously
+    await _checkIndexedDBForNotifications();
+
+    // Then check regular localStorage
     await _checkForPendingNotifications();
 
-    // Set up polling timer to check every 15 seconds
+    // Set up polling timer to check periodically
     _pollingTimer = Timer.periodic(Duration(seconds: 15), (_) async {
       await _checkForPendingNotifications();
     });
+  }
+
+  Future<void> _checkIndexedDBForNotifications() async {
+    if (!kIsWeb) return;
+
+    try {
+      print('Checking IndexedDB for background notifications');
+      // This will trigger the JS function that migrates IndexedDB → localStorage
+      js.context.callMethod(
+          'eval', ['window.checkForBackgroundNotificationsInIndexedDB()']);
+
+      // Wait a moment for the async operation to complete
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // Now the localStorage should be populated if there were any notifications
+    } catch (e) {
+      print('Error checking IndexedDB: $e');
+    }
   }
 
   Future<void> _checkForPendingNotifications() async {
@@ -85,7 +105,7 @@ class WebNotificationBridge {
           }
         }
 
-        // We've processed all notifications, so they're already cleared on JS side
+        // We've processed all notifications, so they're already cleared
       } catch (e) {
         print('Error parsing notifications JSON: $e');
       }
@@ -111,8 +131,13 @@ class WebNotificationBridge {
     if (!kIsWeb) return null;
 
     try {
-      final result =
-          js.context.callMethod('eval', ['window.getPendingNotifications()']);
+      // Use the sync version for direct JS interop
+      final result = js.context
+          .callMethod('eval', ['window.getPendingNotificationsSync()']);
+
+      // Also trigger the async version for next time
+      js.context.callMethod('eval', ['window.getPendingNotifications()']);
+
       return result?.toString();
     } catch (e) {
       print('Error getting pending notifications: $e');
