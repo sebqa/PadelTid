@@ -57,6 +57,12 @@ Future<void> main() async {
     TokenService().saveToken();
   }
 
+  // Initialize notification service
+  await NotificationService().initialize();
+
+  // Process any pending background notifications
+  await NotificationHistoryService().processPendingBackgroundNotifications();
+
   // Now launch the full app when ready
   runApp(
     MultiProvider(

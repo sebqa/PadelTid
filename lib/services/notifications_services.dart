@@ -10,6 +10,8 @@ import '../pages/document_details_page.dart';
 import '../main.dart'; // Import to access navigatorKey
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
@@ -285,25 +287,35 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     final timestamp = DateTime.now();
 
     try {
-      // Initialize the notification history service
-      final notificationService = NotificationHistoryService();
-      await notificationService.initialize();
+      // Use direct shared preferences access that works in background
+      final prefs = await SharedPreferences.getInstance();
 
-      // Use the same ID generation logic
+      // Generate the notification ID consistently
       final id =
           'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}';
 
-      final notificationItem = NotificationItem(
-        id: id,
-        title: title,
-        body: body,
-        documentId: documentId,
-        timestamp: timestamp,
-      );
+      // Create a serializable notification map
+      final notificationMap = {
+        'id': id,
+        'title': title,
+        'body': body,
+        'documentId': documentId,
+        'timestamp': timestamp.toIso8601String(),
+        'isRead': false,
+      };
 
-      await notificationService.addNotification(notificationItem);
-      print(
-          'Added background notification to history: ${notificationItem.title}');
+      // Get existing pending notifications or create new list
+      List<String> pendingNotifications =
+          prefs.getStringList('pending_background_notifications') ?? [];
+
+      // Add the new notification as JSON
+      pendingNotifications.add(jsonEncode(notificationMap));
+
+      // Save back to shared preferences
+      await prefs.setStringList(
+          'pending_background_notifications', pendingNotifications);
+
+      print('Saved background notification to pending list: $title');
     } catch (e) {
       print('Error storing background notification: $e');
     }

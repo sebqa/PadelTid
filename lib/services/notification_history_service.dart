@@ -160,4 +160,43 @@ class NotificationHistoryService extends ChangeNotifier {
     await _saveNotifications();
     notifyListeners();
   }
+
+  // Add this method to your NotificationHistoryService class
+  Future<void> processPendingBackgroundNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final pendingNotifications =
+          prefs.getStringList('pending_background_notifications');
+
+      if (pendingNotifications != null && pendingNotifications.isNotEmpty) {
+        print(
+            'Processing ${pendingNotifications.length} pending background notifications');
+
+        for (final notificationJson in pendingNotifications) {
+          try {
+            final map = jsonDecode(notificationJson) as Map<String, dynamic>;
+
+            final notification = NotificationItem(
+              id: map['id'],
+              title: map['title'],
+              body: map['body'],
+              documentId: map['documentId'],
+              timestamp: DateTime.parse(map['timestamp']),
+              isRead: map['isRead'] ?? false,
+            );
+
+            await addNotification(notification);
+            print('Processed pending notification: ${notification.title}');
+          } catch (e) {
+            print('Error processing individual notification: $e');
+          }
+        }
+
+        // Clear the pending list after processing
+        await prefs.setStringList('pending_background_notifications', []);
+      }
+    } catch (e) {
+      print('Error processing pending notifications: $e');
+    }
+  }
 }
