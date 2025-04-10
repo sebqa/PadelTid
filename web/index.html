@@ -135,7 +135,8 @@
     let links = [
       {rel: 'preconnect', href: 'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com'},
       {rel: 'preconnect', href: 'https://rvhxwa55v5.execute-api.eu-north-1.amazonaws.com'},
-      {rel: 'preconnect', href: 'https://kgzbg5117d.execute-api.eu-north-1.amazonaws.com'}
+      {rel: 'preconnect', href: 'https://kgzbg5117d.execute-api.eu-north-1.amazonaws.com'},
+      {rel: 'preconnect', href: 'https://4ui8jbkcgc.execute-api.eu-north-1.amazonaws.com'}
     ];
     
     links.forEach(attributes => {
@@ -847,6 +848,56 @@
       // Consider "recently" as within the last minute
       const ONE_MINUTE = 60 * 1000;
       return (Date.now() - notificationsClearedTimestamp) < ONE_MINUTE;
+    };
+  </script>
+  <script>
+    // Function to completely remove a notification by ID from all storage
+    window.removeNotificationById = function(id) {
+      if (!id) return false;
+      
+      console.log('[Client] Removing notification by ID:', id);
+      
+      try {
+        // 1. Remove from localStorage
+        let notifications = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]');
+        const initialLength = notifications.length;
+        
+        notifications = notifications.filter(n => n.id !== id);
+        
+        localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+        localStorage.setItem('notification_count', notifications.length);
+        
+        // 2. Remove from IndexedDB
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          
+          // Check if store exists
+          if (!db.objectStoreNames.contains('notifications')) {
+            return;
+          }
+          
+          const tx = db.transaction('notifications', 'readwrite');
+          const store = tx.objectStore('notifications');
+          
+          // Delete the notification by ID
+          const deleteReq = store.delete(id);
+          
+          deleteReq.onsuccess = function() {
+            console.log('[Client] Successfully removed notification from IndexedDB:', id);
+          };
+          
+          tx.oncomplete = function() {
+            db.close();
+          };
+        };
+        
+        return initialLength !== notifications.length; // Return true if removed
+      } catch (e) {
+        console.error('[Client] Error removing notification by ID:', e);
+        return false;
+      }
     };
   </script>
 </body>

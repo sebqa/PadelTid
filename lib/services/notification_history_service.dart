@@ -153,10 +153,30 @@ class NotificationHistoryService extends ChangeNotifier {
     }
   }
 
-  // Add this public method to the NotificationHistoryService class
+  // Update the removeNotification method in NotificationHistoryService class
   Future<void> removeNotification(String notificationId) async {
+    print('Removing notification: $notificationId');
+
+    // 1. Remove from in-memory list
     _notifications.removeWhere((n) => n.id == notificationId);
+
+    // 2. Save to SharedPreferences
     await _saveNotifications();
+
+    // 3. For web, mark as processed in IndexedDB or remove entirely
+    if (kIsWeb) {
+      try {
+        // Either mark as processed or remove from IndexedDB
+        js.context.callMethod('eval', [
+          'window.removeNotificationById && window.removeNotificationById("$notificationId")'
+        ]);
+        print('Called removeNotificationById in JS for ID: $notificationId');
+      } catch (e) {
+        print('Error removing web notification: $e');
+      }
+    }
+
+    // 4. Notify listeners that notification list has changed
     notifyListeners();
   }
 
