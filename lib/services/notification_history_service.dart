@@ -164,57 +164,59 @@ class NotificationHistoryService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Add this method to scan for and process notification files
+  // Use this method to process notifications from background
   Future<void> processPendingBackgroundNotifications() async {
     try {
-      // Get application documents directory
-      final directory = await getApplicationDocumentsDirectory();
+      final prefs = await SharedPreferences.getInstance();
 
-      // Get all files in directory
-      final dir = Directory(directory.path);
-      final List<FileSystemEntity> entities = await dir.list().toList();
+      // Get all background notification keys
+      final keys = prefs.getStringList('background_notification_keys') ?? [];
 
-      // Filter for our notification files
-      final notificationFiles = entities
-          .whereType<File>()
-          .where((file) =>
-              file.path.contains('bgn_') && file.path.endsWith('.json'))
-          .toList();
+      if (keys.isNotEmpty) {
+        print('Found ${keys.length} background notification keys to process');
 
-      if (notificationFiles.isNotEmpty) {
-        print(
-            'Found ${notificationFiles.length} background notification files');
-
-        for (final file in notificationFiles) {
-          try {
-            // Read file content
-            final content = await file.readAsString();
-            final map = jsonDecode(content) as Map<String, dynamic>;
-
-            // Create notification item
-            final notification = NotificationItem(
-              id: map['id'],
-              title: map['title'],
-              body: map['body'],
-              documentId: map['documentId'],
-              timestamp: DateTime.parse(map['timestamp']),
-              isRead: map['isRead'] ?? false,
-            );
-
-            // Add to notification history
-            await addNotification(notification);
-            print('Processed notification file: ${file.path}');
-
-            // Delete file after processing
-            await file.delete();
-          } catch (e) {
-            print('Error processing notification file ${file.path}: $e');
-            // Delete bad files to avoid repeated errors
+        for (final key in keys) {
+          final jsonData = prefs.getString(key);
+          if (jsonData != null) {
             try {
-              await file.delete();
-            } catch (_) {}
+              final data = jsonDecode(jsonData) as Map<String, dynamic>;
+
+              // Generate a consistent ID
+              final title = data['title'] ?? '';
+              final body = data['body'] ?? '';
+              final documentId = data['documentId'];
+              final timestamp =
+                  DateTime.fromMillisecondsSinceEpoch(data['timestamp'] ?? 0);
+
+              final id =
+                  'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}';
+
+              // Create notification item
+              final notification = NotificationItem(
+                id: id,
+                title: title,
+                body: body,
+                documentId: documentId,
+                timestamp: timestamp,
+                isRead: false,
+              );
+
+              // Add to notification history
+              await addNotification(notification);
+              print('Processed background notification: $title');
+
+              // Remove the processed notification data
+              await prefs.remove(key);
+            } catch (e) {
+              print('Error processing notification data for key $key: $e');
+              // Remove bad data to avoid repeated errors
+              await prefs.remove(key);
+            }
           }
         }
+
+        // Clear the list of keys after processing
+        await prefs.setStringList('background_notification_keys', []);
       }
     } catch (e) {
       print('Error processing background notifications: $e');

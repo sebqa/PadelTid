@@ -264,10 +264,10 @@ class NotificationService {
   }
 }
 
-// This needs to be a top-level function
+// Update the background handler with a simpler, more direct approach
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Initialize Firebase first when handling background messages
+  // Initialize Firebase
   try {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
@@ -284,34 +284,32 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   if (notification != null) {
     try {
-      final title = notification.title ?? 'New Notification';
-      final body = notification.body ?? '';
-      final documentId = data['documentId'];
-      final timestamp = DateTime.now();
+      // Get a simple timestamp-based key
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final key = 'bg_notification_$timestamp';
 
-      // Create a simple key that we can use to detect this notification was received
-      final notificationKey =
-          'bgn_${message.messageId ?? timestamp.millisecondsSinceEpoch}';
-
-      // Use a direct file write approach which is more reliable in background contexts
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/$notificationKey.json');
-
-      // Serialize notification data
+      // Create a minimal notification map with just essential data
       final notificationData = {
-        'id':
-            'doc_${documentId}_${timestamp.millisecondsSinceEpoch}_${(title.hashCode ^ body.hashCode).abs()}',
-        'title': title,
-        'body': body,
-        'documentId': documentId,
-        'timestamp': timestamp.toIso8601String(),
-        'isRead': false,
+        'title': notification.title ?? 'New Notification',
+        'body': notification.body ?? '',
+        'documentId': data['documentId'],
+        'timestamp': timestamp,
         'messageId': message.messageId,
       };
 
-      // Write to file
-      await file.writeAsString(jsonEncode(notificationData));
-      print('Saved background notification to file: $notificationKey');
+      // Use direct shared preferences for simplicity
+      final prefs = await SharedPreferences.getInstance();
+
+      // Store the notification data as a JSON string
+      await prefs.setString(key, jsonEncode(notificationData));
+
+      // Record this key in a list of background notification keys
+      List<String> keys =
+          prefs.getStringList('background_notification_keys') ?? [];
+      keys.add(key);
+      await prefs.setStringList('background_notification_keys', keys);
+
+      print('Saved background notification with key: $key');
     } catch (e) {
       print('Error storing background notification: $e');
     }
