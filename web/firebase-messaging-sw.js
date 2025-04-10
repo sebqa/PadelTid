@@ -82,9 +82,6 @@ self.addEventListener('notificationclick', function(event) {
   
   // Handle navigation
   let url = '/';
-  if (documentId) {
-    url = `/document/${documentId}`;
-  }
   
   // Focus or open window
   event.waitUntil(
