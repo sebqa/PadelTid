@@ -4,6 +4,7 @@ import '../model/notification_item.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class NotificationHistoryService extends ChangeNotifier {
   static final NotificationHistoryService _instance =
