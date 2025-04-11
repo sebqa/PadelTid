@@ -62,7 +62,7 @@ class Document {
   final String date;
   final String time;
   final Map<String, ClubAvailability> clubs;
-  bool? _subscribed;
+  bool? _followed;
   NotificationPreferences? notificationPreferences;
   final List<String> selectedLocations;
 
@@ -71,12 +71,12 @@ class Document {
     required this.time,
     required this.clubs,
     required this.selectedLocations,
-    bool? subscribed,
+    bool? followed,
     this.notificationPreferences,
-  }) : _subscribed = subscribed;
+  }) : _followed = followed;
 
-  bool? get subscribed => _subscribed;
-  set subscribed(bool? value) => _subscribed = value;
+  bool? get followed => _followed;
+  set followed(bool? value) => _followed = value;
 
   // Get weather from first available selected location or first available club
   Weather? get weather {
@@ -106,7 +106,7 @@ class Document {
       : clubs.keys.where((club) => selectedLocations.contains(club)).length;
 
   factory Document.fromJson(
-      Map<String, dynamic> json, List<dynamic> subscribedDocs,
+      Map<String, dynamic> json, List<dynamic> followedDocs,
       {List<String> selectedLocations = const []}) {
     Map<String, ClubAvailability> clubs = {};
     if (json.containsKey('clubs')) {
@@ -117,27 +117,26 @@ class Document {
       });
     }
 
-    // First check if 'subscribed' is directly available in the JSON (from the API)
-    bool? isSubscribed =
-        json.containsKey('subscribed') ? json['subscribed'] : null;
+    // First check if 'followed' is directly available in the JSON (from the API)
+    bool? isFollowed = json.containsKey('followed') ? json['followed'] : null;
 
-    // If not available in JSON, fall back to checking subscribedDocs (legacy approach)
-    if (isSubscribed == null && subscribedDocs.isNotEmpty) {
+    // If not available in JSON, fall back to checking followedDocs (legacy approach)
+    if (isFollowed == null && followedDocs.isNotEmpty) {
       // Create document ID in the format YYYYMMDDHHMMSS
       final docId = json['date'].replaceAll('-', '') +
           json['time'].substring(0, 5).replaceAll(':', '') +
           "00";
 
-      // Find subscription data for this document
-      final subscriptionData = subscribedDocs.firstWhere(
-        (sub) => sub['id'] == docId,
+      // Find follow data for this document
+      final followData = followedDocs.firstWhere(
+        (follow) => follow['id'] == docId,
         orElse: () => null,
       );
 
-      isSubscribed = subscriptionData != null;
+      isFollowed = followData != null;
     }
 
-    // Get preferences - first try from direct JSON, then fallback to subscribedDocs
+    // Get preferences - first try from direct JSON, then fallback to followedDocs
     NotificationPreferences? preferences;
     if (json.containsKey('preferences') && json['preferences'] != null) {
       // Get preferences directly from the API response
@@ -148,21 +147,20 @@ class Document {
         notifyWhenOneLeft: prefsJson['notifyWhenOneLeft'] ?? false,
         notifyWhenFull: prefsJson['notifyWhenFull'] ?? false,
       );
-    } else if (subscribedDocs.isNotEmpty) {
-      // Legacy approach - get from subscribedDocs
+    } else if (followedDocs.isNotEmpty) {
+      // Legacy approach - get from followedDocs
       // Create document ID for lookup
       final docId = json['date'].replaceAll('-', '') +
           json['time'].substring(0, 5).replaceAll(':', '') +
           "00";
 
-      final subscriptionData = subscribedDocs.firstWhere(
-        (sub) => sub['id'] == docId,
+      final followData = followedDocs.firstWhere(
+        (follow) => follow['id'] == docId,
         orElse: () => null,
       );
 
-      if (subscriptionData != null && subscriptionData['preferences'] != null) {
-        final prefsJson =
-            subscriptionData['preferences'] as Map<String, dynamic>;
+      if (followData != null && followData['preferences'] != null) {
+        final prefsJson = followData['preferences'] as Map<String, dynamic>;
         preferences = NotificationPreferences(
           notifyOnWeatherChange: prefsJson['notifyOnWeatherChange'] ?? true,
           notifyWhenAvailable: prefsJson['notifyWhenAvailable'] ?? true,
@@ -176,7 +174,7 @@ class Document {
       date: json['date'],
       time: json['time'].substring(0, 5),
       clubs: clubs,
-      subscribed: isSubscribed,
+      followed: isFollowed,
       notificationPreferences: preferences,
       selectedLocations: selectedLocations,
     );

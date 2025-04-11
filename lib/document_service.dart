@@ -117,7 +117,7 @@ class DocumentService {
           final List<dynamic> filteredJson = responseData['filtered'];
           filteredDocuments = filteredJson
               .map((json) => Document.fromJson(
-                  json, [], // No need for subscribedDocs parameter
+                  json, [], // No need for followedDocs parameter
                   selectedLocations: selectedLocations))
               .where((doc) =>
                   selectedLocations.isEmpty ||
@@ -139,7 +139,7 @@ class DocumentService {
           final List<dynamic> recommendedJson = responseData['recommended'];
           recommendedDocuments = recommendedJson
               .map((json) => Document.fromJson(
-                  json, [], // No need for subscribedDocs parameter
+                  json, [], // No need for followedDocs parameter
                   selectedLocations: selectedLocations))
               .where((doc) =>
                   selectedLocations.isEmpty ||
@@ -232,22 +232,23 @@ class DocumentService {
     return [];
   }
 
-  // This method is now deprecated as we get subscriptions directly from the API
+  // This method is now deprecated as we get follows directly from the API
   // Keeping it for backwards compatibility but it should be removed eventually
-  Future<List<dynamic>> getSubscribedDocs() async {
+  Future<List<dynamic>> getFollowedDocs() async {
     if (FirebaseAuth.instance.currentUser != null) {
       try {
         final userId = FirebaseAuth.instance.currentUser!.uid;
         Uri url = Uri.parse(
-            'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getSubscribed?userId=${userId}');
+            'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getFollowed?userId=${userId}');
 
         final response = await http.get(url);
         if (response.statusCode == 200) {
-          List<dynamic> subscriptions = json.decode(response.body);
+          List<dynamic> follows = json.decode(response.body);
 
-          return subscriptions.where((sub) {
-            if (sub is Map<String, dynamic> && sub.containsKey('preferences')) {
-              final preferences = sub['preferences'] as Map<String, dynamic>;
+          return follows.where((follow) {
+            if (follow is Map<String, dynamic> &&
+                follow.containsKey('preferences')) {
+              final preferences = follow['preferences'] as Map<String, dynamic>;
               return preferences.values.any((value) => value == true);
             }
             return true; // Include legacy format subscriptions

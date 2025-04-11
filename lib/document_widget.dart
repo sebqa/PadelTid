@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_application_1/model/document.dart';
-import 'widgets/subscribing_icon.dart';
+import 'widgets/following_icon.dart';
 import 'pages/document_details_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_application_1/utils/translations.dart';
@@ -285,7 +285,7 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SubscribingIcon(document: widget.document),
+                          FollowingIcon(document: widget.document),
                         ],
                       ),
                     ],

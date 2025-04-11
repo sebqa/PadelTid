@@ -8,37 +8,37 @@ db_padel_times = client['padelTimes']
 db_padeltid = client['padeltid']
 collection = db_padel_times['times']
 
-def get_user_subscriptions(user_id):
+def get_user_follows(user_id):
     if not user_id:
         print("No user_id provided")
         return set()
     try:
-        print(f"Fetching subscriptions for user: {user_id}")
+        print(f"Fetching follows for user: {user_id}")
         user = db_padeltid['users'].find_one({"_id": user_id})
         if not user:
             print(f"No user found for ID: {user_id}")
             return set()
             
-        subscriptions = user.get('subscriptions', [])
-        if not subscriptions:
-            print(f"No subscriptions found for user: {user_id}")
+        follows = user.get('follows', [])
+        if not follows:
+            print(f"No follows found for user: {user_id}")
             return set()
             
-        print(f"Raw subscriptions from DB: {subscriptions}")
+        print(f"Raw follows from DB: {follows}")
         
-        # Handle the specific subscription format:
+        # Handle the specific follow format:
         # [{"id":"20250324120000","preferences":{...}}, {"id":"20250323060000","preferences":{...}}]
-        subscription_data = []
-        for sub in subscriptions:
-            if isinstance(sub, dict) and 'id' in sub:
-                print(f"Processing subscription: {sub}")
-                subscription_data.append(sub)
+        follow_data = []
+        for follow in follows:
+            if isinstance(follow, dict) and 'id' in follow:
+                print(f"Processing follow: {follow}")
+                follow_data.append(follow)
                 
-        print(f"Processed subscription data: {subscription_data}")
-        return subscription_data
+        print(f"Processed follow data: {follow_data}")
+        return follow_data
         
     except Exception as e:
-        print(f"Error in get_user_subscriptions: {str(e)}")
+        print(f"Error in get_user_follows: {str(e)}")
         return set()
 
 def get_recommended_times(user_id, locations):
@@ -60,8 +60,8 @@ def get_recommended_times(user_id, locations):
         # Get user filter preferences
         filter_prefs = user.get('filterPreferences', {})
         
-        # Get user subscription data to mark documents as subscribed
-        user_subscriptions = get_user_subscriptions(user_id)
+        # Get user follow data to mark documents as followed
+        user_follows = get_user_follows(user_id)
             
         # For now, just get documents that match the user's preferred locations and weather thresholds
         # In the future, you can implement more sophisticated recommendation logic
@@ -160,8 +160,8 @@ def get_recommended_times(user_id, locations):
                     filtered_clubs[name] = data
             
             if filtered_clubs:  # Only include document if it has valid clubs
-                # Format date and time for subscription check
-                subscription_id = (
+                # Format date and time for follow check
+                follow_id = (
                     doc['date'].replace('-', '') +  # YYYYMMDD
                     doc['time'].split(':')[0].zfill(2) +  # HH (padded with zeros)
                     doc['time'].split(':')[1].zfill(2) +  # MM (padded with zeros)
@@ -169,26 +169,26 @@ def get_recommended_times(user_id, locations):
                 )
                 
                 print(f"Document date: {doc['date']}, time: {doc['time']}")
-                print(f"Generated subscription ID: {subscription_id}")
+                print(f"Generated follow ID: {follow_id}")
                 print(f"Example expected format: 20250412060000")
-                print(f"Available user_subscriptions: {user_subscriptions}")
+                print(f"Available user_follows: {user_follows}")
                 
-                is_subscribed = False
+                is_followed = False
                 preferences = None
                 
                 if user_id:
-                    print(f"Checking subscriptions for user_id: {user_id}")
-                    # Find this document in user's subscriptions
-                    for sub in user_subscriptions:
-                        print(f"Checking subscription: {sub}")
-                        if isinstance(sub, dict):
-                            sub_id = sub.get('id', '')
-                            print(f"Comparing subscription ID {sub_id} with {subscription_id}")
-                            if sub_id == subscription_id:
-                                print(f"Found matching subscription!")
-                                is_subscribed = True
-                                if 'preferences' in sub:
-                                    preferences = sub['preferences']
+                    print(f"Checking follows for user_id: {user_id}")
+                    # Find this document in user's follows
+                    for follow in user_follows:
+                        print(f"Checking follow: {follow}")
+                        if isinstance(follow, dict):
+                            follow_id = follow.get('id', '')
+                            print(f"Comparing follow ID {follow_id} with {follow_id}")
+                            if follow_id == follow_id:
+                                print(f"Found matching follow!")
+                                is_followed = True
+                                if 'preferences' in follow:
+                                    preferences = follow['preferences']
                                     print(f"Found preferences: {preferences}")
                                 break
                 
@@ -196,15 +196,15 @@ def get_recommended_times(user_id, locations):
                     'date': doc['date'],
                     'time': doc['time'],
                     'clubs': filtered_clubs,
-                    'subscribed': is_subscribed
+                    'followed': is_followed
                 }
                 
                 # Include preferences in the response if available
                 if preferences:
-                    print(f"Adding preferences to response for {subscription_id}: {preferences}")
+                    print(f"Adding preferences to response for {follow_id}: {preferences}")
                     cleaned_doc['preferences'] = preferences
                 else:
-                    print(f"No preferences found for {subscription_id}")
+                    print(f"No preferences found for {follow_id}")
                 
                 cleaned_results.append(cleaned_doc)
 
@@ -271,7 +271,7 @@ def lambda_handler(event,context):
         
         # Get user_id if provided
         user_id = event['queryStringParameters'].get('user_id')
-        user_subscriptions = get_user_subscriptions(user_id)
+        user_follows = get_user_follows(user_id)
         
         # Check if this is a combined request (fetch both filtered and recommended)
         fetch_both = event['queryStringParameters'].get('fetch_both', 'false').lower() == 'true'
@@ -298,7 +298,7 @@ def lambda_handler(event,context):
                 showUnavailableSlots,
                 locations,
                 user_id,
-                user_subscriptions
+                user_follows
             )
             
             # Get recommended documents
@@ -364,7 +364,7 @@ def lambda_handler(event,context):
             showUnavailableSlots,
             locations,
             user_id,
-            user_subscriptions
+            user_follows
         )
         
         return {
@@ -396,7 +396,7 @@ def get_filtered_documents(
     showUnavailableSlots,
     locations,
     user_id,
-    user_subscriptions
+    user_follows
 ):
     current_time = datetime.now()
     current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -467,8 +467,8 @@ def get_filtered_documents(
                 filtered_clubs[name] = data
         
         if filtered_clubs:  # Only include document if it has valid clubs
-            # Format date and time for subscription check
-            subscription_id = (
+            # Format date and time for follow check
+            follow_id = (
                 doc['date'].replace('-', '') +  # YYYYMMDD
                 doc['time'].split(':')[0].zfill(2) +  # HH (padded with zeros)
                 doc['time'].split(':')[1].zfill(2) +  # MM (padded with zeros)
@@ -476,26 +476,26 @@ def get_filtered_documents(
             )
             
             print(f"Document date: {doc['date']}, time: {doc['time']}")
-            print(f"Generated subscription ID: {subscription_id}")
+            print(f"Generated follow ID: {follow_id}")
             print(f"Example expected format: 20250412060000")
-            print(f"Available user_subscriptions: {user_subscriptions}")
+            print(f"Available user_follows: {user_follows}")
             
-            is_subscribed = False
+            is_followed = False
             preferences = None
             
             if user_id:
-                print(f"Checking subscriptions for user_id: {user_id}")
-                # Find this document in user's subscriptions
-                for sub in user_subscriptions:
-                    print(f"Checking subscription: {sub}")
-                    if isinstance(sub, dict):
-                        sub_id = sub.get('id', '')
-                        print(f"Comparing subscription ID {sub_id} with {subscription_id}")
-                        if sub_id == subscription_id:
-                            print(f"Found matching subscription!")
-                            is_subscribed = True
-                            if 'preferences' in sub:
-                                preferences = sub['preferences']
+                print(f"Checking follows for user_id: {user_id}")
+                # Find this document in user's follows
+                for follow in user_follows:
+                    print(f"Checking follow: {follow}")
+                    if isinstance(follow, dict):
+                        follow_id = follow.get('id', '')
+                        print(f"Comparing follow ID {follow_id} with {follow_id}")
+                        if follow_id == follow_id:
+                            print(f"Found matching follow!")
+                            is_followed = True
+                            if 'preferences' in follow:
+                                preferences = follow['preferences']
                                 print(f"Found preferences: {preferences}")
                             break
             
@@ -503,15 +503,15 @@ def get_filtered_documents(
                 'date': doc['date'],
                 'time': doc['time'],
                 'clubs': filtered_clubs,
-                'subscribed': is_subscribed
+                'followed': is_followed
             }
             
             # Include preferences in the response if available
             if preferences:
-                print(f"Adding preferences to response for {subscription_id}: {preferences}")
+                print(f"Adding preferences to response for {follow_id}: {preferences}")
                 cleaned_doc['preferences'] = preferences
             else:
-                print(f"No preferences found for {subscription_id}")
+                print(f"No preferences found for {follow_id}")
             
             cleaned_results.append(cleaned_doc)
 

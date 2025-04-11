@@ -8,32 +8,32 @@ import 'package:flutter_application_1/login_page.dart';
 import 'package:flutter_application_1/widgets/notification_preferences_dialog.dart';
 import 'package:flutter_application_1/services/token_service.dart';
 
-class SubscribingIcon extends StatefulWidget {
-  const SubscribingIcon({Key? key, required this.document}) : super(key: key);
+class FollowingIcon extends StatefulWidget {
+  const FollowingIcon({Key? key, required this.document}) : super(key: key);
 
   final Document document;
 
   @override
-  State<SubscribingIcon> createState() => _SubscribingIconState();
+  State<FollowingIcon> createState() => _FollowingIconState();
 }
 
-class _SubscribingIconState extends State<SubscribingIcon> {
+class _FollowingIconState extends State<FollowingIcon> {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
-  late bool subscribing;
+  late bool following;
   final TokenService _tokenService = TokenService();
 
   @override
   void initState() {
     super.initState();
-    subscribing = widget.document.subscribed ?? false;
+    following = widget.document.followed ?? false;
   }
 
   @override
-  void didUpdateWidget(SubscribingIcon oldWidget) {
+  void didUpdateWidget(FollowingIcon oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.document.subscribed != widget.document.subscribed) {
+    if (oldWidget.document.followed != widget.document.followed) {
       setState(() {
-        subscribing = widget.document.subscribed ?? false;
+        following = widget.document.followed ?? false;
       });
     }
   }
@@ -60,7 +60,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Login Required'),
-          content: const Text('Please login to subscribe to timeslots'),
+          content: const Text('Please login to follow timeslots'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
@@ -103,13 +103,13 @@ class _SubscribingIconState extends State<SubscribingIcon> {
                 preferences.notifyWhenFull;
 
             setState(() {
-              subscribing = hasAnyPreference;
+              following = hasAnyPreference;
               widget.document.notificationPreferences = preferences;
-              widget.document.subscribed = hasAnyPreference;
+              widget.document.followed = hasAnyPreference;
             });
 
             final user = FirebaseAuth.instance.currentUser!;
-            subscribeToTopic(
+            followTopic(
               widget.document,
               hasAnyPreference ? 'true' : 'false',
               user,
@@ -121,7 +121,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
                 duration: Duration(seconds: 1),
                 content: Text(hasAnyPreference
                     ? 'Notification preferences updated'
-                    : 'No longer subscribed to timeslot'),
+                    : 'No longer following timeslot'),
               ),
             );
           },
@@ -130,7 +130,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
     );
   }
 
-  Future<void> subscribeToTopic(Document document, String subscribe, User user,
+  Future<void> followTopic(Document document, String follow, User user,
       NotificationPreferences preferences) async {
     try {
       // Get all user tokens
@@ -145,7 +145,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       final queryParams = {
         'date': document.date,
         'time': '${document.time}:00',
-        'subscribe': subscribe,
+        'follow': follow,
         'device_tokens': json.encode(tokens),
         'userId': user.uid,
         'id': docId, // Add the document ID
@@ -160,18 +160,18 @@ class _SubscribingIconState extends State<SubscribingIcon> {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        String subscribed = response.body;
-        Map<String, dynamic> jsonData = json.decode(subscribed);
-        if (jsonData['subscribe'] == 'true') {
-          print('Subscribed to topic ' + docId);
+        String followed = response.body;
+        Map<String, dynamic> jsonData = json.decode(followed);
+        if (jsonData['follow'] == 'true') {
+          print('Following topic ' + docId);
         } else {
-          print("Unsubscribed from topic " + docId);
+          print("No longer following topic " + docId);
         }
       } else {
-        throw Exception('Failed to subscribe to topic');
+        throw Exception('Failed to follow topic');
       }
     } catch (e) {
-      print('Error in subscribeToTopic: $e');
+      print('Error in followTopic: $e');
       throw e;
     }
   }
@@ -180,7 +180,7 @@ class _SubscribingIconState extends State<SubscribingIcon> {
   Widget build(BuildContext context) {
     return IconButton(
       icon: Icon(
-        subscribing ? Icons.notifications : Icons.notifications_outlined,
+        following ? Icons.notifications : Icons.notifications_outlined,
         color: Theme.of(context).colorScheme.primary,
       ),
       onPressed: () {

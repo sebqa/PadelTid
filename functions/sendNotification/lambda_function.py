@@ -82,11 +82,11 @@ def send_notification(event):
 
     notifications_sent = 0
     
-    # Process users with subscriptions for this time slot
-    print("Processing subscription-based notifications...")
-    subscription_notifications = process_subscribed_users(users_collection, doc_id, current_doc, previous_doc, title)
-    notifications_sent += subscription_notifications
-    print(f"Subscription notifications sent: {subscription_notifications}")
+    # Process users with follows for this time slot
+    print("Processing follow-based notifications...")
+    follow_notifications = process_followed_users(users_collection, doc_id, current_doc, previous_doc, title)
+    notifications_sent += follow_notifications
+    print(f"Follow notifications sent: {follow_notifications}")
     
     # Process users with matching court filters
     print("Processing filter-based notifications...")
@@ -98,10 +98,10 @@ def send_notification(event):
     print(f"Notification processing complete. Total sent: {notifications_sent}")
     return f"Sent {notifications_sent} notifications"
 
-def process_subscribed_users(users_collection, doc_id, current_doc, previous_doc, title):
-    # Find all users subscribed to this time slot
+def process_followed_users(users_collection, doc_id, current_doc, previous_doc, title):
+    # Find all users following this time slot
     users = users_collection.find({
-        "subscriptions": {
+        "follows": {
             "$elemMatch": {
                 "id": doc_id
             }
@@ -112,14 +112,14 @@ def process_subscribed_users(users_collection, doc_id, current_doc, previous_doc
     
     for user in users:
         # Get the user's preferences for this time slot
-        subscription = next(
-            (sub for sub in user['subscriptions'] if sub['id'] == doc_id), 
+        follow = next(
+            (follow for follow in user['follows'] if follow['id'] == doc_id), 
             None
         )
-        if not subscription or not subscription.get('preferences'):
+        if not follow or not follow.get('preferences'):
             continue
 
-        preferences = subscription['preferences']
+        preferences = follow['preferences']
         
         # Get the most recent token
         tokens = user.get('tokens', [])
@@ -188,7 +188,7 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
             {
                 "filterPreferences.notifyOnMatchingCourts": True,
                 "tokens": {"$exists": True, "$ne": []},
-                "subscriptions.id": {"$ne": doc_id}  # Not already subscribed
+                "follows.id": {"$ne": doc_id}  # Not already following
             },
             projection={
                 "_id": 1, 
