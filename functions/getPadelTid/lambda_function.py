@@ -10,8 +10,10 @@ collection = db_padel_times['times']
 
 def get_user_subscriptions(user_id):
     if not user_id:
+        print("No user_id provided")
         return set()
     try:
+        print(f"Fetching subscriptions for user: {user_id}")
         user = db_padeltid['users'].find_one({"_id": user_id})
         if not user:
             print(f"No user found for ID: {user_id}")
@@ -22,17 +24,18 @@ def get_user_subscriptions(user_id):
             print(f"No subscriptions found for user: {user_id}")
             return set()
             
-        print(f"Raw subscriptions: {subscriptions}")
+        print(f"Raw subscriptions from DB: {subscriptions}")
         
         # Handle the specific subscription format:
         # [{"id":"20250324120000","preferences":{...}}, {"id":"20250323060000","preferences":{...}}]
-        subscription_ids = set()
+        subscription_data = []
         for sub in subscriptions:
             if isinstance(sub, dict) and 'id' in sub:
-                subscription_ids.add(sub['id'])
+                print(f"Processing subscription: {sub}")
+                subscription_data.append(sub)
                 
-        print(f"Extracted subscription IDs: {subscription_ids}")
-        return subscription_ids
+        print(f"Processed subscription data: {subscription_data}")
+        return subscription_data
         
     except Exception as e:
         print(f"Error in get_user_subscriptions: {str(e)}")
@@ -158,19 +161,36 @@ def get_recommended_times(user_id, locations):
             
             if filtered_clubs:  # Only include document if it has valid clubs
                 # Format date and time for subscription check
-                subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '')
-                print(f"Checking subscription ID: {subscription_id}")
+                subscription_id = (
+                    doc['date'].replace('-', '') +  # YYYYMMDD
+                    doc['time'].split(':')[0].zfill(2) +  # HH (padded with zeros)
+                    doc['time'].split(':')[1].zfill(2) +  # MM (padded with zeros)
+                    "00"  # Add seconds
+                )
+                
+                print(f"Document date: {doc['date']}, time: {doc['time']}")
+                print(f"Generated subscription ID: {subscription_id}")
+                print(f"Example expected format: 20250412060000")
+                print(f"Available user_subscriptions: {user_subscriptions}")
+                
                 is_subscribed = False
                 preferences = None
                 
                 if user_id:
+                    print(f"Checking subscriptions for user_id: {user_id}")
                     # Find this document in user's subscriptions
                     for sub in user_subscriptions:
-                        if isinstance(sub, dict) and sub.get('id') == subscription_id:
-                            is_subscribed = True
-                            if 'preferences' in sub:
-                                preferences = sub['preferences']
-                            break
+                        print(f"Checking subscription: {sub}")
+                        if isinstance(sub, dict):
+                            sub_id = sub.get('id', '')
+                            print(f"Comparing subscription ID {sub_id} with {subscription_id}")
+                            if sub_id == subscription_id:
+                                print(f"Found matching subscription!")
+                                is_subscribed = True
+                                if 'preferences' in sub:
+                                    preferences = sub['preferences']
+                                    print(f"Found preferences: {preferences}")
+                                break
                 
                 cleaned_doc = {
                     'date': doc['date'],
@@ -181,7 +201,10 @@ def get_recommended_times(user_id, locations):
                 
                 # Include preferences in the response if available
                 if preferences:
+                    print(f"Adding preferences to response for {subscription_id}: {preferences}")
                     cleaned_doc['preferences'] = preferences
+                else:
+                    print(f"No preferences found for {subscription_id}")
                 
                 cleaned_results.append(cleaned_doc)
 
@@ -445,19 +468,36 @@ def get_filtered_documents(
         
         if filtered_clubs:  # Only include document if it has valid clubs
             # Format date and time for subscription check
-            subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '')
-            print(f"Checking subscription ID: {subscription_id}")
+            subscription_id = (
+                doc['date'].replace('-', '') +  # YYYYMMDD
+                doc['time'].split(':')[0].zfill(2) +  # HH (padded with zeros)
+                doc['time'].split(':')[1].zfill(2) +  # MM (padded with zeros)
+                "00"  # Add seconds
+            )
+            
+            print(f"Document date: {doc['date']}, time: {doc['time']}")
+            print(f"Generated subscription ID: {subscription_id}")
+            print(f"Example expected format: 20250412060000")
+            print(f"Available user_subscriptions: {user_subscriptions}")
+            
             is_subscribed = False
             preferences = None
             
             if user_id:
+                print(f"Checking subscriptions for user_id: {user_id}")
                 # Find this document in user's subscriptions
                 for sub in user_subscriptions:
-                    if isinstance(sub, dict) and sub.get('id') == subscription_id:
-                        is_subscribed = True
-                        if 'preferences' in sub:
-                            preferences = sub['preferences']
-                        break
+                    print(f"Checking subscription: {sub}")
+                    if isinstance(sub, dict):
+                        sub_id = sub.get('id', '')
+                        print(f"Comparing subscription ID {sub_id} with {subscription_id}")
+                        if sub_id == subscription_id:
+                            print(f"Found matching subscription!")
+                            is_subscribed = True
+                            if 'preferences' in sub:
+                                preferences = sub['preferences']
+                                print(f"Found preferences: {preferences}")
+                            break
             
             cleaned_doc = {
                 'date': doc['date'],
@@ -468,7 +508,10 @@ def get_filtered_documents(
             
             # Include preferences in the response if available
             if preferences:
+                print(f"Adding preferences to response for {subscription_id}: {preferences}")
                 cleaned_doc['preferences'] = preferences
+            else:
+                print(f"No preferences found for {subscription_id}")
             
             cleaned_results.append(cleaned_doc)
 
