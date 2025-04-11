@@ -7,60 +7,7 @@ on:
       - 'functions/**'
 
 jobs:
-  deploy-layer:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    - name: Create Firebase Layer
-      run: |
-        mkdir -p firebase-layer/python
-        cd firebase-layer/python
-        # Install minimal set of required packages
-        pip install --no-cache-dir \
-          firebase-admin \
-          google-auth \
-          google-cloud-firestore \
-          grpcio \
-          -t .
-        # Remove unnecessary files to reduce size
-        find . -type d -name "tests" -exec rm -rf {} +
-        find . -type d -name "*.dist-info" -exec rm -rf {} +
-        find . -type f -name "*.pyc" -delete
-        find . -type f -name "*.pyo" -delete
-        find . -type d -name "__pycache__" -exec rm -rf {} +
-        cd ..
-        zip -r firebase-layer.zip python/
-        
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: eu-north-1
-        
-    - name: Update Layer
-      run: |
-        LAYER_ARN=$(aws lambda publish-layer-version \
-          --layer-name firebase-admin-layer \
-          --zip-file fileb://firebase-layer/firebase-layer.zip \
-          --compatible-runtimes python3.9 \
-          --query 'LayerVersionArn' \
-          --output text)
-        # Update the functions to use the new layer
-        for func in "sendNotification" "subTopic"; do
-          aws lambda update-function-configuration \
-            --function-name $func \
-            --layers $LAYER_ARN
-        done
-
   deploy-functions:
-    needs: deploy-layer
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -96,6 +43,14 @@ jobs:
           {
             name: 'getDocumentById',
             handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'checkSubscription',
+            handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'createSubscription',
+            handler: 'lambda_function.lambda_handler'
           }
         ]
     
@@ -111,12 +66,7 @@ jobs:
       run: |
         cd functions/${{ matrix.function.name }}
         if [ -f requirements.txt ]; then
-          # Skip firebase-admin for functions using the layer
-          if [ "${{ matrix.function.name }}" = "subTopic" ] || [ "${{ matrix.function.name }}" = "sendNotification" ]; then
-            pip install pymongo requests -t .
-          else
-            pip install -r requirements.txt -t .
-          fi
+          pip install -r requirements.txt -t .
         fi
         
     - name: Copy credentials if needed

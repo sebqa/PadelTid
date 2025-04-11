@@ -12,6 +12,9 @@ import 'package:flutter_application_1/utils/translations.dart';
 import 'package:firebase_ui_localizations/firebase_ui_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -170,9 +173,40 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
+  Map<String, dynamic>? subscriptionData;
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
+    _loadSubscriptionData();
+  }
+
+  Future<void> _loadSubscriptionData() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser!.uid;
+      final response = await http.get(
+        Uri.parse(
+            'https://7luhbcjpob.execute-api.eu-north-1.amazonaws.com/default/checkSubscription?userId=$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          subscriptionData = json.decode(response.body);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        print('Error loading subscription data: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print('Error loading subscription data: $e');
+    }
   }
 
   @override
@@ -241,6 +275,139 @@ class _AccountScreenState extends State<AccountScreen> {
                       ],
                     ),
                   ),
+
+                  SizedBox(height: 32),
+
+                  // Subscription Status Section
+                  Text(
+                    TranslationHelper.translate('subscription', languageCode),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+
+                  if (isLoading)
+                    Center(child: CircularProgressIndicator())
+                  else
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .outline
+                              .withOpacity(0.2),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (subscriptionData?['subscriptions']?.isEmpty ??
+                                true)
+                              Column(
+                                children: [
+                                  Text(
+                                    TranslationHelper.translate(
+                                        'no_subscription', languageCode),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        _showSubscriptionDialog(context),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      TranslationHelper.translate(
+                                          'subscribe', languageCode),
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    TranslationHelper.translate(
+                                        'active_subscription', languageCode),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    '${TranslationHelper.translate('status', languageCode)}: ${subscriptionData?['subscriptions'][0]['status']}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    '${TranslationHelper.translate('next_billing', languageCode)}: ${DateTime.fromMillisecondsSinceEpoch(subscriptionData?['subscriptions'][0]['current_period_end'] * 1000).toString().split(' ')[0]}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: () => _showBillingInfo(context),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      TranslationHelper.translate(
+                                          'manage_subscription', languageCode),
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
 
                   SizedBox(height: 32),
 
@@ -432,6 +599,156 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
       );
     }
+  }
+
+  void _showSubscriptionDialog(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationHelper.translate('choose_plan', languageCode)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(
+                  TranslationHelper.translate('premium_plan', languageCode)),
+              subtitle: Text('19,00 kr/month'),
+              onTap: () => _startSubscription('premium'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(TranslationHelper.translate('cancel', languageCode)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _startSubscription(String plan) async {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    try {
+      // Initialize Stripe
+      stripe.Stripe.publishableKey =
+          'pk_test_51RCjX6C4y1gAaEGtvEicAaHHnD3OupXYfQ9nL1Pbt81ATerlv14YuoepCWYJDGUN1JN419kL3v9UkJfEzYgWLHAP00BwniRQVM';
+      await stripe.Stripe.instance.applySettings();
+
+      // Create payment method
+      final paymentMethod = await stripe.Stripe.instance.createPaymentMethod(
+        params: stripe.PaymentMethodParams.card(
+          paymentMethodData: stripe.PaymentMethodData(),
+        ),
+      );
+
+      // Call your backend to create subscription
+      final response = await http.post(
+        Uri.parse(
+            'https://pnjqopxuvl.execute-api.eu-north-1.amazonaws.com/default/createSubscription'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'userId': FirebaseAuth.instance.currentUser!.uid,
+          'paymentMethodId': paymentMethod.id,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final clientSecret = data['clientSecret'];
+
+        // Confirm the payment
+        await stripe.Stripe.instance.confirmPayment(
+          paymentIntentClientSecret: clientSecret,
+          data: stripe.PaymentMethodParams.card(
+            paymentMethodData: stripe.PaymentMethodData(),
+          ),
+        );
+
+        // Refresh subscription data
+        await _loadSubscriptionData();
+        Navigator.of(context).pop(); // Close dialog
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(TranslationHelper.translate(
+                'subscription_created', languageCode)),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        throw Exception('Failed to create subscription: ${response.body}');
+      }
+    } catch (e) {
+      print('Error creating subscription: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '${TranslationHelper.translate('error_prefix', languageCode)} $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showBillingInfo(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationHelper.translate('billing_info', languageCode)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                TranslationHelper.translate('payment_methods', languageCode),
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              ...(subscriptionData?['paymentMethods'] ?? [])
+                  .map((method) => ListTile(
+                        leading: Icon(Icons.credit_card),
+                        title: Text('•••• ${method['card']['last4']}'),
+                        subtitle: Text(
+                            'Expires ${method['card']['exp_month']}/${method['card']['exp_year']}'),
+                      )),
+              SizedBox(height: 16),
+              Text(
+                TranslationHelper.translate('recent_invoices', languageCode),
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              ...(subscriptionData?['invoices'] ?? [])
+                  .map((invoice) => ListTile(
+                        title: Text(
+                            '\$${(invoice['amount_paid'] / 100).toStringAsFixed(2)}'),
+                        subtitle: Text(DateTime.fromMillisecondsSinceEpoch(
+                                invoice['created'] * 1000)
+                            .toString()
+                            .split(' ')[0]),
+                        trailing: Text(invoice['status']),
+                      )),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(TranslationHelper.translate('close', languageCode)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
