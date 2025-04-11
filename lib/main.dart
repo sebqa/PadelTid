@@ -18,12 +18,18 @@ import 'pages/document_details_page.dart';
 import 'services/notification_handler.dart';
 import 'services/notification_history_service.dart';
 import 'services/web_notification_bridge.dart';
+import 'package:url_strategy/url_strategy.dart';
 
 // Add this at the top level
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Configure URL strategy for web
+  if (kIsWeb) {
+    setPathUrlStrategy();
+  }
 
   // Initialize SharedPreferences early
   await SharedPreferences.getInstance();
@@ -166,7 +172,6 @@ class MyApp extends StatelessWidget {
         print('Current locale: ${localeProvider.locale.languageCode}');
         return MaterialApp(
           navigatorKey: navigatorKey,
-          home: HomePage(),
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             appBarTheme: AppBarTheme(
@@ -236,22 +241,98 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          initialRoute:
-              '/', /*
+          initialRoute: '/',
+          routes: {
+            '/': (context) => HomePage(),
+            '/success': (context) => Scaffold(
+                  appBar: AppBar(
+                    title: Text('Subscription Success'),
+                  ),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.green,
+                          size: 64,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Thank you for subscribing!',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Your premium features are now active.',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => HomePage()),
+                              (route) => false,
+                            );
+                          },
+                          child: Text('Return to Home'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            '/cancel': (context) => Scaffold(
+                  appBar: AppBar(
+                    title: Text('Subscription Cancelled'),
+                  ),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.cancel_outlined,
+                          color: Colors.red,
+                          size: 64,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Subscription Cancelled',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'You can try again anytime.',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => HomePage()),
+                              (route) => false,
+                            );
+                          },
+                          child: Text('Return to Home'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          },
           onGenerateRoute: (settings) {
+            // Handle document details route
             if (settings.name?.startsWith('/document/') == true) {
               final documentId = settings.name!.replaceFirst('/document/', '');
-
-              // Navigate to document details page with just the ID
               return MaterialPageRoute(
                 builder: (context) => DocumentDetailsPage(
                   documentId: documentId,
                 ),
               );
             }
-
             return null;
-          }*/
+          },
         );
       },
     );

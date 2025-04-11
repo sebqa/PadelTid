@@ -93,10 +93,14 @@ class SubscriptionDialogs {
               ),
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.of(context).pop();
-                  startSubscription(
-                      context, 'premium', refreshSubscriptionData);
+                  await SubscriptionService.startSubscription(
+                    userId: FirebaseAuth.instance.currentUser!.uid,
+                    context: context,
+                    plan: 'premium',
+                  );
+                  await refreshSubscriptionData();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
@@ -125,36 +129,43 @@ class SubscriptionDialogs {
     );
   }
 
-  static Future<void> startSubscription(BuildContext context, String plan,
-      Function refreshSubscriptionData) async {
+  static Future<void> showSubscriptionDialogWithLoading(
+      BuildContext context, String userId) async {
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
     final languageCode = localeProvider.locale.languageCode;
 
-    await SubscriptionService.startSubscription(
-      userId: FirebaseAuth.instance.currentUser!.uid,
-      plan: plan,
-      context: context,
-      onSuccess: () async {
-        await refreshSubscriptionData();
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => WillPopScope(
+          onWillPop: () async => false,
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+
+      // Start subscription process
+      await SubscriptionService.startSubscription(
+        userId: userId,
+        context: context,
+        plan: 'premium',
+      );
+    } catch (e) {
+      print('Error in subscription dialog: $e');
+      // Only show error if the context is still valid
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(TranslationHelper.translate(
-                'subscription_created', languageCode)),
-            backgroundColor: Colors.green,
-          ),
-        );
-      },
-      onError: (String error) {
-        print('Error creating subscription: $error');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                '${TranslationHelper.translate('error_prefix', languageCode)} $error'),
+                'subscription_error', languageCode)),
             backgroundColor: Colors.red,
           ),
         );
-      },
-    );
+      }
+    }
   }
 
   static void showBillingInfo(
@@ -208,6 +219,41 @@ class SubscriptionDialogs {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(TranslationHelper.translate('close', languageCode)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Future<void> showSubscriptionFeatures(BuildContext context) async {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+            TranslationHelper.translate('subscription_title', languageCode)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(TranslationHelper.translate(
+                'subscription_features', languageCode)),
+            const SizedBox(height: 16),
+            Text(TranslationHelper.translate(
+                'feature_notifications', languageCode)),
+            Text(TranslationHelper.translate('feature_weather', languageCode)),
+            Text(TranslationHelper.translate(
+                'feature_recommendations', languageCode)),
+            Text(
+                TranslationHelper.translate('feature_unlimited', languageCode)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(TranslationHelper.translate('cancel', languageCode)),
           ),
         ],
       ),

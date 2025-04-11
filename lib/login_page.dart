@@ -158,361 +158,14 @@ class _AuthGateState extends State<AuthGate> {
             }
 
             final userId = FirebaseAuth.instance.currentUser!.uid;
-            return AccountScreen(userId);
+            return AccountScreen(
+              user: FirebaseAuth.instance.currentUser!,
+              onSignOut: () => _signOut(context),
+              onDeleteAccount: () => _showDeleteAccountDialog(context),
+            );
           },
         ),
       ),
-    );
-  }
-}
-
-class AccountScreen extends StatefulWidget {
-  final String userId;
-  AccountScreen(this.userId, {super.key});
-
-  @override
-  State<AccountScreen> createState() => _AccountScreenState();
-}
-
-class _AccountScreenState extends State<AccountScreen> {
-  Map<String, dynamic>? subscriptionData;
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSubscriptionData();
-  }
-
-  Future<void> _loadSubscriptionData() async {
-    try {
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final data = await SubscriptionService.checkSubscription(userId);
-      setState(() {
-        subscriptionData = data;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      print('Error loading subscription data: $e');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final localeProvider = Provider.of<LocaleProvider>(context);
-    final languageCode = localeProvider.locale.languageCode;
-    final user = FirebaseAuth.instance.currentUser;
-
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Profile header
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          child: Center(
-                            child: Text(
-                              user?.displayName?.isNotEmpty == true
-                                  ? user!.displayName![0].toUpperCase()
-                                  : user?.email?[0].toUpperCase() ?? 'S',
-                              style: TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          user?.displayName ??
-                              user?.email ??
-                              TranslationHelper.translate(
-                                  'guest', languageCode),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (user?.email != null && user?.displayName != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Text(
-                              user!.email!,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 32),
-
-                  // Subscription Status Section
-                  Text(
-                    TranslationHelper.translate('subscription', languageCode),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onBackground,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-
-                  if (isLoading)
-                    Center(child: CircularProgressIndicator())
-                  else
-                    Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .outline
-                              .withOpacity(0.2),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (subscriptionData?['subscriptions']?.isEmpty ??
-                                true)
-                              Column(
-                                children: [
-                                  Text(
-                                    TranslationHelper.translate(
-                                        'no_subscription', languageCode),
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                  ),
-                                  SizedBox(height: 16),
-                                  ElevatedButton(
-                                    onPressed: () => SubscriptionDialogs
-                                        .showSubscriptionDialog(
-                                            context, _loadSubscriptionData),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.primary,
-                                      foregroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimary,
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      TranslationHelper.translate(
-                                          'subscribe', languageCode),
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            else
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    TranslationHelper.translate(
-                                        'active_subscription', languageCode),
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    '${TranslationHelper.translate('status', languageCode)}: ${subscriptionData?['subscriptions'][0]['status']}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    '${TranslationHelper.translate('next_billing', languageCode)}: ${DateTime.fromMillisecondsSinceEpoch(subscriptionData?['subscriptions'][0]['current_period_end'] * 1000).toString().split(' ')[0]}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
-                                  ),
-                                  SizedBox(height: 16),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        SubscriptionDialogs.showBillingInfo(
-                                            context, subscriptionData),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.primary,
-                                      foregroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimary,
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      TranslationHelper.translate(
-                                          'manage_subscription', languageCode),
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  SizedBox(height: 32),
-
-                  // Account Settings Section
-                  Text(
-                    TranslationHelper.translate(
-                        'account_settings', languageCode),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onBackground,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-
-                  // Sign out button
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .outline
-                            .withOpacity(0.2),
-                      ),
-                    ),
-                    child: InkWell(
-                      onTap: () => _signOut(context),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 16),
-                        child: Row(
-                          children: [
-                            Icon(Icons.logout,
-                                color: Theme.of(context).colorScheme.primary),
-                            SizedBox(width: 16),
-                            Text(
-                              TranslationHelper.translate(
-                                  'sign_out', languageCode),
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            Spacer(),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 16),
-
-                  // Delete account button
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: Colors.red.shade200,
-                      ),
-                    ),
-                    child: InkWell(
-                      onTap: () => _showDeleteAccountDialog(context),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 16),
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_forever, color: Colors.red),
-                            SizedBox(width: 16),
-                            Text(
-                              TranslationHelper.translate(
-                                  'delete_account', languageCode),
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Card(
-          elevation: 0,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-            ),
-          ),
-          child: const SimpleLanguageSelector(),
-        ),
-      ],
     );
   }
 
@@ -593,6 +246,435 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
       );
     }
+  }
+}
+
+class AccountScreen extends StatefulWidget {
+  final User user;
+  final VoidCallback onSignOut;
+  final VoidCallback onDeleteAccount;
+
+  const AccountScreen({
+    Key? key,
+    required this.user,
+    required this.onSignOut,
+    required this.onDeleteAccount,
+  }) : super(key: key);
+
+  @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  bool _isLoading = true;
+  bool _hasSubscription = false;
+  Map<String, dynamic>? _subscriptionData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSubscriptionData();
+  }
+
+  Future<void> _loadSubscriptionData() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await SubscriptionService.checkSubscription(widget.user.uid);
+      setState(() {
+        _hasSubscription = data['isActive'] ?? false;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading subscription data: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context);
+    final languageCode = localeProvider.locale.languageCode;
+    final userName = widget.user.displayName ?? widget.user.email ?? '';
+    final userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
+
+    return Scaffold(
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Profile Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Theme.of(context).shadowColor.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            child: Text(
+                              userInitial,
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            userName,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (widget.user.email != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.user.email!,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.7),
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Subscription Status
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Theme.of(context).shadowColor.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                _hasSubscription
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: _hasSubscription
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                TranslationHelper.translate(
+                                    'subscription_status', languageCode),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          if (_hasSubscription) ...[
+                            Text(
+                              TranslationHelper.translate(
+                                  'subscription_active', languageCode),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _handleUnsubscribe,
+                                icon: const Icon(Icons.cancel),
+                                label: Text(TranslationHelper.translate(
+                                    'unsubscribe', languageCode)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ] else ...[
+                            Text(
+                              TranslationHelper.translate(
+                                  'subscription_inactive', languageCode),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.7),
+                                  ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () =>
+                                    _showSubscriptionDialog(context),
+                                icon: const Icon(Icons.star),
+                                label: Text(TranslationHelper.translate(
+                                    'subscribe', languageCode)),
+                                style: ElevatedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Account Settings
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Theme.of(context).shadowColor.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.settings,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                TranslationHelper.translate(
+                                    'account_settings', languageCode),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Sign Out Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: widget.onSignOut,
+                              icon: const Icon(Icons.logout),
+                              label: Text(TranslationHelper.translate(
+                                  'sign_out', languageCode)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceVariant,
+                                foregroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // Delete Account Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: widget.onDeleteAccount,
+                              icon: const Icon(Icons.delete_forever),
+                              label: Text(TranslationHelper.translate(
+                                  'delete_account', languageCode)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red.withOpacity(0.1),
+                                foregroundColor: Colors.red,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  Future<void> _handleUnsubscribe() async {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationHelper.translate(
+            'unsubscribe_confirmation_title', languageCode)),
+        content: Text(TranslationHelper.translate(
+            'unsubscribe_confirmation_message', languageCode)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(TranslationHelper.translate('cancel', languageCode)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(TranslationHelper.translate('confirm', languageCode)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await SubscriptionService.cancelSubscription(
+          userId: widget.user.uid,
+          onSuccess: () async {
+            await _loadSubscriptionData();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(TranslationHelper.translate(
+                      'unsubscribe_success', languageCode)),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          },
+          onError: (error) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(TranslationHelper.translate(
+                      'unsubscribe_error', languageCode)),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        );
+      } catch (e) {
+        debugPrint('Error unsubscribing: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(TranslationHelper.translate(
+                  'unsubscribe_error', languageCode)),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _showSubscriptionDialog(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+            TranslationHelper.translate('subscribe_to_premium', languageCode)),
+        content:
+            Text(TranslationHelper.translate('premium_features', languageCode)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(TranslationHelper.translate('cancel', languageCode)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await SubscriptionService.startSubscription(
+                userId: widget.user.uid,
+                context: context,
+                plan: 'premium',
+              );
+            },
+            child: Text(TranslationHelper.translate('subscribe', languageCode)),
+          ),
+        ],
+      ),
+    );
   }
 }
 

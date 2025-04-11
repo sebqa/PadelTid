@@ -157,6 +157,19 @@ class TranslationHelper {
       'try_again': 'Try Again',
       'subscription_benefits': 'Get access to all premium features',
       'subscription_cancel_anytime': 'Cancel anytime',
+      'subscribe': 'Subscribe',
+      'unsubscribe': 'Unsubscribe',
+      'unsubscribe_confirm_title': 'Confirm Unsubscribe',
+      'unsubscribe_confirm_message':
+          'Are you sure you want to unsubscribe? You will lose access to premium features.',
+      'unsubscribe_success': 'Subscription cancelled successfully',
+      'unsubscribe_error': 'Error cancelling subscription',
+      'account_settings': 'Account Settings',
+      'delete_account': 'Delete Account',
+      'subscribe_to_premium': 'Subscribe to Premium',
+      'premium_features':
+          'Get access to all premium features with our subscription plan.',
+      'confirm': 'Confirm',
     },
     'da': {
       'monday': 'Mandag',
@@ -316,6 +329,19 @@ class TranslationHelper {
       'try_again': 'Prøv Igen',
       'subscription_benefits': 'Få adgang til alle premium funktioner',
       'subscription_cancel_anytime': 'Opsig når som helst',
+      'subscribe': 'Abonner',
+      'unsubscribe': 'Opsig Abonnement',
+      'unsubscribe_confirm_title': 'Bekræft Opsigelse',
+      'unsubscribe_confirm_message':
+          'Er du sikker på, at du vil opsige dit abonnement? Du vil miste adgang til premium funktioner.',
+      'unsubscribe_success': 'Abonnement opsagt med succes',
+      'unsubscribe_error': 'Fejl ved opsigelse af abonnement',
+      'account_settings': 'Kontoindstillinger',
+      'delete_account': 'Slet Konto',
+      'subscribe_to_premium': 'Abonner på Premium',
+      'premium_features':
+          'Få adgang til alle premium funktioner med vores abonnementsplan.',
+      'confirm': 'Bekræft',
     }
   };
 
