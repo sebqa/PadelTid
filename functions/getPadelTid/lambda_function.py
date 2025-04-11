@@ -468,7 +468,7 @@ def get_filtered_documents(
         
         if filtered_clubs:  # Only include document if it has valid clubs
             # Format date and time for follow check
-            follow_id = (
+            date_to_follow_id = (
                 doc['date'].replace('-', '') +  # YYYYMMDD
                 doc['time'].split(':')[0].zfill(2) +  # HH (padded with zeros)
                 doc['time'].split(':')[1].zfill(2) +  # MM (padded with zeros)
@@ -476,7 +476,7 @@ def get_filtered_documents(
             )
             
             print(f"Document date: {doc['date']}, time: {doc['time']}")
-            print(f"Generated follow ID: {follow_id}")
+            print(f"Generated follow ID: {date_to_follow_id}")
             print(f"Example expected format: 20250412060000")
             print(f"Available user_follows: {user_follows}")
             
@@ -490,8 +490,8 @@ def get_filtered_documents(
                     print(f"Checking follow: {follow}")
                     if isinstance(follow, dict):
                         follow_id = follow.get('id', '')
-                        print(f"Comparing follow ID {follow_id} with {follow_id}")
-                        if follow_id == follow_id:
+                        print(f"Comparing follow ID {follow_id} with {date_to_follow_id}")
+                        if follow_id == date_to_follow_id:
                             print(f"Found matching follow!")
                             is_followed = True
                             if 'preferences' in follow:
