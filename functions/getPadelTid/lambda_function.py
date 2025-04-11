@@ -158,7 +158,7 @@ def get_recommended_times(user_id, locations):
             
             if filtered_clubs:  # Only include document if it has valid clubs
                 # Format date and time for subscription check
-                subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
+                subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '')
                 print(f"Checking subscription ID: {subscription_id}")
                 is_subscribed = False
                 preferences = None
@@ -445,7 +445,7 @@ def get_filtered_documents(
         
         if filtered_clubs:  # Only include document if it has valid clubs
             # Format date and time for subscription check
-            subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
+            subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '')
             print(f"Checking subscription ID: {subscription_id}")
             is_subscribed = False
             preferences = None
