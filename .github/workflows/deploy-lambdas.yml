@@ -51,6 +51,10 @@ jobs:
           {
             name: 'createSubscription',
             handler: 'lambda_function.lambda_handler'
+          },
+          {
+            name: 'cancelSubscription',
+            handler: 'lambda_function.lambda_handler'
           }
         ]
     

@@ -11,6 +11,8 @@ class SubscriptionService {
       'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/createSubscription';
   static const String _checkSubscriptionUrl =
       'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/checkSubscription';
+  static const String _cancelSubscriptionUrl =
+      'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/cancelSubscription';
 
   // Check subscription status
   static Future<Map<String, dynamic>> checkSubscription(String userId) async {
@@ -22,6 +24,41 @@ class SubscriptionService {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to check subscription: ${response.body}');
+    }
+  }
+
+  // Cancel subscription
+  static Future<void> cancelSubscription({
+    required String userId,
+    required Function onSuccess,
+    required Function(String) onError,
+  }) async {
+    try {
+      print('Cancelling subscription...');
+      final response = await http.post(
+        Uri.parse(_cancelSubscriptionUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'userId': userId,
+        }),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          onSuccess();
+        } else {
+          throw Exception(data['error'] ?? 'Failed to cancel subscription');
+        }
+      } else {
+        throw Exception('Failed to cancel subscription: ${response.body}');
+      }
+    } catch (e) {
+      print('Error in cancelSubscription: $e');
+      onError(e.toString());
     }
   }
 
@@ -82,10 +119,10 @@ class SubscriptionService {
         if (await canLaunchUrl(uri)) {
           // For web, we need to handle the success/cancel URLs
           if (kIsWeb) {
-            // Launch the URL in a new tab
+            // Launch the URL in the same tab
             await launchUrl(
               uri,
-              mode: LaunchMode.externalApplication,
+              mode: LaunchMode.inAppWebView,
             );
 
             // Start polling for subscription status
