@@ -64,8 +64,61 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'User not found'})
             }
 
+        # Handle create checkout session request
+        if body.get('createCheckoutSession'):
+            logger.info("Processing createCheckoutSession request")
+            
+            # If user doesn't have a Stripe customer ID, create one
+            if 'stripeCustomerId' not in user:
+                logger.info("Creating new Stripe customer")
+                customer = stripe.Customer.create(
+                    email=user.get('email'),
+                    metadata={'user_id': user_id}
+                )
+                logger.info(f"Created Stripe customer: {customer.id}")
+                # Update user in MongoDB with Stripe customer ID
+                db['users'].update_one(
+                    {"_id": user_id},
+                    {"$set": {"stripeCustomerId": customer.id}}
+                )
+                customer_id = customer.id
+            else:
+                customer_id = user['stripeCustomerId']
+                logger.info(f"Using existing Stripe customer: {customer_id}")
+
+            # Create a Checkout Session
+            logger.info("Creating Checkout Session")
+            checkout_session = stripe.checkout.Session.create(
+                customer=customer_id,
+                payment_method_types=['card'],
+                line_items=[{
+                    'price': os.environ['STRIPE_PRICE_ID'],
+                    'quantity': 1,
+                }],
+                mode='subscription',
+                success_url=body.get('successUrl'),
+                cancel_url=body.get('cancelUrl'),
+                allow_promotion_codes=True,
+                billing_address_collection='required',
+                customer_update={
+                    'address': 'auto',
+                },
+                metadata={
+                    'user_id': user_id
+                }
+            )
+            logger.info(f"Created Checkout Session: {checkout_session.id}")
+
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({
+                    'url': checkout_session.url
+                })
+            }
+
         # Handle create intent request
-        if body.get('createIntent'):
+        elif body.get('createIntent'):
             logger.info("Processing createIntent request")
             # If user doesn't have a Stripe customer ID, create one
             if 'stripeCustomerId' not in user:
