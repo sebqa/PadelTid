@@ -608,17 +608,105 @@ class _AccountScreenState extends State<AccountScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(TranslationHelper.translate('choose_plan', languageCode)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(
-                  TranslationHelper.translate('premium_plan', languageCode)),
-              subtitle: Text('19,00 kr/month'),
-              onTap: () => _startSubscription('premium'),
-            ),
-          ],
+        title: Text(
+          TranslationHelper.translate('subscription_title', languageCode),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Premium Plan Card
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        TranslationHelper.translate(
+                            'subscription_monthly', languageCode),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '19,00 kr/month',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        TranslationHelper.translate(
+                            'subscription_features', languageCode),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(TranslationHelper.translate(
+                          'feature_notifications', languageCode)),
+                      SizedBox(height: 4),
+                      Text(TranslationHelper.translate(
+                          'feature_weather', languageCode)),
+                      SizedBox(height: 4),
+                      Text(TranslationHelper.translate(
+                          'feature_recommendations', languageCode)),
+                      SizedBox(height: 4),
+                      Text(TranslationHelper.translate(
+                          'feature_unlimited', languageCode)),
+                      SizedBox(height: 16),
+                      Text(
+                        TranslationHelper.translate(
+                            'subscription_cancel_anytime', languageCode),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _startSubscription('premium');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  TranslationHelper.translate('subscribe_button', languageCode)
+                      .replaceAll('{price}', '19,00 kr'),
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -638,41 +726,66 @@ class _AccountScreenState extends State<AccountScreen> {
       // Initialize Stripe
       stripe.Stripe.publishableKey =
           'pk_test_51RCjX6C4y1gAaEGtvEicAaHHnD3OupXYfQ9nL1Pbt81ATerlv14YuoepCWYJDGUN1JN419kL3v9UkJfEzYgWLHAP00BwniRQVM';
-      await stripe.Stripe.instance.applySettings();
 
-      // Create payment method
-      final paymentMethod = await stripe.Stripe.instance.createPaymentMethod(
-        params: stripe.PaymentMethodParams.card(
-          paymentMethodData: stripe.PaymentMethodData(),
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: CircularProgressIndicator(),
         ),
       );
 
-      // Call your backend to create subscription
+      // First, call backend to create setup intent
       final response = await http.post(
         Uri.parse(
             'https://pnjqopxuvl.execute-api.eu-north-1.amazonaws.com/default/createSubscription'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'userId': FirebaseAuth.instance.currentUser!.uid,
-          'paymentMethodId': paymentMethod.id,
+          'plan': plan,
+          'createIntent': true
         }),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final clientSecret = data['clientSecret'];
+      if (response.statusCode != 200) {
+        throw Exception('Failed to initialize subscription: ${response.body}');
+      }
 
-        // Confirm the payment
-        await stripe.Stripe.instance.confirmPayment(
+      final data = json.decode(response.body);
+      final clientSecret = data['clientSecret'];
+
+      // Collect payment method using Stripe's pre-built UI
+      await stripe.Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: stripe.SetupPaymentSheetParameters(
+          merchantDisplayName: 'PADELTID',
           paymentIntentClientSecret: clientSecret,
-          data: stripe.PaymentMethodParams.card(
-            paymentMethodData: stripe.PaymentMethodData(),
-          ),
-        );
+          style: ThemeMode.system,
+        ),
+      );
 
+      // Present payment sheet
+      await stripe.Stripe.instance.presentPaymentSheet();
+
+      // Dismiss loading indicator
+      Navigator.of(context).pop();
+
+      // Complete subscription setup with backend
+      final completeResponse = await http.post(
+        Uri.parse(
+            'https://pnjqopxuvl.execute-api.eu-north-1.amazonaws.com/default/createSubscription'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'userId': FirebaseAuth.instance.currentUser!.uid,
+          'plan': plan,
+          'completeSubscription': true,
+          'clientSecret': clientSecret
+        }),
+      );
+
+      if (completeResponse.statusCode == 200) {
         // Refresh subscription data
         await _loadSubscriptionData();
-        Navigator.of(context).pop(); // Close dialog
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -683,9 +796,13 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         );
       } else {
-        throw Exception('Failed to create subscription: ${response.body}');
+        throw Exception(
+            'Failed to complete subscription: ${completeResponse.body}');
       }
     } catch (e) {
+      // Dismiss loading indicator if still showing
+      Navigator.of(context).pop();
+
       print('Error creating subscription: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

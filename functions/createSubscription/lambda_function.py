@@ -15,9 +15,8 @@ def lambda_handler(event, context):
         # Parse the request body
         body = json.loads(event['body'])
         user_id = body.get('userId')
-        payment_method_id = body.get('paymentMethodId')
         
-        if not user_id or not payment_method_id:
+        if not user_id:
             return {
                 'statusCode': 400,
                 'headers': {
@@ -25,7 +24,7 @@ def lambda_handler(event, context):
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
                 },
-                'body': json.dumps({'error': 'User ID and payment method ID are required'})
+                'body': json.dumps({'error': 'User ID is required'})
             }
 
         # Get the user from MongoDB
@@ -42,51 +41,91 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'User not found'})
             }
 
-        # If user doesn't have a Stripe customer ID, create one
-        if 'stripeCustomerId' not in user:
-            customer = stripe.Customer.create(
-                payment_method=payment_method_id,
-                email=user.get('email'),
-                metadata={'user_id': user_id}
+        # Handle create intent request
+        if body.get('createIntent'):
+            # If user doesn't have a Stripe customer ID, create one
+            if 'stripeCustomerId' not in user:
+                customer = stripe.Customer.create(
+                    email=user.get('email'),
+                    metadata={'user_id': user_id}
+                )
+                # Update user in MongoDB with Stripe customer ID
+                db['users'].update_one(
+                    {"_id": user_id},
+                    {"$set": {"stripeCustomerId": customer.id}}
+                )
+                customer_id = customer.id
+            else:
+                customer_id = user['stripeCustomerId']
+
+            # Create a SetupIntent
+            setup_intent = stripe.SetupIntent.create(
+                customer=customer_id,
+                payment_method_types=['card'],
+                usage='off_session',
             )
-            # Update user in MongoDB with Stripe customer ID
-            db['users'].update_one(
-                {"_id": user_id},
-                {"$set": {"stripeCustomerId": customer.id}}
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+                },
+                'body': json.dumps({
+                    'clientSecret': setup_intent.client_secret
+                })
+            }
+
+        # Handle complete subscription request
+        elif body.get('completeSubscription'):
+            client_secret = body.get('clientSecret')
+            if not client_secret:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Access-Control-Allow-Headers': 'Content-Type',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+                    },
+                    'body': json.dumps({'error': 'Client secret is required'})
+                }
+
+            # Get the setup intent
+            setup_intent = stripe.SetupIntent.retrieve(client_secret.split('_secret_')[0])
+            
+            # Create the subscription using the payment method from the setup intent
+            subscription = stripe.Subscription.create(
+                customer=user['stripeCustomerId'],
+                items=[{'price': os.environ['STRIPE_PRICE_ID']}],  # Your Stripe price ID for 19,00 kr/month
+                default_payment_method=setup_intent.payment_method,
+                payment_settings={'save_default_payment_method': 'on_subscription'},
+                expand=['latest_invoice.payment_intent']
             )
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+                },
+                'body': json.dumps({
+                    'subscriptionId': subscription.id,
+                    'status': subscription.status
+                })
+            }
         else:
-            # Attach the payment method to the existing customer
-            stripe.PaymentMethod.attach(
-                payment_method_id,
-                customer=user['stripeCustomerId']
-            )
-            # Set as default payment method
-            stripe.Customer.modify(
-                user['stripeCustomerId'],
-                invoice_settings={'default_payment_method': payment_method_id}
-            )
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+                },
+                'body': json.dumps({'error': 'Invalid request type'})
+            }
 
-        # Create the subscription
-        subscription = stripe.Subscription.create(
-            customer=user['stripeCustomerId'],
-            items=[{'price': os.environ['STRIPE_PRICE_ID']}],  # Your Stripe price ID for 19,00 kr/month
-            payment_behavior='default_incomplete',
-            payment_settings={'save_default_payment_method': 'on_subscription'},
-            expand=['latest_invoice.payment_intent']
-        )
-
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
-            'body': json.dumps({
-                'subscriptionId': subscription.id,
-                'clientSecret': subscription.latest_invoice.payment_intent.client_secret
-            })
-        }
     except Exception as e:
         print(f'Error: {str(e)}')
         return {
