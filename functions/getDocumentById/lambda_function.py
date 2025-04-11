@@ -3,6 +3,27 @@ import os
 from pymongo import MongoClient
 # Use the bson module that comes with pymongo
 from bson.json_util import dumps
+from functools import lru_cache
+import time
+
+# Create a global MongoDB client with connection pooling
+client = MongoClient(
+    host=os.environ.get("ATLAS_URI"),
+    maxPoolSize=50,  # Adjust based on your needs
+    minPoolSize=10,
+    connectTimeoutMS=30000,
+    socketTimeoutMS=45000
+)
+
+# Cache the document for 5 minutes
+@lru_cache(maxsize=100)
+def get_cached_document(date_str, time_str):
+    db = client['padelTimes']
+    collection = db['times']
+    return collection.find_one({
+        'date': date_str,
+        'time': time_str
+    })
 
 def lambda_handler(event, context):
     # Log the request details for debugging
@@ -41,16 +62,11 @@ def lambda_handler(event, context):
         date_str = f"{document_id[0:4]}-{document_id[4:6]}-{document_id[6:8]}"
         time_str = f"{document_id[8:10]}:{document_id[10:12]}:00"
         
-        # Connect to MongoDB
-        client = MongoClient(host=os.environ.get("ATLAS_URI"))
-        db = client['padelTimes']
-        collection = db['times']
-        
-        # Query for the document
-        document = collection.find_one({
-            'date': date_str,
-            'time': time_str
-        })
+        # Get document from cache or database
+        start_time = time.time()
+        document = get_cached_document(date_str, time_str)
+        query_time = time.time() - start_time
+        print(f"Query time: {query_time:.2f} seconds")
         
         if not document:
             return {

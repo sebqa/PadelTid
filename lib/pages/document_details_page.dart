@@ -69,6 +69,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
         _document = widget.document;
         _isLoading = false;
       });
+      // Initialize weather states without waiting
       _initializeClubWeatherStates();
     } else if (widget.documentId != null) {
       // If only ID is provided, fetch the document
@@ -86,6 +87,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
             _document = document;
             _isLoading = false;
           });
+          // Initialize weather states without waiting
           _initializeClubWeatherStates();
         }
       } catch (e) {
@@ -106,9 +108,19 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
     for (var clubEntry in _document!.clubs.entries) {
       if (clubEntry.value.latitude.isNotEmpty &&
           clubEntry.value.longitude.isNotEmpty) {
+        // Initialize states
         _clubLoadingStates[clubEntry.key] = true;
-        _expandedClubs[clubEntry.key] = false; // Start collapsed
-        _fetchDetailedWeatherForClub(clubEntry.key, clubEntry.value);
+        _expandedClubs[clubEntry.key] = false;
+
+        // Fetch weather data in the background
+        _fetchDetailedWeatherForClub(clubEntry.key, clubEntry.value).then((_) {
+          if (mounted) {
+            setState(() {
+              // Update loading state when weather data is loaded
+              _clubLoadingStates[clubEntry.key] = false;
+            });
+          }
+        });
       }
     }
   }
