@@ -2,6 +2,11 @@ import json
 import os
 import stripe
 from pymongo import MongoClient
+import logging
+
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 # Initialize Stripe
 stripe.api_key = os.environ['STRIPE_SECRET_KEY']
@@ -11,6 +16,9 @@ client = MongoClient(host=os.environ.get("ATLAS_URI"))
 db = client['padeltid']
 
 def lambda_handler(event, context):
+    logger.info("Lambda function invoked")
+    logger.info(f"Event: {json.dumps(event)}")
+    
     # Set up CORS headers
     headers = {
         'Access-Control-Allow-Origin': '*',
@@ -22,6 +30,7 @@ def lambda_handler(event, context):
 
     # Handle CORS preflight request
     if event.get('requestContext', {}).get('http', {}).get('method') == 'OPTIONS':
+        logger.info("Handling OPTIONS request")
         return {
             'statusCode': 200,
             'headers': headers,
@@ -30,10 +39,13 @@ def lambda_handler(event, context):
 
     try:
         # Parse the request body
+        logger.info("Parsing request body")
         body = json.loads(event['body'])
         user_id = body.get('userId')
+        logger.info(f"Request body: {json.dumps(body)}")
         
         if not user_id:
+            logger.error("User ID is missing from request")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -41,9 +53,11 @@ def lambda_handler(event, context):
             }
 
         # Get the user from MongoDB
+        logger.info(f"Fetching user from MongoDB: {user_id}")
         user = db['users'].find_one({"_id": user_id})
         
         if not user:
+            logger.error(f"User not found in MongoDB: {user_id}")
             return {
                 'statusCode': 404,
                 'headers': headers,
@@ -52,12 +66,15 @@ def lambda_handler(event, context):
 
         # Handle create intent request
         if body.get('createIntent'):
+            logger.info("Processing createIntent request")
             # If user doesn't have a Stripe customer ID, create one
             if 'stripeCustomerId' not in user:
+                logger.info("Creating new Stripe customer")
                 customer = stripe.Customer.create(
                     email=user.get('email'),
                     metadata={'user_id': user_id}
                 )
+                logger.info(f"Created Stripe customer: {customer.id}")
                 # Update user in MongoDB with Stripe customer ID
                 db['users'].update_one(
                     {"_id": user_id},
@@ -66,13 +83,16 @@ def lambda_handler(event, context):
                 customer_id = customer.id
             else:
                 customer_id = user['stripeCustomerId']
+                logger.info(f"Using existing Stripe customer: {customer_id}")
 
             # Create a SetupIntent
+            logger.info("Creating SetupIntent")
             setup_intent = stripe.SetupIntent.create(
                 customer=customer_id,
                 payment_method_types=['card'],
                 usage='off_session',
             )
+            logger.info(f"Created SetupIntent: {setup_intent.id}")
 
             return {
                 'statusCode': 200,
@@ -84,10 +104,12 @@ def lambda_handler(event, context):
 
         # Handle complete subscription request
         elif body.get('completeSubscription'):
+            logger.info("Processing completeSubscription request")
             client_secret = body.get('clientSecret')
             payment_method_id = body.get('paymentMethodId')  # For web platform
             
             if not client_secret:
+                logger.error("Client secret is missing from request")
                 return {
                     'statusCode': 400,
                     'headers': headers,
@@ -95,6 +117,7 @@ def lambda_handler(event, context):
                 }
 
             if payment_method_id:
+                logger.info("Processing web flow with payment method")
                 # Web flow - use the provided payment method directly
                 subscription = stripe.Subscription.create(
                     customer=user['stripeCustomerId'],
@@ -104,6 +127,7 @@ def lambda_handler(event, context):
                     expand=['latest_invoice.payment_intent']
                 )
             else:
+                logger.info("Processing mobile flow with setup intent")
                 # Mobile flow - get payment method from setup intent
                 setup_intent = stripe.SetupIntent.retrieve(client_secret.split('_secret_')[0])
                 subscription = stripe.Subscription.create(
@@ -114,6 +138,7 @@ def lambda_handler(event, context):
                     expand=['latest_invoice.payment_intent']
                 )
 
+            logger.info(f"Created subscription: {subscription.id} with status: {subscription.status}")
             return {
                 'statusCode': 200,
                 'headers': headers,
@@ -123,6 +148,7 @@ def lambda_handler(event, context):
                 })
             }
         else:
+            logger.error(f"Invalid request type. Body: {json.dumps(body)}")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -130,7 +156,7 @@ def lambda_handler(event, context):
             }
 
     except Exception as e:
-        print(f'Error: {str(e)}')
+        logger.error(f"Error in lambda_handler: {str(e)}", exc_info=True)
         return {
             'statusCode': 500,
             'headers': headers,
