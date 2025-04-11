@@ -11,6 +11,23 @@ client = MongoClient(host=os.environ.get("ATLAS_URI"))
 db = client['padeltid']
 
 def lambda_handler(event, context):
+    # Set up CORS headers
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Accept',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+        'Access-Control-Expose-Headers': '*',
+        'Content-Type': 'application/json'
+    }
+
+    # Handle CORS preflight request
+    if event.get('requestContext', {}).get('http', {}).get('method') == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'message': 'OK'})
+        }
+
     try:
         # Parse the request body
         body = json.loads(event['body'])
@@ -19,11 +36,7 @@ def lambda_handler(event, context):
         if not user_id:
             return {
                 'statusCode': 400,
-                'headers': {
-                    'Access-Control-Allow-Headers': 'Content-Type',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-                },
+                'headers': headers,
                 'body': json.dumps({'error': 'User ID is required'})
             }
 
@@ -33,11 +46,7 @@ def lambda_handler(event, context):
         if not user:
             return {
                 'statusCode': 404,
-                'headers': {
-                    'Access-Control-Allow-Headers': 'Content-Type',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-                },
+                'headers': headers,
                 'body': json.dumps({'error': 'User not found'})
             }
 
@@ -67,11 +76,7 @@ def lambda_handler(event, context):
 
             return {
                 'statusCode': 200,
-                'headers': {
-                    'Access-Control-Allow-Headers': 'Content-Type',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-                },
+                'headers': headers,
                 'body': json.dumps({
                     'clientSecret': setup_intent.client_secret
                 })
@@ -80,36 +85,38 @@ def lambda_handler(event, context):
         # Handle complete subscription request
         elif body.get('completeSubscription'):
             client_secret = body.get('clientSecret')
+            payment_method_id = body.get('paymentMethodId')  # For web platform
+            
             if not client_secret:
                 return {
                     'statusCode': 400,
-                    'headers': {
-                        'Access-Control-Allow-Headers': 'Content-Type',
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-                    },
+                    'headers': headers,
                     'body': json.dumps({'error': 'Client secret is required'})
                 }
 
-            # Get the setup intent
-            setup_intent = stripe.SetupIntent.retrieve(client_secret.split('_secret_')[0])
-            
-            # Create the subscription using the payment method from the setup intent
-            subscription = stripe.Subscription.create(
-                customer=user['stripeCustomerId'],
-                items=[{'price': os.environ['STRIPE_PRICE_ID']}],  # Your Stripe price ID for 19,00 kr/month
-                default_payment_method=setup_intent.payment_method,
-                payment_settings={'save_default_payment_method': 'on_subscription'},
-                expand=['latest_invoice.payment_intent']
-            )
+            if payment_method_id:
+                # Web flow - use the provided payment method directly
+                subscription = stripe.Subscription.create(
+                    customer=user['stripeCustomerId'],
+                    items=[{'price': os.environ['STRIPE_PRICE_ID']}],
+                    default_payment_method=payment_method_id,
+                    payment_settings={'save_default_payment_method': 'on_subscription'},
+                    expand=['latest_invoice.payment_intent']
+                )
+            else:
+                # Mobile flow - get payment method from setup intent
+                setup_intent = stripe.SetupIntent.retrieve(client_secret.split('_secret_')[0])
+                subscription = stripe.Subscription.create(
+                    customer=user['stripeCustomerId'],
+                    items=[{'price': os.environ['STRIPE_PRICE_ID']}],
+                    default_payment_method=setup_intent.payment_method,
+                    payment_settings={'save_default_payment_method': 'on_subscription'},
+                    expand=['latest_invoice.payment_intent']
+                )
 
             return {
                 'statusCode': 200,
-                'headers': {
-                    'Access-Control-Allow-Headers': 'Content-Type',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-                },
+                'headers': headers,
                 'body': json.dumps({
                     'subscriptionId': subscription.id,
                     'status': subscription.status
@@ -118,11 +125,7 @@ def lambda_handler(event, context):
         else:
             return {
                 'statusCode': 400,
-                'headers': {
-                    'Access-Control-Allow-Headers': 'Content-Type',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-                },
+                'headers': headers,
                 'body': json.dumps({'error': 'Invalid request type'})
             }
 
@@ -130,10 +133,6 @@ def lambda_handler(event, context):
         print(f'Error: {str(e)}')
         return {
             'statusCode': 500,
-            'headers': {
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
+            'headers': headers,
             'body': json.dumps({'error': str(e)})
         } 

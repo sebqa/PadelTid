@@ -15,6 +15,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
+import 'package:flutter_application_1/services/subscription_service.dart';
+import 'package:flutter_application_1/widgets/subscription_dialogs.dart';
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -185,22 +187,11 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> _loadSubscriptionData() async {
     try {
       final userId = FirebaseAuth.instance.currentUser!.uid;
-      final response = await http.get(
-        Uri.parse(
-            'https://7luhbcjpob.execute-api.eu-north-1.amazonaws.com/default/checkSubscription?userId=$userId'),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          subscriptionData = json.decode(response.body);
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        print('Error loading subscription data: ${response.statusCode}');
-      }
+      final data = await SubscriptionService.checkSubscription(userId);
+      setState(() {
+        subscriptionData = data;
+        isLoading = false;
+      });
     } catch (e) {
       setState(() {
         isLoading = false;
@@ -324,8 +315,9 @@ class _AccountScreenState extends State<AccountScreen> {
                                   ),
                                   SizedBox(height: 16),
                                   ElevatedButton(
-                                    onPressed: () =>
-                                        _showSubscriptionDialog(context),
+                                    onPressed: () => SubscriptionDialogs
+                                        .showSubscriptionDialog(
+                                            context, _loadSubscriptionData),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor:
                                           Theme.of(context).colorScheme.primary,
@@ -383,7 +375,9 @@ class _AccountScreenState extends State<AccountScreen> {
                                   ),
                                   SizedBox(height: 16),
                                   ElevatedButton(
-                                    onPressed: () => _showBillingInfo(context),
+                                    onPressed: () =>
+                                        SubscriptionDialogs.showBillingInfo(
+                                            context, subscriptionData),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor:
                                           Theme.of(context).colorScheme.primary,
@@ -599,273 +593,6 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
       );
     }
-  }
-
-  void _showSubscriptionDialog(BuildContext context) {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    final languageCode = localeProvider.locale.languageCode;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          TranslationHelper.translate('subscription_title', languageCode),
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Premium Plan Card
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        TranslationHelper.translate(
-                            'subscription_monthly', languageCode),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        '19,00 kr/month',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        TranslationHelper.translate(
-                            'subscription_features', languageCode),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(TranslationHelper.translate(
-                          'feature_notifications', languageCode)),
-                      SizedBox(height: 4),
-                      Text(TranslationHelper.translate(
-                          'feature_weather', languageCode)),
-                      SizedBox(height: 4),
-                      Text(TranslationHelper.translate(
-                          'feature_recommendations', languageCode)),
-                      SizedBox(height: 4),
-                      Text(TranslationHelper.translate(
-                          'feature_unlimited', languageCode)),
-                      SizedBox(height: 16),
-                      Text(
-                        TranslationHelper.translate(
-                            'subscription_cancel_anytime', languageCode),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _startSubscription('premium');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  TranslationHelper.translate('subscribe_button', languageCode)
-                      .replaceAll('{price}', '19,00 kr'),
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(TranslationHelper.translate('cancel', languageCode)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _startSubscription(String plan) async {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    final languageCode = localeProvider.locale.languageCode;
-
-    try {
-      // Initialize Stripe
-      stripe.Stripe.publishableKey =
-          'pk_test_51RCjX6C4y1gAaEGtvEicAaHHnD3OupXYfQ9nL1Pbt81ATerlv14YuoepCWYJDGUN1JN419kL3v9UkJfEzYgWLHAP00BwniRQVM';
-
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-
-      // First, call backend to create setup intent
-      final response = await http.post(
-        Uri.parse(
-            'https://pnjqopxuvl.execute-api.eu-north-1.amazonaws.com/default/createSubscription'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'userId': FirebaseAuth.instance.currentUser!.uid,
-          'plan': plan,
-          'createIntent': true
-        }),
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to initialize subscription: ${response.body}');
-      }
-
-      final data = json.decode(response.body);
-      final clientSecret = data['clientSecret'];
-
-      // Collect payment method using Stripe's pre-built UI
-      await stripe.Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: stripe.SetupPaymentSheetParameters(
-          merchantDisplayName: 'PADELTID',
-          paymentIntentClientSecret: clientSecret,
-          style: ThemeMode.system,
-        ),
-      );
-
-      // Present payment sheet
-      await stripe.Stripe.instance.presentPaymentSheet();
-
-      // Dismiss loading indicator
-      Navigator.of(context).pop();
-
-      // Complete subscription setup with backend
-      final completeResponse = await http.post(
-        Uri.parse(
-            'https://pnjqopxuvl.execute-api.eu-north-1.amazonaws.com/default/createSubscription'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'userId': FirebaseAuth.instance.currentUser!.uid,
-          'plan': plan,
-          'completeSubscription': true,
-          'clientSecret': clientSecret
-        }),
-      );
-
-      if (completeResponse.statusCode == 200) {
-        // Refresh subscription data
-        await _loadSubscriptionData();
-
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(TranslationHelper.translate(
-                'subscription_created', languageCode)),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        throw Exception(
-            'Failed to complete subscription: ${completeResponse.body}');
-      }
-    } catch (e) {
-      // Dismiss loading indicator if still showing
-      Navigator.of(context).pop();
-
-      print('Error creating subscription: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              '${TranslationHelper.translate('error_prefix', languageCode)} $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  void _showBillingInfo(BuildContext context) {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    final languageCode = localeProvider.locale.languageCode;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(TranslationHelper.translate('billing_info', languageCode)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                TranslationHelper.translate('payment_methods', languageCode),
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              ...(subscriptionData?['paymentMethods'] ?? [])
-                  .map((method) => ListTile(
-                        leading: Icon(Icons.credit_card),
-                        title: Text('•••• ${method['card']['last4']}'),
-                        subtitle: Text(
-                            'Expires ${method['card']['exp_month']}/${method['card']['exp_year']}'),
-                      )),
-              SizedBox(height: 16),
-              Text(
-                TranslationHelper.translate('recent_invoices', languageCode),
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              ...(subscriptionData?['invoices'] ?? [])
-                  .map((invoice) => ListTile(
-                        title: Text(
-                            '\$${(invoice['amount_paid'] / 100).toStringAsFixed(2)}'),
-                        subtitle: Text(DateTime.fromMillisecondsSinceEpoch(
-                                invoice['created'] * 1000)
-                            .toString()
-                            .split(' ')[0]),
-                        trailing: Text(invoice['status']),
-                      )),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(TranslationHelper.translate('close', languageCode)),
-          ),
-        ],
-      ),
-    );
   }
 }
 
