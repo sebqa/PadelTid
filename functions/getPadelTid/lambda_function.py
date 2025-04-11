@@ -161,12 +161,15 @@ def get_recommended_times(user_id, locations):
                 subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') + '00'
                 print(f"Checking subscription ID: {subscription_id}")
                 is_subscribed = False
+                preferences = None
                 
                 if user_id:
-                    # Only check if subscribed, don't need preferences
+                    # Find this document in user's subscriptions
                     for sub in user_subscriptions:
                         if isinstance(sub, dict) and sub.get('id') == subscription_id:
                             is_subscribed = True
+                            if 'preferences' in sub:
+                                preferences = sub['preferences']
                             break
                 
                 cleaned_doc = {
@@ -175,6 +178,10 @@ def get_recommended_times(user_id, locations):
                     'clubs': filtered_clubs,
                     'subscribed': is_subscribed
                 }
+                
+                # Include preferences in the response if available
+                if preferences:
+                    cleaned_doc['preferences'] = preferences
                 
                 cleaned_results.append(cleaned_doc)
 
@@ -441,12 +448,15 @@ def get_filtered_documents(
             subscription_id = doc['date'].replace('-', '') + doc['time'].replace(':', '') 
             print(f"Checking subscription ID: {subscription_id}")
             is_subscribed = False
+            preferences = None
             
             if user_id:
                 # Find this document in user's subscriptions
                 for sub in user_subscriptions:
                     if isinstance(sub, dict) and sub.get('id') == subscription_id:
                         is_subscribed = True
+                        if 'preferences' in sub:
+                            preferences = sub['preferences']
                         break
             
             cleaned_doc = {
@@ -455,6 +465,10 @@ def get_filtered_documents(
                 'clubs': filtered_clubs,
                 'subscribed': is_subscribed
             }
+            
+            # Include preferences in the response if available
+            if preferences:
+                cleaned_doc['preferences'] = preferences
             
             cleaned_results.append(cleaned_doc)
 
