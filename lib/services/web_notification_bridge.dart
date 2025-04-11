@@ -14,7 +14,6 @@ class WebNotificationBridge {
 
   bool _initialized = false;
   Timer? _pollingTimer;
-
   Future<void> initialize() async {
     if (!kIsWeb || _initialized) return;
 
@@ -23,11 +22,6 @@ class WebNotificationBridge {
 
     // Check for notifications on startup
     await _processPendingNotifications();
-
-    // Set up polling timer
-    _pollingTimer = Timer.periodic(Duration(seconds: 10), (_) async {
-      await _processPendingNotifications();
-    });
   }
 
   Future<void> _processPendingNotifications() async {
