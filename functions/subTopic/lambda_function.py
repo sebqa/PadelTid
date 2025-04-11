@@ -68,20 +68,12 @@ def follow_topic(date, time, follow, userId, preferences_str):
                     },
                     upsert=True
                 )
-            
-
-            
         else:
             # Remove from user's follows
             collection.update_one(
                 {"_id": userId}, 
                 {"$pull": {"follows": {"id": date_time}}}
             )
-            
-            # Remove user from follow document
-            
-            
-            
             # Clean up empty follow documents
             db.follows.delete_one(
                 {"_id": date_time, "users": {"$size": 0}}
