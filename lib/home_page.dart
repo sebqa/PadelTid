@@ -92,6 +92,16 @@ class _HomePageState extends State<HomePage>
     // Initialize notification history service
     Provider.of<NotificationHistoryService>(context, listen: false)
         .initialize();
+
+    // Listen to auth state changes
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (mounted) {
+        setState(() {
+          // Refresh documents when auth state changes
+          _fetchDocuments();
+        });
+      }
+    });
   }
 
   @override
@@ -521,44 +531,48 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
                 if (_selectedLocations.isNotEmpty && _documentsLoaded) ...[
-                  // Show Recommended section
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                      child: Text(
-                        TranslationHelper.translate(
-                            'recommended', localeProvider.locale.languageCode),
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  height: 1.2,
-                                ),
+                  // Show Recommended section only if user is logged in
+                  if (FirebaseAuth.instance.currentUser != null) ...[
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                        child: Text(
+                          TranslationHelper.translate('recommended',
+                              localeProvider.locale.languageCode),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                height: 1.2,
+                              ),
+                        ),
                       ),
                     ),
-                  ),
-                  // Show loading state or content
-                  SliverToBoxAdapter(
-                    child: FutureBuilder<Map<String, List<Document>>>(
-                      future: allDocumentsFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return RecommendedListSkeleton();
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else if (snapshot.hasData) {
-                          final recommendedDocs =
-                              snapshot.data!['recommended'] ?? [];
-                          return recommended_lv_holder(
-                              documents: recommendedDocs);
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      },
+                    // Show loading state or content
+                    SliverToBoxAdapter(
+                      child: FutureBuilder<Map<String, List<Document>>>(
+                        future: allDocumentsFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return RecommendedListSkeleton();
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (snapshot.hasData) {
+                            final recommendedDocs =
+                                snapshot.data!['recommended'] ?? [];
+                            return recommended_lv_holder(
+                                documents: recommendedDocs);
+                          } else {
+                            return const SizedBox.shrink();
+                          }
+                        },
+                      ),
                     ),
-                  ),
+                  ],
 
                   // Show All Timeslots section header
                   SliverToBoxAdapter(
