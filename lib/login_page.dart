@@ -689,38 +689,6 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
-  void _showSubscriptionDialog(BuildContext context) {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    final languageCode = localeProvider.locale.languageCode;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-            TranslationHelper.translate('subscribe_to_premium', languageCode)),
-        content:
-            Text(TranslationHelper.translate('premium_features', languageCode)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(TranslationHelper.translate('cancel', languageCode)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await SubscriptionService.startSubscription(
-                userId: widget.user.uid,
-                context: context,
-                plan: 'premium',
-              );
-            },
-            child: Text(TranslationHelper.translate('subscribe', languageCode)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFeatureItem(
       BuildContext context, IconData icon, String translationKey) {
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
@@ -756,7 +724,10 @@ class _AccountScreenState extends State<AccountScreen> {
     required String languageCode,
   }) {
     return ElevatedButton(
-      onPressed: () => _showSubscriptionDialog(context),
+      onPressed: () => SubscriptionDialogs.showSubscriptionDialog(
+        context,
+        _loadSubscriptionData,
+      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: isPopular
             ? Theme.of(context).colorScheme.primary
