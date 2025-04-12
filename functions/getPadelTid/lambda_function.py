@@ -161,7 +161,7 @@ def get_recommended_times(user_id, locations):
             
             if filtered_clubs:  # Only include document if it has valid clubs
                 # Format date and time for follow check
-                doc_follow_id = (
+                date_to_follow_id = (
                     doc['date'].replace('-', '') +  # YYYYMMDD
                     doc['time'].split(':')[0].zfill(2) +  # HH (padded with zeros)
                     doc['time'].split(':')[1].zfill(2) +  # MM (padded with zeros)
@@ -201,10 +201,10 @@ def get_recommended_times(user_id, locations):
                 
                 # Include preferences in the response if available
                 if preferences:
-                    print(f"Adding preferences to response for {follow_id}: {preferences}")
+                    print(f"Adding preferences to response for {doc_follow_id}: {preferences}")
                     cleaned_doc['preferences'] = preferences
                 else:
-                    print(f"No preferences found for {follow_id}")
+                    print(f"No preferences found for {doc_follow_id}")
                 
                 cleaned_results.append(cleaned_doc)
 
@@ -508,10 +508,10 @@ def get_filtered_documents(
             
             # Include preferences in the response if available
             if preferences:
-                print(f"Adding preferences to response for {follow_id}: {preferences}")
+                print(f"Adding preferences to response for {date_to_follow_id}: {preferences}")
                 cleaned_doc['preferences'] = preferences
             else:
-                print(f"No preferences found for {follow_id}")
+                print(f"No preferences found for {date_to_follow_id}")
             
             cleaned_results.append(cleaned_doc)
 
