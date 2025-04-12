@@ -23,6 +23,18 @@ import 'package:url_strategy/url_strategy.dart';
 // Add this at the top level
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+class RouteGuard extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    print('Route pushed: ${route.settings.name}');
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    print('Route popped: ${route.settings.name}');
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -72,6 +84,17 @@ Future<void> main() async {
     TokenService().saveToken();
   }
 
+  // Get the initial route from the URL
+  String initialRoute = '/';
+  if (kIsWeb) {
+    final path = Uri.base.path;
+    if (path == '/success' ||
+        path == '/checkout-cancelled' ||
+        path == '/subscription-cancelled') {
+      initialRoute = path;
+    }
+  }
+
   // Now launch the full app when ready
   runApp(
     MultiProvider(
@@ -79,7 +102,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (context) => LocaleProvider()),
         ChangeNotifierProvider(create: (context) => notificationHistoryService),
       ],
-      child: const MyApp(),
+      child: MyApp(initialRoute: initialRoute),
     ),
   );
 }
@@ -157,16 +180,180 @@ class _LoadingDotState extends State<LoadingDot>
   }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class CustomRouteDelegate extends RouterDelegate<String>
+    with ChangeNotifier, PopNavigatorRouterDelegateMixin<String> {
+  final GlobalKey<NavigatorState> navigatorKey;
+  String? _currentRoute;
+
+  CustomRouteDelegate() : navigatorKey = GlobalKey<NavigatorState>() {
+    if (kIsWeb) {
+      _currentRoute = Uri.base.path;
+      if (_currentRoute!.isEmpty) _currentRoute = '/';
+    } else {
+      _currentRoute = '/';
+    }
+  }
+
+  @override
+  String? get currentConfiguration => _currentRoute;
 
   @override
   Widget build(BuildContext context) {
-    // Initialize notification handler with the global context
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      NotificationHandler().initialize(context);
-    });
+    return Navigator(
+      key: navigatorKey,
+      pages: [
+        // Always include the root route
+        MaterialPage(
+          key: const ValueKey('root'),
+          child: _currentRoute == '/' ? HomePage() : Container(),
+        ),
+        // Add the actual route if it's not the root
+        if (_currentRoute != '/') ...[
+          if (_currentRoute == '/success')
+            MaterialPage(
+              key: const ValueKey('success'),
+              child: Scaffold(
+                appBar: AppBar(
+                  title: Text('Subscription Successful'),
+                ),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 100,
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        'Your subscription was successful!',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          _currentRoute = '/';
+                          notifyListeners();
+                        },
+                        child: Text('Return to Home'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (_currentRoute == '/cancel')
+            MaterialPage(
+              key: const ValueKey('cancel'),
+              child: Scaffold(
+                appBar: AppBar(
+                  title: Text('Checkout Cancelled'),
+                ),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.cancel,
+                        color: Colors.orange,
+                        size: 100,
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        'You cancelled the checkout process.',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        'You can try again anytime.',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          _currentRoute = '/';
+                          notifyListeners();
+                        },
+                        child: Text('Return to Home'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (_currentRoute == '/subscription-cancelled')
+            MaterialPage(
+              key: const ValueKey('subscription-cancelled'),
+              child: Scaffold(
+                appBar: AppBar(
+                  title: Text('Subscription Cancelled'),
+                ),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.cancel,
+                        color: Colors.red,
+                        size: 100,
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        'Your subscription has been cancelled.',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        'You will still have access to premium features until the end of your billing period.',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          _currentRoute = '/';
+                          notifyListeners();
+                        },
+                        child: Text('Return to Home'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (_currentRoute?.startsWith('/document/') ?? false)
+            MaterialPage(
+              key: ValueKey(_currentRoute),
+              child: DocumentDetailsPage(
+                documentId: _currentRoute!.split('/').last,
+              ),
+            ),
+        ],
+      ],
+      onPopPage: (route, result) {
+        if (!route.didPop(result)) return false;
+        _currentRoute = '/';
+        notifyListeners();
+        return true;
+      },
+    );
+  }
 
+  @override
+  Future<void> setNewRoutePath(String configuration) async {
+    _currentRoute = configuration;
+    notifyListeners();
+  }
+}
+
+class MyApp extends StatelessWidget {
+  final String initialRoute;
+
+  const MyApp({super.key, required this.initialRoute});
+
+  @override
+  Widget build(BuildContext context) {
     return Consumer<LocaleProvider>(
       builder: (context, localeProvider, _) {
         print('Current locale: ${localeProvider.locale.languageCode}');
@@ -229,7 +416,6 @@ class MyApp extends StatelessWidget {
               ),
             ),
           ),
-          navigatorObservers: [NavigationHelper.routeObserver],
           locale: localeProvider.locale,
           supportedLocales: const [
             Locale('en'), // English
@@ -241,40 +427,31 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          initialRoute: '/',
+          initialRoute: initialRoute,
           routes: {
             '/': (context) => HomePage(),
             '/success': (context) => Scaffold(
                   appBar: AppBar(
-                    title: Text('Subscription Success'),
+                    title: Text('Subscription Successful'),
                   ),
                   body: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.check_circle_outline,
+                          Icons.check_circle,
                           color: Colors.green,
-                          size: 64,
+                          size: 100,
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: 20),
                         Text(
-                          'Thank you for subscribing!',
+                          'Your subscription was successful!',
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Your premium features are now active.',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        SizedBox(height: 24),
+                        SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                  builder: (context) => HomePage()),
-                              (route) => false,
-                            );
+                            Navigator.of(context).pushReplacementNamed('/');
                           },
                           child: Text('Return to Home'),
                         ),
@@ -282,7 +459,41 @@ class MyApp extends StatelessWidget {
                     ),
                   ),
                 ),
-            '/cancel': (context) => Scaffold(
+            '/checkout-cancelled': (context) => Scaffold(
+                  appBar: AppBar(
+                    title: Text('Checkout Cancelled'),
+                  ),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.cancel,
+                          color: Colors.orange,
+                          size: 100,
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'You cancelled the checkout process.',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'You can try again anytime.',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pushReplacementNamed('/');
+                          },
+                          child: Text('Return to Home'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            '/subscription-cancelled': (context) => Scaffold(
                   appBar: AppBar(
                     title: Text('Subscription Cancelled'),
                   ),
@@ -291,28 +502,25 @@ class MyApp extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.cancel_outlined,
+                          Icons.cancel,
                           color: Colors.red,
-                          size: 64,
+                          size: 100,
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: 20),
                         Text(
-                          'Subscription Cancelled',
+                          'Your subscription has been cancelled.',
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: 20),
                         Text(
-                          'You can try again anytime.',
+                          'You will still have access to premium features until the end of your billing period.',
                           style: Theme.of(context).textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 24),
+                        SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                  builder: (context) => HomePage()),
-                              (route) => false,
-                            );
+                            Navigator.of(context).pushReplacementNamed('/');
                           },
                           child: Text('Return to Home'),
                         ),
@@ -322,20 +530,34 @@ class MyApp extends StatelessWidget {
                 ),
           },
           onGenerateRoute: (settings) {
-            // Handle document details route
-            if (settings.name?.startsWith('/document/') == true) {
-              final documentId = settings.name!.replaceFirst('/document/', '');
-              return MaterialPageRoute(
-                builder: (context) => DocumentDetailsPage(
-                  documentId: documentId,
-                ),
-              );
+            if (settings.name?.startsWith('/document/') ?? false) {
+              final documentId = settings.name?.split('/').last;
+              if (documentId != null) {
+                return MaterialPageRoute(
+                  builder: (context) => DocumentDetailsPage(
+                    documentId: documentId,
+                  ),
+                );
+              }
             }
             return null;
           },
         );
       },
     );
+  }
+}
+
+class RouteInformationParserImpl extends RouteInformationParser<String> {
+  @override
+  Future<String> parseRouteInformation(
+      RouteInformation routeInformation) async {
+    return routeInformation.location ?? '/';
+  }
+
+  @override
+  RouteInformation restoreRouteInformation(String configuration) {
+    return RouteInformation(location: configuration);
   }
 }
 
