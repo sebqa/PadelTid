@@ -64,32 +64,65 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'User not found'})
             }
 
-        # Get the subscription from MongoDB
-        logger.info(f"Fetching subscription for user: {user_id}")
-        subscription = db['subscriptions'].find_one({'userId': user_id})
-        
-        if not subscription:
-            logger.error(f"No subscription found for user: {user_id}")
+        # Get the Stripe customer ID from the user document
+        stripe_customer_id = user.get('stripeCustomerId')
+        if not stripe_customer_id:
+            logger.error(f"No Stripe customer ID found for user: {user_id}")
             return {
                 'statusCode': 404,
                 'headers': headers,
-                'body': json.dumps({'error': 'No subscription found for this user'})
-            }
-            
-        subscription_id = subscription.get('subscriptionId')
-        if not subscription_id:
-            logger.error(f"No subscription ID found for user: {user_id}")
-            return {
-                'statusCode': 404,
-                'headers': headers,
-                'body': json.dumps({'error': 'No subscription ID found for this user'})
+                'body': json.dumps({'error': 'No Stripe customer found for this user'})
             }
 
-        # Cancel the subscription in Stripe
+        # Get the active subscription for this customer
         try:
-            logger.info(f"Cancelling Stripe subscription: {subscription_id}")
-            stripe.Subscription.cancel(subscription_id)
-            logger.info(f"Successfully cancelled Stripe subscription: {subscription_id}")
+            logger.info(f"Fetching active subscription for customer: {stripe_customer_id}")
+            subscriptions = stripe.Subscription.list(
+                customer=stripe_customer_id,
+                status='active',
+                limit=1
+            )
+            
+            if not subscriptions.data:
+                logger.error(f"No active subscription found for customer: {stripe_customer_id}")
+                return {
+                    'statusCode': 404,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'No active subscription found'})
+                }
+            
+            subscription = subscriptions.data[0]
+            logger.info(f"Found active subscription: {subscription.id}")
+
+            # Cancel the subscription
+            logger.info(f"Cancelling subscription: {subscription.id}")
+            cancelled_subscription = stripe.Subscription.cancel(subscription.id)
+            logger.info(f"Successfully cancelled subscription: {subscription.id}")
+
+            # Update the subscription status in MongoDB
+            logger.info(f"Updating subscription status in MongoDB for user: {user_id}")
+            db['subscriptions'].update_one(
+                {'userId': user_id},
+                {
+                    '$set': {
+                        'subscriptionStatus': 'cancelled',
+                        'subscriptionId': '',
+                        'updatedAt': cancelled_subscription.canceled_at
+                    }
+                }
+            )
+            logger.info(f"Successfully updated subscription status for user: {user_id}")
+
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({
+                    'success': True,
+                    'message': 'Subscription cancelled successfully',
+                    'cancelledAt': cancelled_subscription.canceled_at
+                })
+            }
+
         except stripe.error.StripeError as e:
             logger.error(f"Stripe error while cancelling subscription: {str(e)}")
             return {
@@ -97,29 +130,6 @@ def lambda_handler(event, context):
                 'headers': headers,
                 'body': json.dumps({'error': f'Failed to cancel subscription: {str(e)}'})
             }
-
-        # Update the subscription status in MongoDB
-        logger.info(f"Updating subscription status in MongoDB for user: {user_id}")
-        db['subscriptions'].update_one(
-            {'userId': user_id},
-            {
-                '$set': {
-                    'subscriptionStatus': 'cancelled',
-                    'subscriptionId': '',
-                    'updatedAt': subscription.get('updatedAt', None)
-                }
-            }
-        )
-        logger.info(f"Successfully updated subscription status for user: {user_id}")
-
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps({
-                'success': True,
-                'message': 'Subscription cancelled successfully'
-            })
-        }
 
     except Exception as e:
         logger.error(f"Error in lambda_handler: {str(e)}", exc_info=True)
