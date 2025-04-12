@@ -135,11 +135,14 @@ def lambda_handler(event, context):
         return {
             'statusCode': 500,
             'headers': headers,
-        try:
-            # Try to get the customer from Stripe
-            logger.info(f"Fetching Stripe customer: {user['stripeCustomerId']}")
-            customer = stripe.Customer.retrieve(user['stripeCustomerId'])
-            
+            'body': json.dumps({'error': str(e)})
+        }
+        
+    try:
+        # Try to get the customer from Stripe
+        logger.info(f"Fetching Stripe customer: {user['stripeCustomerId']}")
+        customer = stripe.Customer.retrieve(user['stripeCustomerId'])
+        
             # Get the customer's subscriptions from Stripe
             logger.info(f"Fetching subscriptions for customer: {customer.id}")
             subscriptions = stripe.Subscription.list(
