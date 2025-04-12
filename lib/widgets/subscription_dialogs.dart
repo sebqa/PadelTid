@@ -208,7 +208,8 @@ class SubscriptionDialogs {
   }
 
   static Future<void> showSubscriptionDialogWithLoading(
-      BuildContext context, String userId) async {
+      BuildContext context, String userId,
+      {String plan = 'monthly'}) async {
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
     final languageCode = localeProvider.locale.languageCode;
 
@@ -229,7 +230,7 @@ class SubscriptionDialogs {
       await SubscriptionService.startSubscription(
         userId: userId,
         context: context,
-        plan: 'premium',
+        plan: plan,
       );
     } catch (e) {
       print('Error in subscription dialog: $e');

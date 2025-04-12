@@ -44,9 +44,11 @@ def lambda_handler(event, context):
         }
 
     try:
-        # Get the user ID from the request
-        user_id = event['queryStringParameters']['userId']
-        logger.info(f"Processing request for user: {user_id}")
+        # Parse the request body
+        logger.info("Parsing request body")
+        body = json.loads(event['body'])
+        user_id = body.get('userId')
+        logger.info(f"Request body: {json.dumps(body)}")
         
         if not user_id:
             logger.error("User ID is missing from request")
@@ -82,67 +84,11 @@ def lambda_handler(event, context):
                 })
             }
 
-        # Get the customer's subscriptions from Stripe
-        logger.info(f"Fetching subscriptions for customer: {user['stripeCustomerId']}")
-        subscriptions = stripe.Subscription.list(
-            customer=user['stripeCustomerId'],
-            status='all',
-            expand=['data.default_payment_method']
-        )
-
-        if not subscriptions.data:
-            logger.info(f"No subscriptions found for customer: {user['stripeCustomerId']}")
-            return {
-                'statusCode': 200,
-                'headers': headers,
-                'body': json.dumps({
-                    'hasSubscription': False,
-                    'subscriptionId': None,
-                    'status': None,
-                    'plan': None
-                })
-            }
-
-        # Get the most recent subscription
-        subscription = subscriptions.data[0]
-        logger.info(f"Found subscription: {subscription.id} with status: {subscription.status}")
-
-        # Determine the plan type
-        plan = None
-        for price_id in subscription.items.data:
-            for plan_type, price in PRICE_IDS.items():
-                if price_id.price.id == price:
-                    plan = plan_type
-                    break
-            if plan:
-                break
-
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps({
-                'hasSubscription': True,
-                'subscriptionId': subscription.id,
-                'status': subscription.status,
-                'plan': plan,
-                'currentPeriodEnd': subscription.current_period_end,
-                'cancelAtPeriodEnd': subscription.cancel_at_period_end
-            })
-        }
-
-    except Exception as e:
-        logger.error(f"Error in lambda_handler: {str(e)}", exc_info=True)
-        return {
-            'statusCode': 500,
-            'headers': headers,
-            'body': json.dumps({'error': str(e)})
-        }
-        
-    try:
-        # Try to get the customer from Stripe
-        logger.info(f"Fetching Stripe customer: {user['stripeCustomerId']}")
-        customer = stripe.Customer.retrieve(user['stripeCustomerId'])
-        
+        try:
+            # Try to get the customer from Stripe
+            logger.info(f"Fetching Stripe customer: {user['stripeCustomerId']}")
+            customer = stripe.Customer.retrieve(user['stripeCustomerId'])
+            
             # Get the customer's subscriptions from Stripe
             logger.info(f"Fetching subscriptions for customer: {customer.id}")
             subscriptions = stripe.Subscription.list(
@@ -151,34 +97,43 @@ def lambda_handler(event, context):
                 expand=['data.default_payment_method']
             )
 
-            # Get the customer's payment methods
-            logger.info(f"Fetching payment methods for customer: {customer.id}")
-            payment_methods = stripe.PaymentMethod.list(
-                customer=customer.id,
-                type='card'
-            )
+            if not subscriptions.data:
+                logger.info(f"No subscriptions found for customer: {customer.id}")
+                return {
+                    'statusCode': 200,
+                    'headers': headers,
+                    'body': json.dumps({
+                        'hasSubscription': False,
+                        'subscriptionId': None,
+                        'status': None,
+                        'plan': None
+                    })
+                }
 
-            # Get the customer's invoices
-            logger.info(f"Fetching invoices for customer: {customer.id}")
-            invoices = stripe.Invoice.list(
-                customer=customer.id,
-                limit=5
-            )
+            # Get the most recent subscription
+            subscription = subscriptions.data[0]
+            logger.info(f"Found subscription: {subscription.id} with status: {subscription.status}")
 
-            # Check if there's an active subscription
-            active_subscription = next(
-                (sub for sub in subscriptions.data if sub.status == 'active'),
-                None
-            )
+            # Determine the plan type
+            plan = None
+            for price_id in subscription.items.data:
+                for plan_type, price in PRICE_IDS.items():
+                    if price_id.price.id == price:
+                        plan = plan_type
+                        break
+                if plan:
+                    break
 
             return {
                 'statusCode': 200,
                 'headers': headers,
                 'body': json.dumps({
-                    'isActive': active_subscription is not None,
-                    'subscriptions': subscriptions.data,
-                    'payment_methods': payment_methods.data,
-                    'invoices': invoices.data
+                    'hasSubscription': True,
+                    'subscriptionId': subscription.id,
+                    'status': subscription.status,
+                    'plan': plan,
+                    'currentPeriodEnd': subscription.current_period_end,
+                    'cancelAtPeriodEnd': subscription.cancel_at_period_end
                 })
             }
 
@@ -194,8 +149,10 @@ def lambda_handler(event, context):
                     'statusCode': 200,
                     'headers': headers,
                     'body': json.dumps({
-                        'isActive': False,
-                        'message': 'No subscription found'
+                        'hasSubscription': False,
+                        'subscriptionId': None,
+                        'status': None,
+                        'plan': None
                     })
                 }
             else:
