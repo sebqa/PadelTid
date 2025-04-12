@@ -15,6 +15,12 @@ stripe.api_key = os.environ['STRIPE_SECRET_KEY']
 client = MongoClient(host=os.environ.get("ATLAS_URI"))
 db = client['padeltid']
 
+# Define price IDs for different plans
+PRICE_IDS = {
+    'monthly': os.environ['STRIPE_MONTHLY_PRICE_ID'],
+    'yearly': os.environ['STRIPE_YEARLY_PRICE_ID']
+}
+
 def lambda_handler(event, context):
     logger.info("Lambda function invoked")
     logger.info(f"Event: {json.dumps(event)}")
@@ -42,6 +48,7 @@ def lambda_handler(event, context):
         logger.info("Parsing request body")
         body = json.loads(event['body'])
         user_id = body.get('userId')
+        plan = body.get('plan', 'monthly')  # Default to monthly if not specified
         logger.info(f"Request body: {json.dumps(body)}")
         
         if not user_id:
@@ -50,6 +57,15 @@ def lambda_handler(event, context):
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({'error': 'User ID is required'})
+            }
+
+        # Validate plan type
+        if plan not in PRICE_IDS:
+            logger.error(f"Invalid plan type: {plan}")
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': f'Invalid plan type. Must be one of: {list(PRICE_IDS.keys())}'})
             }
 
         # Get the user from MongoDB
@@ -66,7 +82,7 @@ def lambda_handler(event, context):
 
         # Handle create checkout session request
         if body.get('createCheckoutSession'):
-            logger.info("Processing createCheckoutSession request")
+            logger.info(f"Processing createCheckoutSession request for plan: {plan}")
             
             # If user doesn't have a Stripe customer ID, create one
             if 'stripeCustomerId' not in user:
@@ -87,12 +103,12 @@ def lambda_handler(event, context):
                 logger.info(f"Using existing Stripe customer: {customer_id}")
 
             # Create a Checkout Session
-            logger.info("Creating Checkout Session")
+            logger.info(f"Creating Checkout Session for plan: {plan}")
             checkout_session = stripe.checkout.Session.create(
                 customer=customer_id,
                 payment_method_types=['card'],
                 line_items=[{
-                    'price': os.environ['STRIPE_PRICE_ID'],
+                    'price': PRICE_IDS[plan],
                     'quantity': 1,
                 }],
                 mode='subscription',
@@ -104,7 +120,8 @@ def lambda_handler(event, context):
                     'address': 'auto',
                 },
                 metadata={
-                    'user_id': user_id
+                    'user_id': user_id,
+                    'plan': plan
                 }
             )
             logger.info(f"Created Checkout Session: {checkout_session.id}")
@@ -119,7 +136,7 @@ def lambda_handler(event, context):
 
         # Handle create intent request
         elif body.get('createIntent'):
-            logger.info("Processing createIntent request")
+            logger.info(f"Processing createIntent request for plan: {plan}")
             # If user doesn't have a Stripe customer ID, create one
             if 'stripeCustomerId' not in user:
                 logger.info("Creating new Stripe customer")
@@ -157,7 +174,7 @@ def lambda_handler(event, context):
 
         # Handle complete subscription request
         elif body.get('completeSubscription'):
-            logger.info("Processing completeSubscription request")
+            logger.info(f"Processing completeSubscription request for plan: {plan}")
             client_secret = body.get('clientSecret')
             payment_method_id = body.get('paymentMethodId')  # For web platform
             
@@ -174,7 +191,7 @@ def lambda_handler(event, context):
                 # Web flow - use the provided payment method directly
                 subscription = stripe.Subscription.create(
                     customer=user['stripeCustomerId'],
-                    items=[{'price': os.environ['STRIPE_PRICE_ID']}],
+                    items=[{'price': PRICE_IDS[plan]}],
                     default_payment_method=payment_method_id,
                     payment_settings={'save_default_payment_method': 'on_subscription'},
                     expand=['latest_invoice.payment_intent']
@@ -185,7 +202,7 @@ def lambda_handler(event, context):
                 setup_intent = stripe.SetupIntent.retrieve(client_secret.split('_secret_')[0])
                 subscription = stripe.Subscription.create(
                     customer=user['stripeCustomerId'],
-                    items=[{'price': os.environ['STRIPE_PRICE_ID']}],
+                    items=[{'price': PRICE_IDS[plan]}],
                     default_payment_method=setup_intent.payment_method,
                     payment_settings={'save_default_payment_method': 'on_subscription'},
                     expand=['latest_invoice.payment_intent']
@@ -197,7 +214,8 @@ def lambda_handler(event, context):
                 'headers': headers,
                 'body': json.dumps({
                     'subscriptionId': subscription.id,
-                    'status': subscription.status
+                    'status': subscription.status,
+                    'plan': plan
                 })
             }
         else:

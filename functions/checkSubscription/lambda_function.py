@@ -15,6 +15,12 @@ stripe.api_key = os.environ['STRIPE_SECRET_KEY']
 client = MongoClient(host=os.environ.get("ATLAS_URI"))
 db = client['padeltid']
 
+# Define price IDs for different plans
+PRICE_IDS = {
+    'monthly': os.environ['STRIPE_MONTHLY_PRICE_ID'],
+    'yearly': os.environ['STRIPE_YEARLY_PRICE_ID']
+}
+
 def lambda_handler(event, context):
     logger.info("Lambda function invoked")
     logger.info(f"Event: {json.dumps(event)}")
@@ -64,16 +70,71 @@ def lambda_handler(event, context):
 
         # Check if user has a Stripe customer ID
         if 'stripeCustomerId' not in user:
-            logger.info(f"No Stripe customer ID found for user: {user_id}")
+            logger.info(f"User {user_id} has no Stripe customer ID")
             return {
                 'statusCode': 200,
                 'headers': headers,
                 'body': json.dumps({
-                    'isActive': False,
-                    'message': 'No subscription found'
+                    'hasSubscription': False,
+                    'subscriptionId': None,
+                    'status': None,
+                    'plan': None
                 })
             }
 
+        # Get the customer's subscriptions from Stripe
+        logger.info(f"Fetching subscriptions for customer: {user['stripeCustomerId']}")
+        subscriptions = stripe.Subscription.list(
+            customer=user['stripeCustomerId'],
+            status='all',
+            expand=['data.default_payment_method']
+        )
+
+        if not subscriptions.data:
+            logger.info(f"No subscriptions found for customer: {user['stripeCustomerId']}")
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({
+                    'hasSubscription': False,
+                    'subscriptionId': None,
+                    'status': None,
+                    'plan': None
+                })
+            }
+
+        # Get the most recent subscription
+        subscription = subscriptions.data[0]
+        logger.info(f"Found subscription: {subscription.id} with status: {subscription.status}")
+
+        # Determine the plan type
+        plan = None
+        for price_id in subscription.items.data:
+            for plan_type, price in PRICE_IDS.items():
+                if price_id.price.id == price:
+                    plan = plan_type
+                    break
+            if plan:
+                break
+
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({
+                'hasSubscription': True,
+                'subscriptionId': subscription.id,
+                'status': subscription.status,
+                'plan': plan,
+                'currentPeriodEnd': subscription.current_period_end,
+                'cancelAtPeriodEnd': subscription.cancel_at_period_end
+            })
+        }
+
+    except Exception as e:
+        logger.error(f"Error in lambda_handler: {str(e)}", exc_info=True)
+        return {
+            'statusCode': 500,
+            'headers': headers,
         try:
             # Try to get the customer from Stripe
             logger.info(f"Fetching Stripe customer: {user['stripeCustomerId']}")

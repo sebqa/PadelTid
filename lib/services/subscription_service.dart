@@ -69,7 +69,7 @@ class SubscriptionService {
   static Future<void> startSubscription({
     required String userId,
     required BuildContext context,
-    String plan = 'premium', // Default plan
+    required String plan, // 'monthly' or 'yearly'
   }) async {
     try {
       // Show loading indicator
@@ -84,7 +84,7 @@ class SubscriptionService {
         ),
       );
 
-      print('Creating checkout session...');
+      print('Creating checkout session for plan: $plan');
       final response = await http.post(
         Uri.parse(_createSubscriptionUrl),
         headers: {'Content-Type': 'application/json'},
@@ -102,7 +102,7 @@ class SubscriptionService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final checkoutUrl = data['url']; // Changed from 'checkoutUrl' to 'url'
+        final checkoutUrl = data['url'];
 
         // Close loading dialog before navigation
         if (context.mounted) {

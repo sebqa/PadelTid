@@ -26,105 +26,183 @@ class SubscriptionDialogs {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Premium Plan Card
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        TranslationHelper.translate(
-                            'subscription_monthly', languageCode),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        '19,00 kr/month',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        TranslationHelper.translate(
-                            'subscription_features', languageCode),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(TranslationHelper.translate(
-                          'feature_notifications', languageCode)),
-                      SizedBox(height: 4),
-                      Text(TranslationHelper.translate(
-                          'feature_weather', languageCode)),
-                      SizedBox(height: 4),
-                      Text(TranslationHelper.translate(
-                          'feature_recommendations', languageCode)),
-                      SizedBox(height: 4),
-                      Text(TranslationHelper.translate(
-                          'feature_unlimited', languageCode)),
-                      SizedBox(height: 16),
-                      Text(
-                        TranslationHelper.translate(
-                            'subscription_cancel_anytime', languageCode),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
+              // Premium Features Section
+              Text(
+                TranslationHelper.translate('premium_features', languageCode),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await SubscriptionService.startSubscription(
-                    userId: FirebaseAuth.instance.currentUser!.uid,
-                    context: context,
-                    plan: 'premium',
-                  );
-                  await refreshSubscriptionData();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              _buildFeatureItem(
+                  context, Icons.notifications, 'feature_notifications'),
+              _buildFeatureItem(context, Icons.cloud, 'feature_weather'),
+              _buildFeatureItem(
+                  context, Icons.recommend, 'feature_recommendations'),
+              _buildFeatureItem(
+                  context, Icons.all_inclusive, 'feature_unlimited'),
+              SizedBox(height: 24),
+
+              // Monthly Plan Card
+              _buildPlanCard(
+                context,
+                'Monthly Plan',
+                '19,00 kr/month',
+                'monthly',
+                refreshSubscriptionData,
+              ),
+              SizedBox(height: 16),
+
+              // Yearly Plan Card
+              _buildPlanCard(
+                context,
+                'Yearly Plan',
+                '99,00 kr/year',
+                'yearly',
+                refreshSubscriptionData,
+                isPopular: true,
+              ),
+
+              SizedBox(height: 16),
+              Text(
+                TranslationHelper.translate(
+                    'subscription_cancel_anytime', languageCode),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
                 ),
-                child: Text(
-                  TranslationHelper.translate('subscribe_button', languageCode)
-                      .replaceAll('{price}', '19,00 kr'),
-                  style: TextStyle(fontSize: 16),
-                ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.pop(context),
             child: Text(TranslationHelper.translate('cancel', languageCode)),
           ),
         ],
+      ),
+    );
+  }
+
+  static Widget _buildFeatureItem(
+      BuildContext context, IconData icon, String translationKey) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: Theme.of(context).colorScheme.primary,
+            size: 20,
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              TranslationHelper.translate(translationKey, languageCode),
+              style: TextStyle(
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Widget _buildPlanCard(
+    BuildContext context,
+    String title,
+    String price,
+    String plan,
+    Function refreshSubscriptionData, {
+    bool isPopular = false,
+  }) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    return Card(
+      elevation: isPopular ? 4 : 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isPopular
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          width: isPopular ? 2 : 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isPopular) ...[
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  TranslationHelper.translate('most_popular', languageCode),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8),
+            ],
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              price,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await SubscriptionService.startSubscription(
+                  userId: FirebaseAuth.instance.currentUser!.uid,
+                  context: context,
+                  plan: plan,
+                );
+                await refreshSubscriptionData();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                TranslationHelper.translate('subscribe_button', languageCode)
+                    .replaceAll('{price}', price),
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
