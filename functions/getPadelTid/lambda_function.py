@@ -169,7 +169,7 @@ def get_recommended_times(user_id, locations):
                 )
                 
                 print(f"Document date: {doc['date']}, time: {doc['time']}")
-                print(f"Generated follow ID: {doc_follow_id}")
+                print(f"Generated follow ID: {date_to_follow_id}")
                 print(f"Example expected format: 20250412060000")
                 print(f"Available user_follows: {user_follows}")
                 
@@ -183,8 +183,8 @@ def get_recommended_times(user_id, locations):
                         print(f"Checking follow: {follow}")
                         if isinstance(follow, dict):
                             follow_id = follow.get('id', '')
-                            print(f"Comparing follow ID {follow_id} with {doc_follow_id}")
-                            if follow_id == doc_follow_id:
+                            print(f"Comparing follow ID {follow_id} with {date_to_follow_id}")
+                            if follow_id == date_to_follow_id:
                                 print(f"Found matching follow!")
                                 is_followed = True
                                 if 'preferences' in follow:
@@ -201,10 +201,10 @@ def get_recommended_times(user_id, locations):
                 
                 # Include preferences in the response if available
                 if preferences:
-                    print(f"Adding preferences to response for {doc_follow_id}: {preferences}")
+                    print(f"Adding preferences to response for {date_to_follow_id}: {preferences}")
                     cleaned_doc['preferences'] = preferences
                 else:
-                    print(f"No preferences found for {doc_follow_id}")
+                    print(f"No preferences found for {date_to_follow_id}")
                 
                 cleaned_results.append(cleaned_doc)
 
