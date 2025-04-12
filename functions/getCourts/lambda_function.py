@@ -107,3 +107,7 @@ def lambda_handler(event, context):
     # Get the date for one week from now
     date_one_week_later = (datetime.now() + timedelta(weeks=1)).strftime("%Y-%m-%d")
     getCourts(date_one_week_later)
+
+    # Get the date for two weeks from now
+    date_two_weeks_later = (datetime.now() + timedelta(weeks=2)).strftime("%Y-%m-%d")
+    getCourts(date_two_weeks_later)
