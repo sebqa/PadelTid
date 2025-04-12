@@ -936,5 +936,13 @@
       });
     });
   </script>
+  <script>
+    // Handle the stored path from 404.html
+    if (sessionStorage.redirect) {
+      const redirect = sessionStorage.redirect;
+      sessionStorage.removeItem('redirect');
+      window.history.replaceState(null, null, redirect);
+    }
+  </script>
 </body>
 </html>
