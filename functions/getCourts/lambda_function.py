@@ -4,6 +4,14 @@ from datetime import datetime, timedelta
 
 
 def getCourts(date):
+    # Check if the date is in the past
+    input_date = datetime.strptime(date, "%Y-%m-%d").date()
+    current_date = datetime.now().date()
+    
+    if input_date < current_date:
+        print(f"Skipping past date: {date}")
+        return
+
     # Connect to the default host and port
     client = MongoClient(host=os.environ.get("ATLAS_URI"))
 
