@@ -97,11 +97,12 @@ def lambda_handler(event, context):
             logger.info(f"Fetching subscriptions for customer: {customer.id}")
             subscriptions = stripe.Subscription.list(
                 customer=customer.id,
-                status='all',
+                status='active',
+                limit=1,
                 expand=['data.default_payment_method']
             )
 
-            if not subscriptions.data:
+            if len(subscriptions) == 0:
                 logger.info(f"No subscriptions found for customer: {customer.id}")
                 return {
                     'statusCode': 200,
@@ -115,14 +116,14 @@ def lambda_handler(event, context):
                 }
 
             # Get the most recent subscription
-            subscription = subscriptions.data[0]
+            subscription = subscriptions['data'][0]
             logger.info(f"Found subscription: {subscription.id} with status: {subscription.status}")
 
             # Determine the plan type
             plan = None
-            for price_id in subscription.items.data:
+            for item in subscription['items']['data']:
                 for plan_type, price in PRICE_IDS.items():
-                    if price_id.price.id == price:
+                    if item['price']['id'] == price:
                         plan = plan_type
                         break
                 if plan:
@@ -133,11 +134,11 @@ def lambda_handler(event, context):
                 'headers': headers,
                 'body': json.dumps({
                     'hasSubscription': True,
-                    'subscriptionId': subscription.id,
-                    'status': subscription.status,
+                    'subscriptionId': subscription['id'],
+                    'status': subscription['status'],
                     'plan': plan,
-                    'currentPeriodEnd': subscription.current_period_end,
-                    'cancelAtPeriodEnd': subscription.cancel_at_period_end
+                    'currentPeriodEnd': subscription['current_period_end'],
+                    'cancelAtPeriodEnd': subscription['cancel_at_period_end']
                 })
             }
 

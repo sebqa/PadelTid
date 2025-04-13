@@ -569,6 +569,9 @@ class _AccountScreenState extends State<AccountScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
+                          // Language Selector
+                          const SimpleLanguageSelector(),
+                          const SizedBox(height: 16),
                           // Sign Out Button
                           SizedBox(
                             width: double.infinity,

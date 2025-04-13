@@ -19,6 +19,8 @@ import 'package:flutter_application_1/services/token_service.dart';
 import 'package:flutter_application_1/providers/locale_provider.dart';
 import 'package:flutter_application_1/utils/translations.dart';
 import 'package:flutter_application_1/services/notification_handler.dart';
+import 'package:flutter_application_1/services/subscription_service.dart';
+import 'package:flutter_application_1/widgets/subscription_dialogs.dart';
 
 class Location {
   final String name;
@@ -198,130 +200,174 @@ class _HomePageState extends State<HomePage>
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setState) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    TranslationHelper.translate('weather_preferences',
-                        localeProvider.locale.languageCode),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  SizedBox(height: 24),
-                  _buildSliderWithLabel(
-                    context: context,
-                    icon: Icons.air,
-                    label: TranslationHelper.translate(
-                        'wind_speed', localeProvider.locale.languageCode),
-                    value: windSpeedThreshold,
-                    onChanged: (value) {
-                      setState(() => windSpeedThreshold = value);
-                    },
-                    min: 0,
-                    max: 20,
-                    unit: TranslationHelper.translate(
-                        'm_per_s', localeProvider.locale.languageCode),
-                  ),
-                  SizedBox(height: 24),
-                  _buildSliderWithLabel(
-                    context: context,
-                    icon: Icons.umbrella,
-                    label: TranslationHelper.translate(
-                        'precipitation', localeProvider.locale.languageCode),
-                    value: precipitationProbabilityThreshold,
-                    onChanged: (value) {
-                      setState(() => precipitationProbabilityThreshold = value);
-                    },
-                    min: 0,
-                    max: 100,
-                    unit: TranslationHelper.translate(
-                        'percentage', localeProvider.locale.languageCode),
-                  ),
-                  SizedBox(height: 24),
-                  _buildSliderWithLabel(
-                    context: context,
-                    icon: Icons.thermostat,
-                    label: TranslationHelper.translate(
-                        'temperature', localeProvider.locale.languageCode),
-                    value: temperatureThreshold,
-                    onChanged: (value) {
-                      setState(() => temperatureThreshold = value);
-                    },
-                    min: -10,
-                    max: 30,
-                    unit: TranslationHelper.translate(
-                        'celsius', localeProvider.locale.languageCode),
-                  ),
-                  SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          builder: (context, setState) => FutureBuilder<bool>(
+            future: SubscriptionService.isSubscribed,
+            builder: (context, snapshot) {
+              final isSubscribed = snapshot.data ?? false;
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        TranslationHelper.translate('show_unavailable',
+                        TranslationHelper.translate('weather_preferences',
                             localeProvider.locale.languageCode),
-                        style: Theme.of(context).textTheme.bodyLarge,
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      Switch(
-                        value: showUnavailableSlots,
+                      SizedBox(height: 24),
+                      _buildSliderWithLabel(
+                        context: context,
+                        icon: Icons.air,
+                        label: TranslationHelper.translate(
+                            'wind_speed', localeProvider.locale.languageCode),
+                        value: windSpeedThreshold,
                         onChanged: (value) {
-                          setState(() => showUnavailableSlots = value);
+                          setState(() => windSpeedThreshold = value);
                         },
-                        activeColor: Theme.of(context).colorScheme.primary,
+                        min: 0,
+                        max: 20,
+                        unit: TranslationHelper.translate(
+                            'm_per_s', localeProvider.locale.languageCode),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        TranslationHelper.translate('notify_on_matching_courts',
+                      SizedBox(height: 24),
+                      _buildSliderWithLabel(
+                        context: context,
+                        icon: Icons.umbrella,
+                        label: TranslationHelper.translate('precipitation',
                             localeProvider.locale.languageCode),
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      Switch(
-                        value: notifyOnMatchingCourts,
+                        value: precipitationProbabilityThreshold,
                         onChanged: (value) {
-                          setState(() => notifyOnMatchingCourts = value);
+                          setState(
+                              () => precipitationProbabilityThreshold = value);
                         },
-                        activeColor: Theme.of(context).colorScheme.primary,
+                        min: 0,
+                        max: 100,
+                        unit: TranslationHelper.translate(
+                            'percentage', localeProvider.locale.languageCode),
+                      ),
+                      SizedBox(height: 24),
+                      _buildSliderWithLabel(
+                        context: context,
+                        icon: Icons.thermostat,
+                        label: TranslationHelper.translate(
+                            'temperature', localeProvider.locale.languageCode),
+                        value: temperatureThreshold,
+                        onChanged: (value) {
+                          setState(() => temperatureThreshold = value);
+                        },
+                        min: -10,
+                        max: 30,
+                        unit: TranslationHelper.translate(
+                            'celsius', localeProvider.locale.languageCode),
+                      ),
+                      SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            TranslationHelper.translate('show_unavailable',
+                                localeProvider.locale.languageCode),
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          Switch(
+                            value: showUnavailableSlots,
+                            onChanged: (value) {
+                              setState(() => showUnavailableSlots = value);
+                            },
+                            activeColor: Theme.of(context).colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                TranslationHelper.translate(
+                                    'notify_on_matching_courts',
+                                    localeProvider.locale.languageCode),
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              if (!isSubscribed) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'PREMIUM',
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          Switch(
+                            value:
+                                isSubscribed ? notifyOnMatchingCourts : false,
+                            onChanged: isSubscribed
+                                ? (value) {
+                                    setState(
+                                        () => notifyOnMatchingCourts = value);
+                                  }
+                                : (_) {
+                                    SubscriptionDialogs.showSubscriptionDialog(
+                                      context,
+                                      () => setState(() {}),
+                                    );
+                                  },
+                            activeColor: Theme.of(context).colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(TranslationHelper.translate(
+                                'cancel', localeProvider.locale.languageCode)),
+                          ),
+                          SizedBox(width: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              updateThresholds();
+                              Navigator.pop(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(TranslationHelper.translate(
+                                'apply', localeProvider.locale.languageCode)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(TranslationHelper.translate(
-                            'cancel', localeProvider.locale.languageCode)),
-                      ),
-                      SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          updateThresholds();
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text(TranslationHelper.translate(
-                            'apply', localeProvider.locale.languageCode)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         );
       },

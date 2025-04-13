@@ -14,6 +14,19 @@ class SubscriptionService {
   static const String _createSubscriptionUrl = '$_baseUrl/createSubscription';
   static const String _cancelSubscriptionUrl = '$_baseUrl/cancelSubscription';
 
+  static Future<bool> get isSubscribed async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    try {
+      final status = await checkSubscription(user.uid);
+      return status['hasSubscription'] == true;
+    } catch (e) {
+      print('Error checking subscription status: $e');
+      return false;
+    }
+  }
+
   // Check subscription status
   static Future<Map<String, dynamic>> checkSubscription(String userId) async {
     try {
