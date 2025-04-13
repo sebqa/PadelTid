@@ -44,11 +44,15 @@ def lambda_handler(event, context):
         }
 
     try:
-        # Parse the request body
-        logger.info("Parsing request body")
-        body = json.loads(event['body'])
-        user_id = body.get('userId')
-        logger.info(f"Request body: {json.dumps(body)}")
+        # Get user ID from either query parameters or request body
+        user_id = None
+        if event.get('queryStringParameters', {}).get('userId'):
+            user_id = event['queryStringParameters']['userId']
+        elif event.get('body'):
+            body = json.loads(event['body'])
+            user_id = body.get('userId')
+        
+        logger.info(f"User ID from request: {user_id}")
         
         if not user_id:
             logger.error("User ID is missing from request")

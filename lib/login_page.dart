@@ -482,30 +482,30 @@ class _AccountScreenState extends State<AccountScreen> {
                             _buildFeatureItem(context, Icons.all_inclusive,
                                 'feature_unlimited'),
                             const SizedBox(height: 16),
-                            // Subscription Plans
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildPlanButton(
-                                    context,
-                                    'Monthly',
-                                    '19,00 kr/month',
-                                    'monthly',
-                                    languageCode: languageCode,
+                            // Single Subscription Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () =>
+                                    SubscriptionDialogs.showSubscriptionDialog(
+                                  context,
+                                  _loadSubscriptionData,
+                                ),
+                                icon: const Icon(Icons.star),
+                                label: Text(TranslationHelper.translate(
+                                    'subscribe_to_premium', languageCode)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  foregroundColor:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _buildPlanButton(
-                                    context,
-                                    'Yearly',
-                                    '99,00 kr/year',
-                                    'yearly',
-                                    isPopular: true,
-                                    languageCode: languageCode,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -708,68 +708,6 @@ class _AccountScreenState extends State<AccountScreen> {
             child: Text(
               TranslationHelper.translate(translationKey, languageCode),
               style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlanButton(
-    BuildContext context,
-    String title,
-    String price,
-    String plan, {
-    bool isPopular = false,
-    required String languageCode,
-  }) {
-    return ElevatedButton(
-      onPressed: () => SubscriptionDialogs.showSubscriptionDialog(
-        context,
-        _loadSubscriptionData,
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isPopular
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.surfaceVariant,
-        foregroundColor: isPopular
-            ? Theme.of(context).colorScheme.onPrimary
-            : Theme.of(context).colorScheme.onSurfaceVariant,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isPopular)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                TranslationHelper.translate('most_popular', languageCode),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-            ),
-          if (isPopular) const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            price,
-            style: const TextStyle(
-              fontSize: 12,
             ),
           ),
         ],

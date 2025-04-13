@@ -44,24 +44,114 @@ class SubscriptionDialogs {
                   context, Icons.all_inclusive, 'feature_unlimited'),
               SizedBox(height: 24),
 
-              // Monthly Plan Card
-              _buildPlanCard(
-                context,
-                'Monthly Plan',
-                '19,00 kr/month',
-                'monthly',
-                refreshSubscriptionData,
+              // Monthly Plan Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await SubscriptionService.startSubscription(
+                      userId: FirebaseAuth.instance.currentUser!.uid,
+                      context: context,
+                      plan: 'monthly',
+                    );
+                    await refreshSubscriptionData();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceVariant,
+                    foregroundColor:
+                        Theme.of(context).colorScheme.onSurfaceVariant,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Monthly Plan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '19,00 kr/month',
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               SizedBox(height: 16),
 
-              // Yearly Plan Card
-              _buildPlanCard(
-                context,
-                'Yearly Plan',
-                '99,00 kr/year',
-                'yearly',
-                refreshSubscriptionData,
-                isPopular: true,
+              // Yearly Plan Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await SubscriptionService.startSubscription(
+                      userId: FirebaseAuth.instance.currentUser!.uid,
+                      context: context,
+                      plan: 'yearly',
+                    );
+                    await refreshSubscriptionData();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimary
+                                  .withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              TranslationHelper.translate(
+                                  'most_popular', languageCode),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Yearly Plan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '99,00 kr/year',
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
               SizedBox(height: 16),
@@ -111,98 +201,6 @@ class SubscriptionDialogs {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  static Widget _buildPlanCard(
-    BuildContext context,
-    String title,
-    String price,
-    String plan,
-    Function refreshSubscriptionData, {
-    bool isPopular = false,
-  }) {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    final languageCode = localeProvider.locale.languageCode;
-
-    return Card(
-      elevation: isPopular ? 4 : 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isPopular
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          width: isPopular ? 2 : 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (isPopular) ...[
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  TranslationHelper.translate('most_popular', languageCode),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              SizedBox(height: 8),
-            ],
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              price,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await SubscriptionService.startSubscription(
-                  userId: FirebaseAuth.instance.currentUser!.uid,
-                  context: context,
-                  plan: plan,
-                );
-                await refreshSubscriptionData();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                TranslationHelper.translate('subscribe_button', languageCode)
-                    .replaceAll('{price}', price),
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
