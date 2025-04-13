@@ -7,6 +7,9 @@ import 'package:flutter_application_1/model/document.dart';
 import 'package:flutter_application_1/login_page.dart';
 import 'package:flutter_application_1/widgets/notification_preferences_dialog.dart';
 import 'package:flutter_application_1/services/token_service.dart';
+import 'package:flutter_application_1/services/subscription_service.dart';
+import 'package:flutter_application_1/providers/subscription_provider.dart';
+import 'package:provider/provider.dart';
 
 class FollowingIcon extends StatefulWidget {
   const FollowingIcon({Key? key, required this.document}) : super(key: key);
@@ -88,14 +91,16 @@ class _FollowingIconState extends State<FollowingIcon> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final isSubscribed = context.watch<SubscriptionProvider>().isSubscribed;
         return NotificationPreferencesDialog(
           initialPreferences: widget.document.notificationPreferences ??
               NotificationPreferences(
                 notifyOnWeatherChange: true,
-                notifyWhenAvailable: true,
+                notifyWhenAvailable: false,
                 notifyWhenOneLeft: false,
                 notifyWhenFull: false,
               ),
+          isSubscribed: isSubscribed,
           onSave: (preferences) {
             final hasAnyPreference = preferences.notifyOnWeatherChange ||
                 preferences.notifyWhenAvailable ||

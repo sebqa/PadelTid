@@ -19,6 +19,7 @@ import 'services/notification_handler.dart';
 import 'services/notification_history_service.dart';
 import 'services/web_notification_bridge.dart';
 import 'package:url_strategy/url_strategy.dart';
+import 'package:flutter_application_1/providers/subscription_provider.dart';
 
 // Add this at the top level
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -99,8 +100,9 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => LocaleProvider()),
-        ChangeNotifierProvider(create: (context) => notificationHistoryService),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationHistoryService()),
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
       ],
       child: MyApp(initialRoute: initialRoute),
     ),

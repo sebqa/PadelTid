@@ -281,7 +281,9 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       final data = await SubscriptionService.checkSubscription(widget.user.uid);
       setState(() {
-        _hasSubscription = data['isActive'] ?? false;
+        _hasSubscription =
+            data['hasSubscription'] == true && data['status'] == 'active';
+        _subscriptionData = data;
         _isLoading = false;
       });
     } catch (e) {

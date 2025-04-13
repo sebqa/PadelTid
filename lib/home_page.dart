@@ -21,6 +21,7 @@ import 'package:flutter_application_1/utils/translations.dart';
 import 'package:flutter_application_1/services/notification_handler.dart';
 import 'package:flutter_application_1/services/subscription_service.dart';
 import 'package:flutter_application_1/widgets/subscription_dialogs.dart';
+import 'package:flutter_application_1/providers/subscription_provider.dart';
 
 class Location {
   final String name;
@@ -89,6 +90,8 @@ class _HomePageState extends State<HomePage>
     // Initialize notification handler
     WidgetsBinding.instance.addPostFrameCallback((_) {
       NotificationHandler().initialize(context);
+      Provider.of<SubscriptionProvider>(context, listen: false)
+          .checkSubscriptionStatus();
     });
 
     // Initialize notification history service
@@ -101,6 +104,8 @@ class _HomePageState extends State<HomePage>
         setState(() {
           // Refresh documents when auth state changes
           _fetchDocuments();
+          Provider.of<SubscriptionProvider>(context, listen: false)
+              .checkSubscriptionStatus();
         });
       }
     });
@@ -200,14 +205,16 @@ class _HomePageState extends State<HomePage>
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setState) => FutureBuilder<bool>(
-            future: SubscriptionService.isSubscribed,
-            builder: (context, snapshot) {
-              final isSubscribed = snapshot.data ?? false;
-              return Dialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+          builder: (context, setState) {
+            final isSubscribed =
+                context.watch<SubscriptionProvider>().isSubscribed;
+
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: SizedBox(
+                width: double.maxFinite,
                 child: Padding(
                   padding: EdgeInsets.all(24),
                   child: Column(
@@ -321,8 +328,7 @@ class _HomePageState extends State<HomePage>
                             ],
                           ),
                           Switch(
-                            value:
-                                isSubscribed ? notifyOnMatchingCourts : false,
+                            value: notifyOnMatchingCourts,
                             onChanged: isSubscribed
                                 ? (value) {
                                     setState(
@@ -331,7 +337,13 @@ class _HomePageState extends State<HomePage>
                                 : (_) {
                                     SubscriptionDialogs.showSubscriptionDialog(
                                       context,
-                                      () => setState(() {}),
+                                      () {
+                                        Provider.of<SubscriptionProvider>(
+                                                context,
+                                                listen: false)
+                                            .checkSubscriptionStatus();
+                                        setState(() {});
+                                      },
                                     );
                                   },
                             activeColor: Theme.of(context).colorScheme.primary,
@@ -366,9 +378,9 @@ class _HomePageState extends State<HomePage>
                     ],
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         );
       },
     );
