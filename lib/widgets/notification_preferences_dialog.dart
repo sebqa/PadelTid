@@ -11,7 +11,7 @@ class NotificationPreferences {
 
   NotificationPreferences({
     this.notifyOnWeatherChange = true,
-    this.notifyWhenAvailable = true,
+    this.notifyWhenAvailable = false,
     this.notifyWhenOneLeft = false,
     this.notifyWhenFull = false,
   });
