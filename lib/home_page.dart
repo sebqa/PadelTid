@@ -98,15 +98,6 @@ class _HomePageState extends State<HomePage>
         .initialize();
 
     // Listen to auth state changes
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (mounted) {
-        setState(() {
-          // Only refresh subscription status on auth changes
-          Provider.of<SubscriptionProvider>(context, listen: false)
-              .checkSubscriptionStatus();
-        });
-      }
-    });
   }
 
   @override

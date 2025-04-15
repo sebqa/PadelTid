@@ -43,11 +43,17 @@ def insert_weather(data, host, club_name):
     requests = []
     
     for entry in timeseries:
-        next_hour = entry['data'].get('next_1_hours', {}) or entry['data'].get('next_6_hours', {})
+        # Try to get the most accurate forecast available
+        next_hour = entry['data'].get('next_1_hours', {})
+        if not next_hour:
+            next_hour = entry['data'].get('next_6_hours', {})
+        if not next_hour:
+            next_hour = entry['data'].get('next_12_hours', {})
         
         if next_hour:
+            # Get precipitation probability from the appropriate source
             precipitation_probability = next_hour.get('details', {}).get('probability_of_precipitation', 0)
-            symbol_code = next_hour.get('summary', {}).get('symbol_code',"null")
+            symbol_code = next_hour.get('summary', {}).get('symbol_code', "null")
             wind_speed = entry['data']['instant']['details'].get('wind_speed', 0)        
             dt = datetime.strptime(entry["time"], "%Y-%m-%dT%H:%M:%SZ")
             air_temperature = entry['data']['instant']['details'].get('air_temperature', 0)
@@ -81,13 +87,15 @@ def insert_weather(data, host, club_name):
 
                     new_symbol_code = entry['data'].get('next_6_hours', {}).get('summary', {}).get('symbol_code')
 
+                    # Create update object that preserves existing data
                     update_object = {
                         '$set': {
                             f'clubs.{club_name}.weather': {
                                 'wind_speed': round(new_wind_speed, 1),
                                 'precipitation_probability': round(new_precipitation_probability,1),
                                 'air_temperature': round(new_air_temperature,1),
-                                'symbol_code': new_symbol_code
+                                'symbol_code': new_symbol_code,
+                                'last_updated': datetime.utcnow().isoformat()
                             }
                         }
                     }
@@ -98,17 +106,21 @@ def insert_weather(data, host, club_name):
                 'time': time_string
             }
             
+            # Create update object that preserves existing data
             update_object = {
                 '$set': {
                     f'clubs.{club_name}.weather': {
                         'wind_speed': wind_speed,
                         'precipitation_probability': precipitation_probability,
                         'air_temperature': air_temperature,
-                        'symbol_code': symbol_code
+                        'symbol_code': symbol_code,
+                        'last_updated': datetime.utcnow().isoformat()
                     }
                 }
             }
             
             requests.append(UpdateOne(filter, update_object, upsert=True))
 
-    result = times_collection.bulk_write(requests)
+    if requests:
+        result = times_collection.bulk_write(requests)
+        print(f"Updated weather data for {club_name}: {result.modified_count} documents modified")
