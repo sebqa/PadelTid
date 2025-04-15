@@ -25,46 +25,33 @@ def lambda_handler(event, context):
     logger.info("Lambda function invoked")
     logger.info(f"Event: {json.dumps(event)}")
     
-    # Set up CORS headers
+    # Enable CORS
     headers = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Accept',
-        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
-        'Access-Control-Expose-Headers': '*',
-        'Content-Type': 'application/json'
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'GET,OPTIONS'
     }
 
-    # Handle CORS preflight request
-    if event.get('requestContext', {}).get('http', {}).get('method') == 'OPTIONS':
-        logger.info("Handling OPTIONS request")
+    if event['httpMethod'] == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({'message': 'OK'})
+            'body': json.dumps({})
         }
 
     try:
-        # Get user ID from either query parameters or request body
-        user_id = None
-        if event.get('queryStringParameters', {}).get('userId'):
-            user_id = event['queryStringParameters']['userId']
-        elif event.get('body'):
-            body = json.loads(event['body'])
-            user_id = body.get('userId')
-        
-        logger.info(f"User ID from request: {user_id}")
-        
+        # Get user ID from query parameters
+        user_id = event.get('queryStringParameters', {}).get('userId')
         if not user_id:
-            logger.error("User ID is missing from request")
             return {
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({'error': 'User ID is required'})
             }
 
-        # Get the user from MongoDB
+        # Find user in MongoDB
         logger.info(f"Fetching user from MongoDB: {user_id}")
-        user = db['users'].find_one({"_id": user_id})
+        user = db['users'].find_one({'userId': user_id})
         
         if not user:
             logger.error(f"User not found in MongoDB: {user_id}")
@@ -74,94 +61,66 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'User not found'})
             }
 
-        # Check if user has a Stripe customer ID
-        if 'stripeCustomerId' not in user:
-            logger.info(f"User {user_id} has no Stripe customer ID")
-            return {
-                'statusCode': 200,
-                'headers': headers,
-                'body': json.dumps({
-                    'hasSubscription': False,
-                    'subscriptionId': None,
-                    'status': None,
-                    'plan': None
-                })
-            }
+        subscription_data = {
+            'hasSubscription': False,
+            'status': None,
+            'currentPeriodEnd': None,
+            'cancelAtPeriodEnd': False,
+            'plan': None,
+            'invoices': []
+        }
 
-        try:
-            # Try to get the customer from Stripe
-            logger.info(f"Fetching Stripe customer: {user['stripeCustomerId']}")
-            customer = stripe.Customer.retrieve(user['stripeCustomerId'])
-            
-            # Get the customer's subscriptions from Stripe
-            logger.info(f"Fetching subscriptions for customer: {customer.id}")
-            subscriptions = stripe.Subscription.list(
-                customer=customer.id,
-                status='active',
-                limit=1,
-                expand=['data.default_payment_method']
-            )
-
-            if len(subscriptions) == 0:
-                logger.info(f"No subscriptions found for customer: {customer.id}")
-                return {
-                    'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps({
-                        'hasSubscription': False,
-                        'subscriptionId': None,
-                        'status': None,
-                        'plan': None
-                    })
-                }
-
-            # Get the most recent subscription
-            subscription = subscriptions['data'][0]
-            logger.info(f"Found subscription: {subscription.id} with status: {subscription.status}")
-
-            # Determine the plan type
-            plan = None
-            for item in subscription['items']['data']:
-                for plan_type, price in PRICE_IDS.items():
-                    if item['price']['id'] == price:
-                        plan = plan_type
-                        break
-                if plan:
-                    break
-
-            return {
-                'statusCode': 200,
-                'headers': headers,
-                'body': json.dumps({
-                    'hasSubscription': True,
-                    'subscriptionId': subscription['id'],
-                    'status': subscription['status'],
-                    'plan': plan,
-                    'currentPeriodEnd': subscription['current_period_end'],
-                    'cancelAtPeriodEnd': subscription['cancel_at_period_end']
-                })
-            }
-
-        except stripe.error.InvalidRequestError as e:
-            if 'No such customer' in str(e):
-                logger.warning(f"Stripe customer not found: {user['stripeCustomerId']}")
-                # Clear the Stripe customer ID from MongoDB
-                db['users'].update_one(
-                    {"_id": user_id},
-                    {"$unset": {"stripeCustomerId": ""}}
+        # Check if user has Stripe customer ID
+        if 'stripeCustomerId' in user:
+            try:
+                # Get customer's subscriptions
+                logger.info(f"Fetching Stripe customer: {user['stripeCustomerId']}")
+                subscriptions = stripe.Subscription.list(
+                    customer=user['stripeCustomerId'],
+                    status='all',
+                    limit=1
                 )
-                return {
-                    'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps({
-                        'hasSubscription': False,
-                        'subscriptionId': None,
-                        'status': None,
-                        'plan': None
+
+                if subscriptions.data:
+                    subscription = subscriptions.data[0]
+                    subscription_data.update({
+                        'hasSubscription': True,
+                        'status': subscription.status,
+                        'currentPeriodEnd': subscription.current_period_end,
+                        'cancelAtPeriodEnd': subscription.cancel_at_period_end,
+                        'plan': subscription.plan.nickname or subscription.plan.id
                     })
-                }
-            else:
-                raise
+
+                # Get recent invoices
+                invoices = stripe.Invoice.list(
+                    customer=user['stripeCustomerId'],
+                    limit=10
+                )
+
+                subscription_data['invoices'] = [{
+                    'id': invoice.id,
+                    'amount_paid': invoice.amount_paid / 100,  # Convert from cents
+                    'currency': invoice.currency,
+                    'status': invoice.status,
+                    'created': invoice.created,
+                    'hosted_invoice_url': invoice.hosted_invoice_url,
+                    'pdf_url': invoice.invoice_pdf
+                } for invoice in invoices.data]
+
+            except stripe.error.InvalidRequestError as e:
+                logger.warning(f"Stripe error: {str(e)}")
+                if "No such customer" in str(e):
+                    # Clear invalid customer ID
+                    db['users'].update_one(
+                        {'userId': user_id},
+                        {'$unset': {'stripeCustomerId': ''}}
+                    )
+
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps(subscription_data)
+        }
 
     except Exception as e:
         logger.error(f"Error in lambda_handler: {str(e)}", exc_info=True)
@@ -170,3 +129,6 @@ def lambda_handler(event, context):
             'headers': headers,
             'body': json.dumps({'error': str(e)})
         }
+    finally:
+        if 'client' in locals():
+            client.close()

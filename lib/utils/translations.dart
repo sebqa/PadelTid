@@ -170,6 +170,12 @@ class TranslationHelper {
       'premium_features':
           'Get access to all premium features with our subscription plan.',
       'confirm': 'Confirm',
+      'support': 'Support',
+      'contact_email': 'Contact Support',
+      'faq': 'FAQ',
+      'view_faq': 'View frequently asked questions',
+      'premium_support': 'Premium Support',
+      'priority_support': 'Get priority support as a premium member',
     },
     'da': {
       'monday': 'Mandag',
@@ -342,6 +348,12 @@ class TranslationHelper {
       'premium_features':
           'Få adgang til alle premium funktioner med vores abonnementsplan.',
       'confirm': 'Bekræft',
+      'support': 'Support',
+      'contact_email': 'Kontakt Support',
+      'faq': 'FAQ',
+      'view_faq': 'Se ofte stillede spørgsmål',
+      'premium_support': 'Premium Support',
+      'priority_support': 'Få prioriteret support som premium medlem',
     }
   };
 

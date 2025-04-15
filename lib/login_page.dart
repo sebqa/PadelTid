@@ -17,6 +17,9 @@ import 'dart:convert';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:flutter_application_1/services/subscription_service.dart';
 import 'package:flutter_application_1/widgets/subscription_dialogs.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:math';
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -267,7 +270,6 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   bool _isLoading = true;
-  bool _hasSubscription = false;
   Map<String, dynamic>? _subscriptionData;
 
   @override
@@ -277,19 +279,91 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _loadSubscriptionData() async {
-    setState(() => _isLoading = true);
     try {
-      final data = await SubscriptionService.checkSubscription(widget.user.uid);
-      setState(() {
-        _hasSubscription =
-            data['hasSubscription'] == true && data['status'] == 'active';
-        _subscriptionData = data;
-        _isLoading = false;
-      });
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        final data = await SubscriptionService.checkSubscription(userId);
+        if (mounted) {
+          setState(() {
+            _subscriptionData = data;
+            _isLoading = false;
+          });
+        }
+      }
     } catch (e) {
-      debugPrint('Error loading subscription data: $e');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  String _formatDate(int timestamp) {
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
+  void _showInvoices(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Invoices',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              SizedBox(height: 16),
+              if (_subscriptionData?['invoices']?.isEmpty ?? true)
+                Text('No invoices available')
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount:
+                      min((_subscriptionData?['invoices']?.length ?? 0), 5),
+                  itemBuilder: (context, index) {
+                    final invoice = _subscriptionData!['invoices'][index];
+                    return ListTile(
+                      title: Text('Invoice ${_formatDate(invoice['created'])}'),
+                      subtitle: Text(
+                        '${invoice['amount_paid']} ${invoice['currency'].toUpperCase()}',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.visibility),
+                            onPressed: () => launchUrl(
+                                Uri.parse(invoice['hosted_invoice_url'])),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.download),
+                            onPressed: () =>
+                                launchUrl(Uri.parse(invoice['pdf_url'])),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Close'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -393,10 +467,11 @@ class _AccountScreenState extends State<AccountScreen> {
                           Row(
                             children: [
                               Icon(
-                                _hasSubscription
+                                _subscriptionData?['hasSubscription'] == true
                                     ? Icons.star
                                     : Icons.star_border,
-                                color: _hasSubscription
+                                color: _subscriptionData?['hasSubscription'] ==
+                                        true
                                     ? Theme.of(context).colorScheme.primary
                                     : Theme.of(context)
                                         .colorScheme
@@ -417,7 +492,8 @@ class _AccountScreenState extends State<AccountScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          if (_hasSubscription) ...[
+                          if (_subscriptionData?['hasSubscription'] ==
+                              true) ...[
                             Text(
                               TranslationHelper.translate(
                                   'subscription_active', languageCode),
@@ -428,6 +504,24 @@ class _AccountScreenState extends State<AccountScreen> {
                                     color:
                                         Theme.of(context).colorScheme.primary,
                                   ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Add Invoices Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () => _showInvoices(context),
+                                icon: const Icon(Icons.receipt),
+                                label: Text(TranslationHelper.translate(
+                                    'view_invoices', languageCode)),
+                                style: OutlinedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 16),
                             SizedBox(
@@ -617,6 +711,79 @@ class _AccountScreenState extends State<AccountScreen> {
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Support Section
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Theme.of(context).shadowColor.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.support_agent,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                TranslationHelper.translate(
+                                    'support', languageCode),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          ListTile(
+                            leading: Icon(Icons.email_outlined),
+                            title: Text(TranslationHelper.translate(
+                                'contact_email', languageCode)),
+                            subtitle: Text('support@padeltid.com'),
+                            onTap: () => launchUrl(
+                                Uri.parse('mailto:support@padeltid.com')),
+                          ),
+                          ListTile(
+                            leading: Icon(Icons.help_outline),
+                            title: Text(TranslationHelper.translate(
+                                'faq', languageCode)),
+                            subtitle: Text(TranslationHelper.translate(
+                                'view_faq', languageCode)),
+                            onTap: () => launchUrl(
+                                Uri.parse('https://padeltid.com/faq')),
+                          ),
+                          if (_subscriptionData?['hasSubscription'] == true)
+                            ListTile(
+                              leading: Icon(Icons.support),
+                              title: Text(TranslationHelper.translate(
+                                  'premium_support', languageCode)),
+                              subtitle: Text(TranslationHelper.translate(
+                                  'priority_support', languageCode)),
+                              onTap: () => launchUrl(Uri.parse(
+                                  'mailto:premium-support@padeltid.com')),
+                            ),
                         ],
                       ),
                     ),
