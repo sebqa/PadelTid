@@ -82,8 +82,7 @@ class _HomePageState extends State<HomePage>
     ));
 
     _controller.forward();
-    _checkOnboardingStatus();
-    _initializePreferences();
+    _initializeApp();
     _tokenService.initTokenRefreshListener();
     localeProvider = Provider.of<LocaleProvider>(context, listen: false);
 
@@ -102,8 +101,7 @@ class _HomePageState extends State<HomePage>
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       if (mounted) {
         setState(() {
-          // Refresh documents when auth state changes
-          _fetchDocuments();
+          // Only refresh subscription status on auth changes
           Provider.of<SubscriptionProvider>(context, listen: false)
               .checkSubscriptionStatus();
         });
@@ -127,6 +125,42 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  Future<void> _initializeApp() async {
+    // Get shared preferences instance
+    sharedPreferences = await SharedPreferences.getInstance();
+
+    // Check onboarding status
+    final hasSeenOnboarding =
+        sharedPreferences.getBool('has_seen_onboarding') ?? false;
+    setState(() {
+      _showOnboarding = !hasSeenOnboarding;
+    });
+
+    // Initialize preferences
+    setState(() {
+      _selectedLocations =
+          sharedPreferences.getStringList('selected_locations') ?? [];
+
+      // Only set default values if not seen onboarding
+      if (!_showOnboarding) {
+        windSpeedThreshold =
+            sharedPreferences.getDouble('wind_speed_threshold') ?? 10.0;
+        precipitationProbabilityThreshold = sharedPreferences
+                .getDouble('precipitation_probability_threshold') ??
+            50.0;
+        temperatureThreshold =
+            sharedPreferences.getDouble('temperature_threshold') ?? 0.0;
+        showUnavailableSlots =
+            sharedPreferences.getBool('show_unavailable_courts') ?? true;
+        notifyOnMatchingCourts =
+            sharedPreferences.getBool('notify_on_matching_courts') ?? false;
+      }
+    });
+
+    // Fetch documents once after all preferences are set
+    _fetchDocuments();
+  }
+
   Future<void> _checkOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
@@ -134,15 +168,7 @@ class _HomePageState extends State<HomePage>
     setState(() {
       _selectedLocations = prefs.getStringList('selected_locations') ?? [];
       _showOnboarding = !hasSeenOnboarding;
-      if (!_showOnboarding) {
-        windSpeedThreshold = prefs.getDouble('wind_speed_threshold') ?? 10.0;
-        precipitationProbabilityThreshold =
-            prefs.getDouble('precipitation_probability_threshold') ?? 50.0;
-        temperatureThreshold = prefs.getDouble('temperature_threshold') ?? 0.0;
-      }
     });
-
-    // We'll fetch initial documents in _initializePreferences instead
   }
 
   Future<void> _initializePreferences() async {
@@ -162,7 +188,6 @@ class _HomePageState extends State<HomePage>
       _selectedLocations =
           sharedPreferences.getStringList('selected_locations') ?? [];
     });
-    _fetchDocuments();
   }
 
   void _fetchDocuments() {
