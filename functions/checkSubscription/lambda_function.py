@@ -57,17 +57,31 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'User ID is required'})
             }
 
-        # Find user in MongoDB
-        logger.info(f"Fetching user from MongoDB: {user_id}")
-        user = db['users'].find_one({'userId': user_id})
+        # Log database connection details
+        logger.info(f"Connecting to MongoDB with URI: {os.environ.get('ATLAS_URI')}")
+        logger.info(f"Database name: {db.name}")
+        logger.info(f"Collection name: users")
         
+        # Find user in MongoDB using _id field
+        logger.info(f"Searching for user with ID: {user_id}")
+        logger.info(f"Query: {{'_id': '{user_id}'}}")
+        
+        user = db['users'].find_one({'_id': user_id})
+            
         if not user:
+            # Log all documents in the collection for debugging
+            logger.info("Listing all documents in users collection:")
+            for doc in db['users'].find().limit(5):
+                logger.info(f"Document: {json.dumps(doc, default=str)}")
+            
             logger.error(f"User not found in MongoDB: {user_id}")
             return {
                 'statusCode': 404,
                 'headers': headers,
                 'body': json.dumps({'error': 'User not found'})
             }
+
+        logger.info(f"Found user: {json.dumps(user, default=str)}")
 
         subscription_data = {
             'hasSubscription': False,
@@ -120,7 +134,7 @@ def lambda_handler(event, context):
                 if "No such customer" in str(e):
                     # Clear invalid customer ID
                     db['users'].update_one(
-                        {'userId': user_id},
+                        {'_id': user_id},
                         {'$unset': {'stripeCustomerId': ''}}
                     )
 
