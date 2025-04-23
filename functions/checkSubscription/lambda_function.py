@@ -32,7 +32,8 @@ def lambda_handler(event, context):
         'Access-Control-Allow-Methods': 'GET,OPTIONS'
     }
 
-    if event['httpMethod'] == 'OPTIONS':
+    # Handle CORS preflight request for API Gateway
+    if 'httpMethod' in event and event['httpMethod'] == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': headers,
@@ -40,8 +41,13 @@ def lambda_handler(event, context):
         }
 
     try:
-        # Get user ID from query parameters
-        user_id = event.get('queryStringParameters', {}).get('userId')
+        # Get user ID from either query parameters or direct event
+        user_id = None
+        if 'queryStringParameters' in event and event['queryStringParameters']:
+            user_id = event['queryStringParameters'].get('userId')
+        elif 'userId' in event:
+            user_id = event['userId']
+            
         if not user_id:
             return {
                 'statusCode': 400,
@@ -116,6 +122,7 @@ def lambda_handler(event, context):
                         {'$unset': {'stripeCustomerId': ''}}
                     )
 
+        # Return response in API Gateway format
         return {
             'statusCode': 200,
             'headers': headers,
