@@ -25,15 +25,17 @@ def lambda_handler(event, context):
     logger.info("Lambda function invoked")
     logger.info(f"Event: {json.dumps(event)}")
     
-    # Enable CORS
+    # Enable CORS with comprehensive headers
     headers = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': 'GET,OPTIONS'
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With',
+        'Access-Control-Allow-Methods': 'GET,OPTIONS,POST',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Max-Age': '3600'
     }
 
-    # Handle CORS preflight request for API Gateway
-    if 'httpMethod' in event and event['httpMethod'] == 'OPTIONS':
+    # Handle CORS preflight request
+    if event.get('httpMethod') == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': headers,
