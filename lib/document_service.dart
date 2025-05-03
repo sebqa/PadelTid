@@ -42,7 +42,8 @@ class DocumentService {
       {bool notifyOnMatchingCourts = false,
       double? notificationWindThreshold,
       double? notificationPrecipitationThreshold,
-      double? notificationTemperatureThreshold}) async {
+      double? notificationTemperatureThreshold,
+      bool? notificationShowUnavailableSlots}) async {
     final user = FirebaseAuth.instance.currentUser;
 
     // Logging filter parameters
@@ -59,7 +60,8 @@ class DocumentService {
       print('[Filter] Notification thresholds - wind: '
           '[32m$notificationWindThreshold\u001b[0m, precipitation: '
           '[32m$notificationPrecipitationThreshold\u001b[0m, temperature: '
-          '[32m$notificationTemperatureThreshold\u001b[0m');
+          '[32m$notificationTemperatureThreshold\u001b[0m, show unavailable: '
+          '[32m$notificationShowUnavailableSlots\u001b[0m');
     }
 
     // Prepare result containers
@@ -93,6 +95,10 @@ class DocumentService {
         if (notificationTemperatureThreshold != null) {
           baseQueryParams['notification_temperature_threshold'] =
               notificationTemperatureThreshold.toString();
+        }
+        if (notificationShowUnavailableSlots != null) {
+          baseQueryParams['notification_show_unavailable_courts'] =
+              notificationShowUnavailableSlots.toString();
         }
       }
 

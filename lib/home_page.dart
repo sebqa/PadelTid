@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage>
   double notificationWindSpeedThreshold = 50.0;
   double notificationPrecipitationThreshold = 100.0;
   double notificationTemperatureThreshold = 0.0;
+  bool notificationShowUnavailableSlots = true;
   bool showUnavailableSlots = true;
   bool notifyOnMatchingCourts = false;
   late SharedPreferences sharedPreferences;
@@ -166,6 +167,9 @@ class _HomePageState extends State<HomePage>
         notificationTemperatureThreshold =
             sharedPreferences.getDouble('notification_temperature_threshold') ??
                 temperatureThreshold;
+        notificationShowUnavailableSlots =
+            sharedPreferences.getBool('notification_show_unavailable_courts') ??
+                showUnavailableSlots;
       }
     });
 
@@ -213,6 +217,9 @@ class _HomePageState extends State<HomePage>
       notificationTemperatureThreshold =
           sharedPreferences.getDouble('notification_temperature_threshold') ??
               temperatureThreshold;
+      notificationShowUnavailableSlots =
+          sharedPreferences.getBool('notification_show_unavailable_courts') ??
+              showUnavailableSlots;
 
       _selectedLocations =
           sharedPreferences.getStringList('selected_locations') ?? [];
@@ -243,6 +250,9 @@ class _HomePageState extends State<HomePage>
           await sharedPreferences.setDouble(
               'notification_temperature_threshold',
               notificationTemperatureThreshold);
+          await sharedPreferences.setBool(
+              'notification_show_unavailable_courts',
+              notificationShowUnavailableSlots);
         }
       }
 
@@ -259,6 +269,7 @@ class _HomePageState extends State<HomePage>
           notificationPrecipitationThreshold:
               notificationPrecipitationThreshold,
           notificationTemperatureThreshold: notificationTemperatureThreshold,
+          notificationShowUnavailableSlots: notificationShowUnavailableSlots,
         );
         _documentsLoaded = true;
       });
@@ -503,6 +514,28 @@ class _HomePageState extends State<HomePage>
                             max: 30,
                             unit: TranslationHelper.translate(
                                 'celsius', localeProvider.locale.languageCode),
+                          ),
+                          SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                TranslationHelper.translate(
+                                        'notification_show_unavailable',
+                                        localeProvider.locale.languageCode) ??
+                                    "Show Unavailable Courts",
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              Switch(
+                                value: notificationShowUnavailableSlots,
+                                onChanged: (value) {
+                                  setState(() =>
+                                      notificationShowUnavailableSlots = value);
+                                },
+                                activeColor:
+                                    Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
                           ),
                         ],
                         SizedBox(height: 32),

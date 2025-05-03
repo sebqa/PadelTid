@@ -225,7 +225,7 @@ def save_user_preferences(user_id, preferences):
         # Extract base preferences
         base_preferences = {
             "notifyOnMatchingCourts": preferences.get("notifyOnMatchingCourts", False),
-            "showUnavailableSlots": preferences.get("showUnavailableSlots", False),
+            "showUnavailableSlots": preferences.get("notification_show_unavailable_courts", False),
             "locations": preferences.get("locations", [])
         }
         
@@ -233,30 +233,18 @@ def save_user_preferences(user_id, preferences):
         location_preferences = {}
         for location in preferences.get("locations", []):
             location_preferences[location] = {
-                "wind_threshold": preferences.get("wind_speed_threshold"),
-                "min_temp": preferences.get("temperature_threshold"),
-                "precip_threshold": preferences.get("precipitation_probability_threshold")
+                "wind_threshold": preferences.get("notification_wind_threshold"),
+                "min_temp": preferences.get("notification_temperature_threshold"),
+                "precip_threshold": preferences.get("notification_precipitation_threshold")
             }
-        
-        # Create notification-specific preference structure if notifyOnMatchingCourts is enabled
-        notification_preferences = None
-        if preferences.get("notifyOnMatchingCourts", False):
-            notification_preferences = {
-                "wind_threshold": preferences.get("notification_wind_threshold", preferences.get("wind_speed_threshold")),
-                "min_temp": preferences.get("notification_temperature_threshold", preferences.get("temperature_threshold")),
-                "precip_threshold": preferences.get("notification_precipitation_threshold", preferences.get("precipitation_probability_threshold"))
-            }
+
         
         # Complete preferences structure
         optimized_preferences = {
             **base_preferences,
             "locationPreferences": location_preferences
         }
-        
-        # Add notification preferences if present
-        if notification_preferences:
-            optimized_preferences["notificationPreferences"] = notification_preferences
-        
+
         # Update the user document
         result = db_padeltid['users'].update_one(
             {"_id": user_id}, 
@@ -292,10 +280,6 @@ def lambda_handler(event,context):
         # Save user preferences if user_id is provided
         if user_id:
             preferences = {
-                "wind_speed_threshold": wind_speed_threshold,
-                "precipitation_probability_threshold": precipitation_probability_threshold,
-                "temperature_threshold": temperature_threshold,
-                "showUnavailableSlots": showUnavailableSlots == "true",
                 "locations": locations,
                 "notifyOnMatchingCourts": event['queryStringParameters'].get('notify_on_matching_courts', 'false') == "true"
             }
@@ -306,6 +290,7 @@ def lambda_handler(event,context):
                 notification_wind = event['queryStringParameters'].get('notification_wind_threshold')
                 notification_precip = event['queryStringParameters'].get('notification_precipitation_threshold')
                 notification_temp = event['queryStringParameters'].get('notification_temperature_threshold')
+                notification_show_unavailable = event['queryStringParameters'].get('notification_show_unavailable_courts')
                 
                 if notification_wind:
                     preferences["notification_wind_threshold"] = float(notification_wind)
@@ -313,6 +298,8 @@ def lambda_handler(event,context):
                     preferences["notification_precipitation_threshold"] = float(notification_precip)
                 if notification_temp:
                     preferences["notification_temperature_threshold"] = float(notification_temp)
+                if notification_show_unavailable:
+                    preferences["notification_show_unavailable_courts"] = notification_show_unavailable == "true"
             
             save_user_preferences(user_id, preferences)
         
