@@ -63,6 +63,13 @@ class TranslationHelper {
       'recommended': 'Recommended',
       'all_timeslots': 'All timeslots',
       'loading': 'Loading...',
+      'notification_preferences': 'Notification Preferences',
+      'notification_description':
+          'Set specific weather conditions for notifications. Courts that match these conditions will trigger notifications.',
+      'notification_wind': 'Wind Speed',
+      'notification_precipitation': 'Precipitation',
+      'notification_temperature': 'Temperature',
+      'notification_show_unavailable': 'Show unavailable',
       'no_data': 'No data',
       'error_prefix': 'Error:',
       'email': 'Email',
