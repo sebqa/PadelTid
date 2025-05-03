@@ -238,11 +238,24 @@ def save_user_preferences(user_id, preferences):
                 "precip_threshold": preferences.get("precipitation_probability_threshold")
             }
         
+        # Create notification-specific preference structure if notifyOnMatchingCourts is enabled
+        notification_preferences = None
+        if preferences.get("notifyOnMatchingCourts", False):
+            notification_preferences = {
+                "wind_threshold": preferences.get("notification_wind_threshold", preferences.get("wind_speed_threshold")),
+                "min_temp": preferences.get("notification_temperature_threshold", preferences.get("temperature_threshold")),
+                "precip_threshold": preferences.get("notification_precipitation_threshold", preferences.get("precipitation_probability_threshold"))
+            }
+        
         # Complete preferences structure
         optimized_preferences = {
             **base_preferences,
             "locationPreferences": location_preferences
         }
+        
+        # Add notification preferences if present
+        if notification_preferences:
+            optimized_preferences["notificationPreferences"] = notification_preferences
         
         # Update the user document
         result = db_padeltid['users'].update_one(
@@ -286,6 +299,21 @@ def lambda_handler(event,context):
                 "locations": locations,
                 "notifyOnMatchingCourts": event['queryStringParameters'].get('notify_on_matching_courts', 'false') == "true"
             }
+            
+            # Add notification-specific thresholds if provided
+            if event['queryStringParameters'].get('notify_on_matching_courts', 'false') == "true":
+                # Get notification-specific thresholds if provided, or use regular thresholds as defaults
+                notification_wind = event['queryStringParameters'].get('notification_wind_threshold')
+                notification_precip = event['queryStringParameters'].get('notification_precipitation_threshold')
+                notification_temp = event['queryStringParameters'].get('notification_temperature_threshold')
+                
+                if notification_wind:
+                    preferences["notification_wind_threshold"] = float(notification_wind)
+                if notification_precip:
+                    preferences["notification_precipitation_threshold"] = float(notification_precip)
+                if notification_temp:
+                    preferences["notification_temperature_threshold"] = float(notification_temp)
+            
             save_user_preferences(user_id, preferences)
         
         # If this is a combined request, we need to fetch both types of data

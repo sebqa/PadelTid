@@ -39,7 +39,10 @@ class DocumentService {
       double temperature,
       bool showUnavailableSlots,
       List<String> selectedLocations,
-      {bool notifyOnMatchingCourts = false}) async {
+      {bool notifyOnMatchingCourts = false,
+      double? notificationWindThreshold,
+      double? notificationPrecipitationThreshold,
+      double? notificationTemperatureThreshold}) async {
     final user = FirebaseAuth.instance.currentUser;
 
     // Logging filter parameters
@@ -50,6 +53,14 @@ class DocumentService {
         '[32m$showUnavailableSlots\u001b[0m, selectedLocations: '
         '[32m$selectedLocations\u001b[0m, notifyOnMatchingCourts: '
         '[32m$notifyOnMatchingCourts\u001b[0m');
+
+    // Log notification thresholds if enabled
+    if (notifyOnMatchingCourts) {
+      print('[Filter] Notification thresholds - wind: '
+          '[32m$notificationWindThreshold\u001b[0m, precipitation: '
+          '[32m$notificationPrecipitationThreshold\u001b[0m, temperature: '
+          '[32m$notificationTemperatureThreshold\u001b[0m');
+    }
 
     // Prepare result containers
     List<Document> filteredDocuments = [];
@@ -68,6 +79,22 @@ class DocumentService {
         if (user != null)
           'notify_on_matching_courts': notifyOnMatchingCourts.toString(),
       };
+
+      // Add notification-specific thresholds if notifications are enabled
+      if (notifyOnMatchingCourts && user != null) {
+        if (notificationWindThreshold != null) {
+          baseQueryParams['notification_wind_threshold'] =
+              notificationWindThreshold.toString();
+        }
+        if (notificationPrecipitationThreshold != null) {
+          baseQueryParams['notification_precipitation_threshold'] =
+              notificationPrecipitationThreshold.toString();
+        }
+        if (notificationTemperatureThreshold != null) {
+          baseQueryParams['notification_temperature_threshold'] =
+              notificationTemperatureThreshold.toString();
+        }
+      }
 
       // Make a single request for both types of documents
       final queryParams = {
