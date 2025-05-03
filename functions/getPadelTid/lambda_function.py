@@ -58,17 +58,17 @@ def get_recommended_times(user_id, locations):
             return {"error": "At least one location must be specified"}, 400
         
         # Get user filter preferences
-        filter_prefs = user.get('filterPreferences', {})
+        #filter_prefs = user.get('filterPreferences', {})
         
         # Get user follow data to mark documents as followed
-        user_follows = get_user_follows(user_id)
+        #user_follows = get_user_follows(user_id)
             
         # For now, just get documents that match the user's preferred locations and weather thresholds
         # In the future, you can implement more sophisticated recommendation logic
         
         # Default weather thresholds if not in user preferences
-        default_wind = 10.0  # Default wind threshold (m/s)
-        default_precip = 30.0  # Default precipitation probability (%)
+        default_wind = 4.0  # Default wind threshold (m/s)
+        default_precip = 10.0  # Default precipitation probability (%)
         default_temp = 5.0  # Default minimum temperature (°C)
         
         # Get weather thresholds from user preferences, if available
@@ -77,7 +77,7 @@ def get_recommended_times(user_id, locations):
         temp_threshold = default_temp
         
         # Get location-specific preferences if available
-        location_prefs = filter_prefs.get('locationPreferences', {})
+        #location_prefs = filter_prefs.get('locationPreferences', {})
         
         # Get documents matching user preferences for each location
         recommended_docs = []
@@ -103,24 +103,13 @@ def get_recommended_times(user_id, locations):
         club_conditions = []
         for club in locations:
             # Get location-specific thresholds if available
-            club_prefs = location_prefs.get(club, {})
-            club_wind = club_prefs.get('wind_threshold', wind_threshold)
-            club_precip = club_prefs.get('precip_threshold', precip_threshold)
-            club_temp = club_prefs.get('min_temp', temp_threshold)
-            
-            # Convert string values to float if needed
-            if isinstance(club_wind, str):
-                club_wind = float(club_wind)
-            if isinstance(club_precip, str):
-                club_precip = float(club_precip)
-            if isinstance(club_temp, str):
-                club_temp = float(club_temp)
+          
             
             base_conditions = [
                 {f'clubs.{club}': {'$exists': True}},
-                {f'clubs.{club}.weather.wind_speed': {'$lte': club_wind}},
-                {f'clubs.{club}.weather.precipitation_probability': {'$lte': club_precip}},
-                {f'clubs.{club}.weather.air_temperature': {'$gte': club_temp}},
+                {f'clubs.{club}.weather.wind_speed': {'$lte': default_wind}},
+                {f'clubs.{club}.weather.precipitation_probability': {'$lte': default_precip}},
+                {f'clubs.{club}.weather.air_temperature': {'$gte': default_temp}},
                 {f'clubs.{club}.available_slots': {'$gt': 0}}  # Only available slots for recommendations
             ]
                 
@@ -139,7 +128,7 @@ def get_recommended_times(user_id, locations):
             projection[f'clubs.{club}'] = 1
 
         # Get results with limit to avoid too many recommendations
-        results = list(collection.find(query, projection).sort([("date", 1), ("time", 1)]).limit(10))
+        results = list(collection.find(query, projection).sort([("date", 1), ("time", 1)]).limit(20))
         
         # Clean up results and format them
         cleaned_results = []
