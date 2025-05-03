@@ -42,48 +42,20 @@ class DocumentService {
       {bool notifyOnMatchingCourts = false}) async {
     final user = FirebaseAuth.instance.currentUser;
 
-    // Create cache keys for both types of requests
-    final filterCacheKey =
-        '${windSpeed}_${precipitationProbability}_${temperature}_${showUnavailableSlots}_false_${notifyOnMatchingCourts}_${selectedLocations.join(',')}';
-    final recommendedCacheKey =
-        '${windSpeed}_${precipitationProbability}_${temperature}_${showUnavailableSlots}_true_${notifyOnMatchingCourts}_${selectedLocations.join(',')}';
-
-    // Check if cache is valid
-    final now = DateTime.now();
-    final isCacheValid = now.difference(_lastCacheTime) < cacheDuration;
+    // Logging filter parameters
+    print('[Filter] windSpeed: '
+        '[32m$windSpeed\u001b[0m, precipitationProbability: '
+        '[32m$precipitationProbability\u001b[0m, temperature: '
+        '[32m$temperature\u001b[0m, showUnavailableSlots: '
+        '[32m$showUnavailableSlots\u001b[0m, selectedLocations: '
+        '[32m$selectedLocations\u001b[0m, notifyOnMatchingCourts: '
+        '[32m$notifyOnMatchingCourts\u001b[0m');
 
     // Prepare result containers
     List<Document> filteredDocuments = [];
     List<Document> recommendedDocuments = [];
 
-    // Try to load from cache first
-    bool needFetchFiltered = true;
-    bool needFetchRecommended = true;
-
-    if (isCacheValid) {
-      if (_cachedResults.containsKey(filterCacheKey)) {
-        print('Using cached data for filtered documents');
-        filteredDocuments = _cachedResults[filterCacheKey];
-        needFetchFiltered = false;
-      }
-
-      if (_cachedResults.containsKey(recommendedCacheKey)) {
-        print('Using cached data for recommended documents');
-        recommendedDocuments = _cachedResults[recommendedCacheKey];
-        needFetchRecommended = false;
-      }
-    }
-
-    // Fetch data if needed
     try {
-      // If both are available in cache, return early
-      if (!needFetchFiltered && !needFetchRecommended) {
-        return {
-          'filtered': filteredDocuments,
-          'recommended': recommendedDocuments,
-        };
-      }
-
       // Base query parameters
       final baseQueryParams = {
         'wind_speed_threshold': windSpeed.toString(),
@@ -107,14 +79,17 @@ class DocumentService {
               'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com/getPadelTid')
           .replace(queryParameters: queryParams);
 
-      print('Making combined API request to: ${url.toString()}');
+      print(
+          '[API] Making combined API request to: [34m${url.toString()}\u001b[0m');
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
 
         // Process filtered documents
-        if (needFetchFiltered && responseData.containsKey('filtered')) {
+        if (responseData.containsKey('filtered')) {
           final List<dynamic> filteredJson = responseData['filtered'];
+          print(
+              '[Filter] Filtering filtered documents by selectedLocations: $selectedLocations');
           filteredDocuments = filteredJson
               .map((json) => Document.fromJson(
                   json, [], // No need for followedDocs parameter
@@ -124,19 +99,21 @@ class DocumentService {
                   doc.clubs.keys
                       .any((club) => selectedLocations.contains(club)))
               .toList();
-
-          // Cache the results
-          _cachedResults[filterCacheKey] = filteredDocuments;
+          print(
+              '[Filter] Filtered documents count: [32m${filteredDocuments.length}\u001b[0m');
 
           // Store in local cache for faster initial load
           if (selectedLocations.isNotEmpty) {
-            _saveToLocalCache(filteredDocuments);
+            print('[SharedPrefs] Saving filtered documents to local cache');
+            await _saveToLocalCache(filteredDocuments);
           }
         }
 
         // Process recommended documents
-        if (needFetchRecommended && responseData.containsKey('recommended')) {
+        if (responseData.containsKey('recommended')) {
           final List<dynamic> recommendedJson = responseData['recommended'];
+          print(
+              '[Filter] Filtering recommended documents by selectedLocations: $selectedLocations');
           recommendedDocuments = recommendedJson
               .map((json) => Document.fromJson(
                   json, [], // No need for followedDocs parameter
@@ -146,32 +123,21 @@ class DocumentService {
                   doc.clubs.keys
                       .any((club) => selectedLocations.contains(club)))
               .toList();
-
-          // Cache the results
-          _cachedResults[recommendedCacheKey] = recommendedDocuments;
+          print(
+              '[Filter] Recommended documents count: [32m${recommendedDocuments.length}\u001b[0m');
         }
-
-        _lastCacheTime = now;
       } else {
         throw Exception('Failed to load documents');
       }
     } catch (e) {
-      // On error, try to use cached data or local storage
-      if (filteredDocuments.isEmpty &&
-          _cachedResults.containsKey(filterCacheKey)) {
-        filteredDocuments = _cachedResults[filterCacheKey];
-      }
-
-      if (recommendedDocuments.isEmpty &&
-          _cachedResults.containsKey(recommendedCacheKey)) {
-        recommendedDocuments = _cachedResults[recommendedCacheKey];
-      }
-
+      print('[Error] Exception during fetchAllDocuments: $e');
       // Try to load from local storage as fallback for filtered docs
       if (filteredDocuments.isEmpty) {
+        print('[SharedPrefs] Loading filtered documents from local cache');
         filteredDocuments = await _loadFromLocalCache();
+        print(
+            '[SharedPrefs] Loaded filtered documents from local cache: [32m${filteredDocuments.length}\u001b[0m');
       }
-
       if (filteredDocuments.isEmpty && recommendedDocuments.isEmpty) {
         throw Exception('Failed to load documents: $e');
       }
@@ -203,6 +169,7 @@ class DocumentService {
   Future<void> _saveToLocalCache(List<Document> documents) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      print('[SharedPrefs] Got SharedPreferences instance for save');
       final jsonData = documents
           .map((doc) => {
                 'date': doc.date,
@@ -211,8 +178,9 @@ class DocumentService {
               })
           .toList();
       await prefs.setString('cached_documents', json.encode(jsonData));
+      print('[SharedPrefs] Saved filtered documents to shared preferences');
     } catch (e) {
-      print('Error saving to local cache: $e');
+      print('[SharedPrefs] Error saving to local cache: $e');
     }
   }
 
@@ -220,14 +188,17 @@ class DocumentService {
   Future<List<Document>> _loadFromLocalCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      print('[SharedPrefs] Got SharedPreferences instance for load');
       final jsonString = prefs.getString('cached_documents');
       if (jsonString != null) {
         final List<dynamic> jsonList = json.decode(jsonString);
+        print(
+            '[SharedPrefs] Loaded jsonString from shared preferences, count: [32m${jsonList.length}\u001b[0m');
         // Convert back to Document objects
         return jsonList.map((json) => Document.fromJson(json, [])).toList();
       }
     } catch (e) {
-      print('Error loading from local cache: $e');
+      print('[SharedPrefs] Error loading from local cache: $e');
     }
     return [];
   }

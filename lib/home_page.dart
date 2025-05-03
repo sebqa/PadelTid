@@ -62,6 +62,7 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+    print('[HomePage] initState called');
     WidgetsBinding.instance.addObserver(this);
     _controller = AnimationController(
       duration: Duration(milliseconds: 800),
@@ -88,9 +89,18 @@ class _HomePageState extends State<HomePage>
 
     // Initialize notification handler
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('[HomePage] postFrameCallback executed');
       NotificationHandler().initialize(context);
-      Provider.of<SubscriptionProvider>(context, listen: false)
-          .checkSubscriptionStatus();
+      print(
+          '[HomePage] Attempting to get SubscriptionProvider and check status');
+      try {
+        final provider =
+            Provider.of<SubscriptionProvider>(context, listen: false);
+        print('[HomePage] Got SubscriptionProvider instance: $provider');
+        provider.checkSubscriptionStatus();
+      } catch (e) {
+        print('[HomePage] ERROR accessing SubscriptionProvider: $e');
+      }
     });
 
     // Initialize notification history service
@@ -122,7 +132,7 @@ class _HomePageState extends State<HomePage>
 
     // Check onboarding status
     final hasSeenOnboarding =
-        sharedPreferences.getBool('has_seen_onboarding') ?? false;
+        sharedPreferences.getString("user_consent") == "all";
     setState(() {
       _showOnboarding = !hasSeenOnboarding;
     });
@@ -217,6 +227,8 @@ class _HomePageState extends State<HomePage>
   }
 
   void showSettingsDialog() {
+    print('[HomePage] Opening settings dialog. Current notifyOnMatchingCourts: '
+        '[34m$notifyOnMatchingCourts\u001b[0m');
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -224,6 +236,8 @@ class _HomePageState extends State<HomePage>
           builder: (context, setState) {
             final isSubscribed =
                 context.watch<SubscriptionProvider>().isSubscribed;
+            print(
+                '[HomePage] showSettingsDialog: isSubscribed = $isSubscribed');
 
             return Dialog(
               shape: RoundedRectangleBorder(
@@ -459,6 +473,18 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    print('[HomePage] build method called');
+
+    // Try to access SubscriptionProvider in build to verify it exists
+    try {
+      final subProvider =
+          Provider.of<SubscriptionProvider>(context, listen: false);
+      print(
+          '[HomePage] SubscriptionProvider accessed in build: isSubscribed=${subProvider.isSubscribed}');
+    } catch (e) {
+      print('[HomePage] ERROR accessing SubscriptionProvider in build: $e');
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(

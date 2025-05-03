@@ -88,10 +88,14 @@ class _FollowingIconState extends State<FollowingIcon> {
   }
 
   void _showSubscriptionDialog() {
+    print('[FollowingIcon] Opening subscription dialog for document: '
+        '\u001b[34m${widget.document.date} ${widget.document.time}\u001b[0m');
     showDialog(
       context: context,
       builder: (BuildContext context) {
         final isSubscribed = context.watch<SubscriptionProvider>().isSubscribed;
+        print(
+            '[FollowingIcon] _showSubscriptionDialog: isSubscribed = $isSubscribed');
         return NotificationPreferencesDialog(
           initialPreferences: widget.document.notificationPreferences ??
               NotificationPreferences(
@@ -192,10 +196,12 @@ class _FollowingIconState extends State<FollowingIcon> {
         final user = FirebaseAuth.instance.currentUser;
 
         if (user == null) {
+          print('[FollowingIcon] User not logged in, showing login dialog');
           _showLoginDialog();
           return;
         }
 
+        print('[FollowingIcon] User is logged in, showing subscription dialog');
         _showSubscriptionDialog();
       },
     );

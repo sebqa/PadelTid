@@ -38,6 +38,7 @@ class RouteGuard extends NavigatorObserver {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  print('[main] Starting app initialization');
 
   // Configure URL strategy for web
   if (kIsWeb) {
@@ -58,31 +59,36 @@ Future<void> main() async {
   // Initialize the locale provider first and pre-load the current locale
   final localeProvider = LocaleProvider();
   await localeProvider.initialize();
+  print('[main] LocaleProvider initialized');
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('[main] Firebase initialized');
 
   // Initialize the notification service
   await NotificationService().initialize();
+  print('[main] NotificationService initialized');
 
   // Process any pending background notifications
   final notificationHistoryService = NotificationHistoryService();
   await notificationHistoryService.initialize();
+  print('[main] NotificationHistoryService initialized');
 
   // Initialize web notification bridge for PWAs with polling
   if (kIsWeb) {
     await WebNotificationBridge().initialize();
-    print('Using polling-based notification bridge for web');
+    print('[main] Using polling-based notification bridge for web');
   } else {
     await notificationHistoryService.processPendingBackgroundNotifications();
   }
 
-  // Show minimal UI initially while waiting for data
-  runApp(LoadingApp());
-
   // Perform user auth check and token operations
   if (FirebaseAuth.instance.currentUser != null) {
+    print(
+        '[main] User is logged in: ${FirebaseAuth.instance.currentUser!.uid}');
     TokenService().saveToken();
+  } else {
+    print('[main] No user is logged in');
   }
 
   // Get the initial route from the URL
@@ -94,92 +100,24 @@ Future<void> main() async {
         path == '/subscription-cancelled') {
       initialRoute = path;
     }
+    print('[main] Initial route: $initialRoute');
   }
 
-  // Now launch the full app when ready
+  // Now launch the full app with everything initialized
+  print('[main] Running MultiProvider with SubscriptionProvider');
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => NotificationHistoryService()),
-        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        ChangeNotifierProvider(create: (_) => localeProvider),
+        ChangeNotifierProvider(create: (_) => notificationHistoryService),
+        ChangeNotifierProvider(create: (_) {
+          print('[main] Creating SubscriptionProvider');
+          return SubscriptionProvider();
+        }),
       ],
       child: MyApp(initialRoute: initialRoute),
     ),
   );
-}
-
-// Minimal loading app that renders immediately
-class LoadingApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        backgroundColor: Color(0xFF00875A),
-        body: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              LoadingDot(delay: 0),
-              SizedBox(width: 8),
-              LoadingDot(delay: 0.2),
-              SizedBox(width: 8),
-              LoadingDot(delay: 0.4),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class LoadingDot extends StatefulWidget {
-  final double delay;
-  LoadingDot({required this.delay});
-
-  @override
-  _LoadingDotState createState() => _LoadingDotState();
-}
-
-class _LoadingDotState extends State<LoadingDot>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    Future.delayed(Duration(milliseconds: (widget.delay * 1000).toInt()), () {
-      if (mounted) {
-        _controller.repeat(reverse: true);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: Tween(begin: 0.3, end: 1.0).animate(_controller),
-      child: Container(
-        width: 8,
-        height: 8,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 }
 
 class CustomRouteDelegate extends RouterDelegate<String>

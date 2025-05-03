@@ -16,13 +16,17 @@ class SubscriptionService {
 
   static Future<bool> get isSubscribed async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return false;
+    if (user == null) {
+      print('[SubscriptionService] No user logged in for isSubscribed');
+      return false;
+    }
 
     try {
       final status = await checkSubscription(user.uid);
+      print('[SubscriptionService] isSubscribed status: $status');
       return status['hasSubscription'] == true;
     } catch (e) {
-      print('Error checking subscription status: $e');
+      print('[SubscriptionService] Error checking subscription status: $e');
       return false;
     }
   }
@@ -34,22 +38,25 @@ class SubscriptionService {
         queryParameters: {'userId': userId},
       );
 
-      print('Checking subscription status for user: $userId');
+      print(
+          '[SubscriptionService] Checking subscription status for user: $userId');
       final response = await http.get(
         uri,
         headers: {'Content-Type': 'application/json'},
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('[SubscriptionService] Response status: ${response.statusCode}');
+      print('[SubscriptionService] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
+        print(
+            '[SubscriptionService] Failed to check subscription: ${response.statusCode}');
         throw Exception('Failed to check subscription: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error checking subscription: $e');
+      print('[SubscriptionService] Error checking subscription: $e');
       rethrow;
     }
   }

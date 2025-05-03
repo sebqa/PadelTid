@@ -10,7 +10,7 @@ class NotificationPreferences {
   bool notifyWhenFull;
 
   NotificationPreferences({
-    this.notifyOnWeatherChange = true,
+    this.notifyOnWeatherChange = false,
     this.notifyWhenAvailable = false,
     this.notifyWhenOneLeft = false,
     this.notifyWhenFull = false,
