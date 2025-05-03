@@ -696,13 +696,6 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
         // Additional details for first forecast
         if (forecasts.isNotEmpty) ...[
           SizedBox(height: 16),
-          Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              TranslationHelper.translate('weather_details', languageCode),
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
           _buildWeatherMetrics(context, forecasts.first, languageCode),
           SizedBox(height: 16),
           _buildPadelConditions(context, forecasts.first, languageCode),
@@ -767,23 +760,9 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _buildDetailedWeatherInfoItem(
-          context,
-          Icons.compress,
-          '${weather.airPressure.round()} hPa',
-          TranslationHelper.translate('air_pressure', languageCode),
-        ),
-        _buildDetailedWeatherInfoItem(
-          context,
-          Icons.opacity,
-          '${weather.humidity.round()}${TranslationHelper.translate('percent', languageCode)}',
-          TranslationHelper.translate('humidity', languageCode),
-        ),
-        _buildDetailedWeatherInfoItem(
-          context,
-          Icons.navigation,
-          '${weather.windDirection.round()}°',
-          TranslationHelper.translate('wind_direction', languageCode),
-        ),
+            context, Icons.compress, '${weather.airPressure.round()} hPa'),
+        _buildDetailedWeatherInfoItem(context, Icons.opacity,
+            '${weather.humidity.round()}${TranslationHelper.translate('percent', languageCode)}'),
       ],
     );
   }
@@ -929,19 +908,12 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
             fontSize: 14,
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 12,
-          ),
-        ),
       ],
     );
   }
 
   Widget _buildDetailedWeatherInfoItem(
-      BuildContext context, IconData icon, String value, String label) {
+      BuildContext context, IconData icon, String value) {
     return Column(
       children: [
         Icon(
@@ -955,13 +927,6 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 14,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 12,
           ),
         ),
       ],
