@@ -3,13 +3,14 @@ import os
 from pymongo import MongoClient
 from bson import ObjectId
 
+# Connect to MongoDB
+client = MongoClient(host=os.environ.get("ATLAS_URI"))
+db = client['padelTimes']
+clubs_collection = db['clubs']
+        
+
 def lambda_handler(event, context):
     try:
-        # Connect to MongoDB
-        client = MongoClient(host=os.environ.get("ATLAS_URI"))
-        db = client['padelTimes']
-        clubs_collection = db['clubs']
-        
         # Get all clubs without the projection parameter
         clubs = list(clubs_collection.find({}))
         
