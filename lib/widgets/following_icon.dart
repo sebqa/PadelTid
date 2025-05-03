@@ -99,7 +99,7 @@ class _FollowingIconState extends State<FollowingIcon> {
         return NotificationPreferencesDialog(
           initialPreferences: widget.document.notificationPreferences ??
               NotificationPreferences(
-                notifyOnWeatherChange: true,
+                notifyOnWeatherChange: false,
                 notifyWhenAvailable: false,
                 notifyWhenOneLeft: false,
                 notifyWhenFull: false,

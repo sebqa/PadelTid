@@ -119,11 +119,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      if (FirebaseAuth.instance.currentUser != null) {
-        _tokenService.saveToken();
-      }
-    }
+    // Token is now only saved during initialization, not on resume
   }
 
   Future<void> _initializeApp() async {
@@ -157,6 +153,11 @@ class _HomePageState extends State<HomePage>
             sharedPreferences.getBool('notify_on_matching_courts') ?? false;
       }
     });
+
+    // Save token on app launch if user is logged in
+    if (FirebaseAuth.instance.currentUser != null) {
+      _tokenService.saveToken();
+    }
 
     // Fetch documents once after all preferences are set
     _fetchDocuments();
