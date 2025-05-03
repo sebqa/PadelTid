@@ -159,8 +159,8 @@ class _HomePageState extends State<HomePage>
       _tokenService.saveToken();
     }
 
-    // Fetch documents once after all preferences are set
-    _fetchDocuments();
+    // Fetch documents only once through updateThresholds
+    await updateThresholds();
   }
 
   Future<void> _checkOnboardingStatus() async {
@@ -192,20 +192,6 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  void _fetchDocuments() {
-    allDocumentsFuture = documentService.fetchAllDocuments(
-      windSpeedThreshold,
-      precipitationProbabilityThreshold,
-      temperatureThreshold,
-      showUnavailableSlots,
-      _selectedLocations,
-      notifyOnMatchingCourts: notifyOnMatchingCourts,
-    );
-    setState(() {
-      _documentsLoaded = true;
-    });
-  }
-
   Future<void> updateThresholds() async {
     try {
       if (sharedPreferences.getString("user_consent") == "all") {
@@ -220,8 +206,19 @@ class _HomePageState extends State<HomePage>
         await sharedPreferences.setBool(
             'notify_on_matching_courts', notifyOnMatchingCourts);
       }
-      _fetchDocuments();
-      setState(() {});
+
+      // Fetch documents only once
+      setState(() {
+        allDocumentsFuture = documentService.fetchAllDocuments(
+          windSpeedThreshold,
+          precipitationProbabilityThreshold,
+          temperatureThreshold,
+          showUnavailableSlots,
+          _selectedLocations,
+          notifyOnMatchingCourts: notifyOnMatchingCourts,
+        );
+        _documentsLoaded = true;
+      });
     } catch (e) {
       print('Failed to update thresholds: $e');
     }
@@ -812,6 +809,7 @@ class _HomePageState extends State<HomePage>
         _selectedLocations,
         notifyOnMatchingCourts: notifyOnMatchingCourts,
       );
+      _documentsLoaded = true;
     });
   }
 }
