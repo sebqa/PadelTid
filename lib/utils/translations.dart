@@ -208,6 +208,13 @@ class TranslationHelper {
       'location': 'lokation',
       'locations': 'lokationer',
       'notify_on_matching_courts': 'Notifikation ved nye',
+      'notification_preferences': 'Notifikationsindstillinger',
+      'notification_description':
+          'Indstil specifikke vejrbetingelser for notifikationer. Baner, der matcher disse betingelser, vil udløse notifikationer.',
+      'notification_wind': 'Vindhastighed',
+      'notification_precipitation': 'Nedbør',
+      'notification_temperature': 'Temperatur',
+      'notification_show_unavailable': 'Vis utilgængelige baner',
       'court': 'bane',
       'courts': 'baner',
       'temperature_unit': '°C',
