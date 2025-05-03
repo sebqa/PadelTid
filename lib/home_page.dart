@@ -521,9 +521,8 @@ class _HomePageState extends State<HomePage>
                             children: [
                               Text(
                                 TranslationHelper.translate(
-                                        'notification_show_unavailable',
-                                        localeProvider.locale.languageCode) ??
-                                    "Show Unavailable Courts",
+                                    'notification_show_unavailable',
+                                    localeProvider.locale.languageCode),
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                               Switch(
