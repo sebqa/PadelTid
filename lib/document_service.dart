@@ -144,20 +144,54 @@ class DocumentService {
 
         // Process recommended documents
         if (responseData.containsKey('recommended')) {
-          final List<dynamic> recommendedJson = responseData['recommended'];
-          print(
-              '[Filter] Filtering recommended documents by selectedLocations: $selectedLocations');
-          recommendedDocuments = recommendedJson
-              .map((json) => Document.fromJson(
-                  json, [], // No need for followedDocs parameter
-                  selectedLocations: selectedLocations))
-              .where((doc) =>
-                  selectedLocations.isEmpty ||
-                  doc.clubs.keys
-                      .any((club) => selectedLocations.contains(club)))
-              .toList();
-          print(
-              '[Filter] Recommended documents count: [32m${recommendedDocuments.length}\u001b[0m');
+          final recommendedData = responseData['recommended'];
+
+          // Make sure we have a valid array
+          if (recommendedData is List<dynamic>) {
+            final List<dynamic> recommendedJson = recommendedData;
+            print(
+                '[Filter] Filtering recommended documents by selectedLocations: $selectedLocations');
+
+            // Check if we have valid data before processing
+            if (recommendedJson.isNotEmpty) {
+              try {
+                // More defensive conversion of response data
+                recommendedDocuments = recommendedJson
+                    .where((json) =>
+                        json != null &&
+                        json is Map<String, dynamic> &&
+                        json.containsKey('clubs') &&
+                        json['clubs'] is Map)
+                    .map((json) => Document.fromJson(
+                        json, [], // No need for followedDocs parameter
+                        selectedLocations: selectedLocations))
+                    .where((doc) =>
+                        selectedLocations.isEmpty ||
+                        doc.clubs.keys
+                            .any((club) => selectedLocations.contains(club)))
+                    .toList();
+                print(
+                    '[Filter] Recommended documents count: [32m${recommendedDocuments.length}\u001b[0m');
+              } catch (e) {
+                print('[Error] Error processing recommended documents: $e');
+                print(
+                    '[Error] Recommended JSON sample: ${recommendedJson.isNotEmpty ? recommendedJson.first : "empty"}');
+                recommendedDocuments =
+                    []; // Ensure we have an empty list rather than null
+              }
+            } else {
+              print(
+                  '[Filter] No valid recommended documents in response (empty array)');
+              recommendedDocuments = [];
+            }
+          } else {
+            print(
+                '[Filter] Recommended documents is not a valid array: $recommendedData');
+            recommendedDocuments = [];
+          }
+        } else {
+          print('[Filter] No recommended documents key in response');
+          recommendedDocuments = [];
         }
       } else {
         throw Exception('Failed to load documents');

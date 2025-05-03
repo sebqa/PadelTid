@@ -61,7 +61,7 @@ def get_recommended_times(user_id, locations):
         #filter_prefs = user.get('filterPreferences', {})
         
         # Get user follow data to mark documents as followed
-        #user_follows = get_user_follows(user_id)
+        user_follows = get_user_follows(user_id)
             
         # For now, just get documents that match the user's preferred locations and weather thresholds
         # In the future, you can implement more sophisticated recommendation logic
