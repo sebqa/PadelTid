@@ -108,54 +108,16 @@ class _NotificationPreferencesDialogState
             ),
             const Divider(height: 1),
             ListTile(
-              leading: !widget.isSubscribed
-                  ? Icon(
-                      Icons.lock_outline,
-                      color: Theme.of(context).colorScheme.primary,
-                    )
-                  : const Icon(Icons.notifications_active),
+              leading: const Icon(Icons.notifications_active),
               title: const Text('Courts become available'),
-              subtitle: Row(
-                children: [
-                  const Flexible(
-                    child: Text('Notify when courts become available'),
-                  ),
-                  if (!widget.isSubscribed) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'PREMIUM',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+              subtitle: const Text('Notify when courts become available'),
               trailing: Switch(
                 value: preferences.notifyWhenAvailable,
-                onChanged: widget.isSubscribed
-                    ? (bool? value) {
-                        setState(() {
-                          preferences.notifyWhenAvailable = value ?? false;
-                        });
-                      }
-                    : (_) => SubscriptionDialogs.showSubscriptionDialog(
-                          context,
-                          () => setState(() {}),
-                        ),
+                onChanged: (bool? value) {
+                  setState(() {
+                    preferences.notifyWhenAvailable = value ?? false;
+                  });
+                },
               ),
             ),
           ],

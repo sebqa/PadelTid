@@ -446,6 +446,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                     const SizedBox(height: 24),
                     // Subscription Status
+                    /*
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24.0),
@@ -622,6 +623,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         ],
                       ),
                     ),
+                    */
                     const SizedBox(height: 24),
                     // Account Settings
                     Container(
