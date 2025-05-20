@@ -124,7 +124,37 @@ class _HomePageState extends State<HomePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Add better lifecycle handling
+    print('[HomePage] AppLifecycleState changed to: $state');
     // Token is now only saved during initialization, not on resume
+  }
+
+  // Add method to handle Android back navigation
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    print('[HomePage] didChangeDependencies called');
+    // Avoid reloading documents when coming back to this page
+    if (_isInitialized && _cachedDocuments == null) {
+      print('[HomePage] Restoring cached documents after navigation');
+      // Only reload if cache was lost but we're initialized
+      _fetchDocumentsIfNeeded(forceRefresh: false);
+    }
+  }
+
+  // Override this method to properly handle route popping
+  @override
+  void deactivate() {
+    print('[HomePage] deactivate called');
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    print('[HomePage] activate called');
+    super.activate();
+    // This is called when returning to this widget after navigating back
+    // We don't need to refresh data here since we have the cache
   }
 
   Future<void> _initializeApp() async {
