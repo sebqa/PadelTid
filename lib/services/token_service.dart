@@ -30,6 +30,9 @@ class TokenService {
   DateTime? _lastSaveTime;
   bool _isInitialized = false;
   bool _isSaving = false;
+  StreamSubscription? _authSubscription;
+  String? _lastAuthUserId;
+  DateTime? _lastAuthChangeTime;
 
   // Initialize token service
   Future<void> initialize() async {
@@ -52,9 +55,30 @@ class TokenService {
           '[TokenService] Web platform detected, using web-specific initialization');
     }
 
+    // Cancel any existing auth subscription
+    await _authSubscription?.cancel();
+
     // Setup auth state change listener - only save token on actual login
-    _auth.authStateChanges().listen((User? user) {
-      print('[TokenService] Auth state changed, user: ${user?.uid}');
+    _authSubscription = _auth.authStateChanges().listen((User? user) {
+      final now = DateTime.now();
+      final userId = user?.uid;
+
+      print('[TokenService] Auth state changed, user: $userId');
+
+      // Skip if this is a duplicate auth state change in a short time
+      if (userId != null &&
+          userId == _lastAuthUserId &&
+          _lastAuthChangeTime != null &&
+          now.difference(_lastAuthChangeTime!).inSeconds < 5) {
+        print(
+            '[TokenService] Skipping duplicate auth state change within 5 seconds');
+        return;
+      }
+
+      // Update auth state tracking
+      _lastAuthUserId = userId;
+      _lastAuthChangeTime = now;
+
       if (user != null) {
         // Delay token save to avoid race conditions
         Future.delayed(Duration(milliseconds: 500), () {
@@ -63,13 +87,24 @@ class TokenService {
       }
     });
 
-    // If user is already logged in, save the token once
+    // If user is already logged in, save the token once - with a longer delay to avoid conflicts
     if (_auth.currentUser != null) {
-      // Small delay to let the app fully initialize
-      Future.delayed(Duration(milliseconds: 1000), () {
-        saveToken('initialization');
+      // Small delay to let the app fully initialize and to avoid conflict with auth state listener
+      Future.delayed(Duration(milliseconds: 2000), () {
+        // Double-check we haven't already saved recently
+        if (_lastSavedToken == null || _lastSaveTime == null) {
+          saveToken('initialization');
+        } else {
+          print(
+              '[TokenService] Skipping initialization token save as already done by auth listener');
+        }
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
   }
 
   // Request permissions for all platforms
@@ -148,21 +183,34 @@ class TokenService {
 
   // Save or update token with debouncing to prevent multiple calls
   Future<void> saveToken([String source = 'unknown']) async {
+    // Create a unique identifier for this save attempt based on source and time
+    final saveId = '$source-${DateTime.now().millisecondsSinceEpoch}';
+
     // Don't allow concurrent save operations
     if (_isSaving) {
       print(
-          '[TokenService] Token save already in progress, skipping (source: $source)');
+          '[TokenService] Token save already in progress, skipping (source: $source, id: $saveId)');
+      return;
+    }
+
+    // Check for a recently saved token first before proceeding
+    final now = DateTime.now();
+    if (_lastSavedToken != null &&
+        _lastSaveTime != null &&
+        now.difference(_lastSaveTime!).inMinutes < 5) {
+      print(
+          '[TokenService] Token already saved within last 5 minutes, skipping (source: $source, id: $saveId)');
       return;
     }
 
     _isSaving = true;
-    print('[TokenService] Starting token save (source: $source)');
+    print('[TokenService] Starting token save (source: $source, id: $saveId)');
 
     try {
       final user = _auth.currentUser;
       if (user == null) {
         print(
-            '[TokenService] Cannot save token: No user logged in (source: $source)');
+            '[TokenService] Cannot save token: No user logged in (source: $source, id: $saveId)');
         _isSaving = false;
         return;
       }
@@ -170,13 +218,13 @@ class TokenService {
       // Skip permission check for web platform
       if (!kIsWeb) {
         // Check notification settings status
-        print('[TokenService] Checking notification permission');
+        print('[TokenService] Checking notification permission (id: $saveId)');
         final settings = await _messaging.getNotificationSettings();
 
         if (settings.authorizationStatus != AuthorizationStatus.authorized &&
             settings.authorizationStatus != AuthorizationStatus.provisional) {
           print(
-              '[TokenService] Notifications not authorized, requesting permission');
+              '[TokenService] Notifications not authorized, requesting permission (id: $saveId)');
           final newSettings = await _messaging.requestPermission(
             alert: true,
             badge: true,
@@ -189,7 +237,7 @@ class TokenService {
               newSettings.authorizationStatus !=
                   AuthorizationStatus.provisional) {
             print(
-                '[TokenService] User declined notification permissions (source: $source)');
+                '[TokenService] User declined notification permissions (source: $source, id: $saveId)');
             _isSaving = false;
             return;
           }
@@ -197,29 +245,29 @@ class TokenService {
       }
 
       // Get the FCM token with platform-specific handling
-      print('[TokenService] Getting FCM token (source: $source)');
+      print('[TokenService] Getting FCM token (source: $source, id: $saveId)');
       final token = await _getToken();
 
       if (token == null || token.isEmpty) {
-        print('[TokenService] Failed to get valid FCM token (source: $source)');
+        print(
+            '[TokenService] Failed to get valid FCM token (source: $source, id: $saveId)');
         _isSaving = false;
         return;
       }
 
       // Prevent duplicate saves of the same token within a short time period
-      final now = DateTime.now();
       if (token == _lastSavedToken &&
           _lastSaveTime != null &&
           now.difference(_lastSaveTime!).inMinutes < 5) {
         print(
-            '[TokenService] Token already saved recently, skipping (source: $source)');
+            '[TokenService] Token already saved recently, skipping (source: $source, id: $saveId)');
         _isSaving = false;
         return;
       }
 
       print(
-          "[TokenService] Got token: ${token.substring(0, min(token.length, 10))}... (source: $source)");
-      print("[TokenService] Making POST request to save token");
+          "[TokenService] Got token: ${token.substring(0, min(token.length, 10))}... (source: $source, id: $saveId)");
+      print("[TokenService] Making POST request to save token (id: $saveId)");
 
       final response = await http.post(
         Uri.parse(_apiUrl),
@@ -236,19 +284,21 @@ class TokenService {
       );
 
       print(
-          "[TokenService] Response status: ${response.statusCode} (source: $source)");
+          "[TokenService] Response status: ${response.statusCode} (source: $source, id: $saveId)");
 
       if (response.statusCode == 200) {
-        print('[TokenService] Token saved successfully (source: $source)');
+        print(
+            '[TokenService] Token saved successfully (source: $source, id: $saveId)');
         // Update last saved token info
         _lastSavedToken = token;
         _lastSaveTime = now;
       } else {
-        print("[TokenService] Response body: ${response.body}");
+        print("[TokenService] Response body: ${response.body} (id: $saveId)");
         throw Exception('Failed to save token: ${response.body}');
       }
     } catch (e) {
-      print('[TokenService] Error saving token: $e (source: $source)');
+      print(
+          '[TokenService] Error saving token: $e (source: $source, id: $saveId)');
       print('[TokenService] Stack trace: ${StackTrace.current}');
     } finally {
       _isSaving = false;
