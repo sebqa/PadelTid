@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 
 class TokenService {
@@ -16,11 +15,8 @@ class TokenService {
   Future<void> initialize() async {
     print('[TokenService] Initializing');
 
-    // Request notification permissions early for iOS
-    if (Platform.isIOS) {
-      print('[TokenService] Requesting iOS notification permissions');
-      await _requestiOSPermissions();
-    }
+    // Request notification permissions early for all platforms
+    await _requestPermissions();
 
     // Setup auth state change listener
     _auth.authStateChanges().listen((User? user) {
@@ -34,8 +30,8 @@ class TokenService {
     initTokenRefreshListener();
   }
 
-  // Request iOS permissions separately
-  Future<bool> _requestiOSPermissions() async {
+  // Request permissions for all platforms
+  Future<bool> _requestPermissions() async {
     try {
       NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
@@ -45,10 +41,10 @@ class TokenService {
       );
 
       print(
-          '[TokenService] iOS permission status: ${settings.authorizationStatus}');
+          '[TokenService] Permission status: ${settings.authorizationStatus}');
       return settings.authorizationStatus == AuthorizationStatus.authorized;
     } catch (e) {
-      print('[TokenService] Error requesting iOS permissions: $e');
+      print('[TokenService] Error requesting permissions: $e');
       return false;
     }
   }
@@ -62,24 +58,21 @@ class TokenService {
         return;
       }
 
-      // Always request permission for iOS, for Android it's handled in the manifest
-      NotificationSettings settings;
-      if (Platform.isIOS) {
-        print('[TokenService] Checking iOS notification permission');
-        settings = await _messaging.getNotificationSettings();
-        if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-          print('[TokenService] iOS notifications not authorized');
-          settings = await _messaging.requestPermission(
-            alert: true,
-            badge: true,
-            sound: true,
-            provisional: false,
-          );
+      // Check notification settings for all platforms
+      print('[TokenService] Checking notification permission');
+      final settings = await _messaging.getNotificationSettings();
+      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+        print('[TokenService] Notifications not authorized');
+        final newSettings = await _messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
 
-          if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-            print('[TokenService] User declined iOS notification permissions');
-            return;
-          }
+        if (newSettings.authorizationStatus != AuthorizationStatus.authorized) {
+          print('[TokenService] User declined notification permissions');
+          return;
         }
       }
 
@@ -105,7 +98,6 @@ class TokenService {
           'userId': user.uid,
           'token': token,
           'action': 'save',
-          'platform': Platform.isIOS ? 'ios' : 'android'
         }),
       );
 
@@ -155,9 +147,6 @@ class TokenService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
         body: json
             .encode({'userId': user.uid, 'token': token, 'action': 'remove'}),
@@ -182,15 +171,12 @@ class TokenService {
       final user = _auth.currentUser;
       if (user != null) {
         try {
-          // For iOS, check notification permissions again
-          if (Platform.isIOS) {
-            final settings = await _messaging.getNotificationSettings();
-            if (settings.authorizationStatus !=
-                AuthorizationStatus.authorized) {
-              print(
-                  '[TokenService] No notification permissions for token refresh on iOS');
-              return;
-            }
+          // Check notification permission for all platforms
+          final settings = await _messaging.getNotificationSettings();
+          if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+            print(
+                '[TokenService] No notification permissions for token refresh');
+            return;
           }
 
           print("[TokenService] Saving refreshed token");
@@ -204,7 +190,6 @@ class TokenService {
               'userId': user.uid,
               'token': token,
               'action': 'save',
-              'platform': Platform.isIOS ? 'ios' : 'android'
             }),
           );
 
