@@ -63,6 +63,8 @@ class _HomePageState extends State<HomePage>
   final TokenService _tokenService = TokenService();
   late LocaleProvider localeProvider;
   final DocumentService documentService = DocumentService();
+  bool _isInitialized = false; // Add flag to track initialization
+  Map<String, List<Document>>? _cachedDocuments; // Add cache for documents
 
   @override
   void initState() {
@@ -111,8 +113,6 @@ class _HomePageState extends State<HomePage>
     // Initialize notification history service
     Provider.of<NotificationHistoryService>(context, listen: false)
         .initialize();
-
-    // Listen to auth state changes
   }
 
   @override
@@ -178,8 +178,12 @@ class _HomePageState extends State<HomePage>
       _tokenService.saveToken();
     }
 
-    // Fetch documents only once through updateThresholds
-    await updateThresholds();
+    // Fetch documents only once initially
+    await _fetchDocumentsIfNeeded(forceRefresh: true);
+
+    setState(() {
+      _isInitialized = true;
+    });
   }
 
   Future<void> _checkOnboardingStatus() async {
@@ -226,6 +230,38 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  Future<void> _fetchDocumentsIfNeeded({bool forceRefresh = false}) async {
+    if (forceRefresh || _cachedDocuments == null) {
+      print('[HomePage] Fetching documents (force=$forceRefresh)');
+
+      setState(() {
+        allDocumentsFuture = documentService.fetchAllDocuments(
+          windSpeedThreshold,
+          precipitationProbabilityThreshold,
+          temperatureThreshold,
+          showUnavailableSlots,
+          _selectedLocations,
+          notifyOnMatchingCourts: notifyOnMatchingCourts,
+          notificationWindThreshold: notificationWindSpeedThreshold,
+          notificationPrecipitationThreshold:
+              notificationPrecipitationThreshold,
+          notificationTemperatureThreshold: notificationTemperatureThreshold,
+          notificationShowUnavailableSlots: notificationShowUnavailableSlots,
+        );
+        _documentsLoaded = true;
+      });
+
+      // Cache the results
+      try {
+        _cachedDocuments = await allDocumentsFuture;
+      } catch (e) {
+        print('[HomePage] Error caching documents: $e');
+      }
+    } else {
+      print('[HomePage] Using cached documents');
+    }
+  }
+
   Future<void> updateThresholds() async {
     try {
       if (sharedPreferences.getString("user_consent") == "all") {
@@ -256,23 +292,8 @@ class _HomePageState extends State<HomePage>
         }
       }
 
-      // Fetch documents only once
-      setState(() {
-        allDocumentsFuture = documentService.fetchAllDocuments(
-          windSpeedThreshold,
-          precipitationProbabilityThreshold,
-          temperatureThreshold,
-          showUnavailableSlots,
-          _selectedLocations,
-          notifyOnMatchingCourts: notifyOnMatchingCourts,
-          notificationWindThreshold: notificationWindSpeedThreshold,
-          notificationPrecipitationThreshold:
-              notificationPrecipitationThreshold,
-          notificationTemperatureThreshold: notificationTemperatureThreshold,
-          notificationShowUnavailableSlots: notificationShowUnavailableSlots,
-        );
-        _documentsLoaded = true;
-      });
+      // Fetch documents with updated settings
+      await _fetchDocumentsIfNeeded(forceRefresh: true);
     } catch (e) {
       print('Failed to update thresholds: $e');
     }
@@ -845,7 +866,13 @@ class _HomePageState extends State<HomePage>
                       child: FutureBuilder<Map<String, List<Document>>>(
                         future: allDocumentsFuture,
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
+                          if (_cachedDocuments != null) {
+                            // Use cached data if available
+                            final recommendedDocs =
+                                _cachedDocuments!['recommended'] ?? [];
+                            return recommended_lv_holder(
+                                documents: recommendedDocs);
+                          } else if (snapshot.connectionState ==
                               ConnectionState.waiting) {
                             return RecommendedListSkeleton();
                           } else if (snapshot.hasError) {
@@ -897,7 +924,22 @@ class _HomePageState extends State<HomePage>
                     child: FutureBuilder<Map<String, List<Document>>>(
                       future: allDocumentsFuture,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
+                        if (_cachedDocuments != null) {
+                          // Use cached data if available
+                          final filteredDocs =
+                              _cachedDocuments!['filtered'] ?? [];
+                          final groupedDocuments =
+                              _groupDocuments(filteredDocs);
+                          if (!consentShown) {
+                            showConsentSnackbar(context,
+                                onlyShowIfNotSet: true);
+                            consentShown = true;
+                          }
+                          return MainListView(
+                            groupedDocuments: groupedDocuments,
+                            onFilterTap: showSettingsDialog,
+                          );
+                        } else if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return MainListSkeleton();
                         } else if (snapshot.hasError) {
@@ -991,17 +1033,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _refreshData() async {
-    setState(() {
-      allDocumentsFuture = documentService.fetchAllDocuments(
-        windSpeedThreshold,
-        precipitationProbabilityThreshold,
-        temperatureThreshold,
-        showUnavailableSlots,
-        _selectedLocations,
-        notifyOnMatchingCourts: notifyOnMatchingCourts,
-      );
-      _documentsLoaded = true;
-    });
+    await _fetchDocumentsIfNeeded(forceRefresh: true);
   }
 }
 
