@@ -53,7 +53,18 @@ def insert_weather(data, host, club_name):
         if next_hour:
             # Get precipitation probability from the appropriate source
             precipitation_probability = next_hour.get('details', {}).get('probability_of_precipitation', 0)
-            symbol_code = next_hour.get('summary', {}).get('symbol_code', "null")
+            
+            # Get symbol code from the most accurate forecast available
+            symbol_code = None
+            if entry['data'].get('next_1_hours', {}).get('summary', {}).get('symbol_code'):
+                symbol_code = entry['data']['next_1_hours']['summary']['symbol_code']
+            elif entry['data'].get('next_6_hours', {}).get('summary', {}).get('symbol_code'):
+                symbol_code = entry['data']['next_6_hours']['summary']['symbol_code']
+            elif entry['data'].get('next_12_hours', {}).get('summary', {}).get('symbol_code'):
+                symbol_code = entry['data']['next_12_hours']['summary']['symbol_code']
+            else:
+                symbol_code = "null"
+                
             wind_speed = entry['data']['instant']['details'].get('wind_speed', 0)        
             dt = datetime.strptime(entry["time"], "%Y-%m-%dT%H:%M:%SZ")
             air_temperature = entry['data']['instant']['details'].get('air_temperature', 0)
@@ -85,8 +96,11 @@ def insert_weather(data, host, club_name):
                     if new_precipitation_probability < 0:
                         new_precipitation_probability = 0
 
+                    # Use the more accurate symbol code from the appropriate forecast period
                     new_symbol_code = entry['data'].get('next_6_hours', {}).get('summary', {}).get('symbol_code')
-
+                    if not new_symbol_code:
+                        new_symbol_code = entry['data'].get('next_12_hours', {}).get('summary', {}).get('symbol_code', "null")
+                    
                     # Create update object that preserves existing data
                     update_object = {
                         '$set': {
