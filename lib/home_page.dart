@@ -91,7 +91,10 @@ class _HomePageState extends State<HomePage>
 
     _controller.forward();
     _initializeApp();
-    _tokenService.initTokenRefreshListener();
+
+    // Initialize token service properly
+    _tokenService.initialize();
+
     localeProvider = Provider.of<LocaleProvider>(context, listen: false);
 
     // Initialize notification handler
@@ -203,10 +206,10 @@ class _HomePageState extends State<HomePage>
       }
     });
 
-    // Save token on app launch if user is logged in
-    if (FirebaseAuth.instance.currentUser != null) {
-      _tokenService.saveToken();
-    }
+    // We don't need to save token here anymore as TokenService.initialize handles this
+    // if (FirebaseAuth.instance.currentUser != null) {
+    //   _tokenService.saveToken();
+    // }
 
     // Fetch documents only once initially
     await _fetchDocumentsIfNeeded(forceRefresh: true);

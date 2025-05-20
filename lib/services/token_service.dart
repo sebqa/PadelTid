@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 
 class TokenService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -10,29 +12,88 @@ class TokenService {
   final String _apiUrl =
       'https://kgzbg5117d.execute-api.eu-north-1.amazonaws.com/default/manageTokens'; // Create new Lambda endpoint
 
+  // Initialize token service
+  Future<void> initialize() async {
+    print('[TokenService] Initializing');
+
+    // Request notification permissions early for iOS
+    if (Platform.isIOS) {
+      print('[TokenService] Requesting iOS notification permissions');
+      await _requestiOSPermissions();
+    }
+
+    // Setup auth state change listener
+    _auth.authStateChanges().listen((User? user) {
+      print('[TokenService] Auth state changed, user: ${user?.uid}');
+      if (user != null) {
+        saveToken();
+      }
+    });
+
+    // Initialize token refresh listener
+    initTokenRefreshListener();
+  }
+
+  // Request iOS permissions separately
+  Future<bool> _requestiOSPermissions() async {
+    try {
+      NotificationSettings settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+
+      print(
+          '[TokenService] iOS permission status: ${settings.authorizationStatus}');
+      return settings.authorizationStatus == AuthorizationStatus.authorized;
+    } catch (e) {
+      print('[TokenService] Error requesting iOS permissions: $e');
+      return false;
+    }
+  }
+
   // Save or update token
   Future<void> saveToken() async {
     try {
       final user = _auth.currentUser;
-      if (user == null) return;
-
-      // Check notification permission
-      final settings = await _messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-
-      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-        print('User declined notification permissions');
+      if (user == null) {
+        print('[TokenService] Cannot save token: No user logged in');
         return;
       }
 
-      final token = await _messaging.getToken();
-      if (token == null) return;
+      // Always request permission for iOS, for Android it's handled in the manifest
+      NotificationSettings settings;
+      if (Platform.isIOS) {
+        print('[TokenService] Checking iOS notification permission');
+        settings = await _messaging.getNotificationSettings();
+        if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+          print('[TokenService] iOS notifications not authorized');
+          settings = await _messaging.requestPermission(
+            alert: true,
+            badge: true,
+            sound: true,
+            provisional: false,
+          );
 
-      print("Making POST request to save token"); // Debug log
-      print("URL: $_apiUrl"); // Debug log
+          if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+            print('[TokenService] User declined iOS notification permissions');
+            return;
+          }
+        }
+      }
+
+      print('[TokenService] Getting FCM token');
+      final token = await _messaging.getToken();
+      if (token == null || token.isEmpty) {
+        print('[TokenService] Failed to get valid FCM token');
+        return;
+      }
+
+      print(
+          "[TokenService] Got token: ${token.substring(0, 10)}..."); // Partial token for privacy
+      print("[TokenService] Making POST request to save token");
+      print("[TokenService] URL: $_apiUrl");
 
       final response = await http.post(
         Uri.parse(_apiUrl),
@@ -40,20 +101,25 @@ class TokenService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body:
-            json.encode({'userId': user.uid, 'token': token, 'action': 'save'}),
+        body: json.encode({
+          'userId': user.uid,
+          'token': token,
+          'action': 'save',
+          'platform': Platform.isIOS ? 'ios' : 'android'
+        }),
       );
 
-      print("Response status: ${response.statusCode}"); // Debug log
-      print("Response body: ${response.body}"); // Debug log
-      print("Response headers: ${response.headers}"); // Debug log
+      print("[TokenService] Response status: ${response.statusCode}");
+      print("[TokenService] Response body: ${response.body}");
 
       if (response.statusCode != 200) {
         throw Exception('Failed to save token: ${response.body}');
+      } else {
+        print('[TokenService] Token saved successfully');
       }
     } catch (e) {
-      print('Error saving token: $e');
-      print('Stack trace: ${StackTrace.current}');
+      print('[TokenService] Error saving token: $e');
+      print('[TokenService] Stack trace: ${StackTrace.current}');
     }
   }
 
@@ -70,7 +136,7 @@ class TokenService {
       }
       return [];
     } catch (e) {
-      print('Error getting user tokens: $e');
+      print('[TokenService] Error getting user tokens: $e');
       return [];
     }
   }
@@ -97,51 +163,60 @@ class TokenService {
             .encode({'userId': user.uid, 'token': token, 'action': 'remove'}),
       );
 
-      print("Remove token response: ${response.statusCode} - ${response.body}");
+      print(
+          "[TokenService] Remove token response: ${response.statusCode} - ${response.body}");
 
       if (response.statusCode != 200) {
         throw Exception('Failed to remove token: ${response.body}');
       }
     } catch (e) {
-      print('Error removing token: $e');
-      print('Stack trace: ${StackTrace.current}');
+      print('[TokenService] Error removing token: $e');
+      print('[TokenService] Stack trace: ${StackTrace.current}');
     }
   }
 
   void initTokenRefreshListener() {
+    print('[TokenService] Setting up token refresh listener');
     FirebaseMessaging.instance.onTokenRefresh.listen((String token) async {
+      print('[TokenService] FCM token refreshed');
       final user = _auth.currentUser;
       if (user != null) {
         try {
-          // Check notification permission
-          final settings = await _messaging.getNotificationSettings();
-          if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-            print('No notification permissions for token refresh');
-            return;
+          // For iOS, check notification permissions again
+          if (Platform.isIOS) {
+            final settings = await _messaging.getNotificationSettings();
+            if (settings.authorizationStatus !=
+                AuthorizationStatus.authorized) {
+              print(
+                  '[TokenService] No notification permissions for token refresh on iOS');
+              return;
+            }
           }
 
+          print("[TokenService] Saving refreshed token");
           final response = await http.post(
             Uri.parse(_apiUrl),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Methods': 'POST, OPTIONS',
-              'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             },
-            body: json
-                .encode({'userId': user.uid, 'token': token, 'action': 'save'}),
+            body: json.encode({
+              'userId': user.uid,
+              'token': token,
+              'action': 'save',
+              'platform': Platform.isIOS ? 'ios' : 'android'
+            }),
           );
 
           print(
-              "Token refresh response: ${response.statusCode} - ${response.body}");
+              "[TokenService] Token refresh response: ${response.statusCode}");
 
           if (response.statusCode != 200) {
             throw Exception('Failed to save refreshed token: ${response.body}');
           }
         } catch (e) {
-          print('Error saving refreshed token: $e');
-          print('Stack trace: ${StackTrace.current}');
+          print('[TokenService] Error saving refreshed token: $e');
+          print('[TokenService] Stack trace: ${StackTrace.current}');
         }
       }
     });
