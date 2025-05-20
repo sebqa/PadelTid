@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/services/subscription_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/widgets/subscription_dialogs.dart';
+import 'package:flutter_application_1/providers/locale_provider.dart';
+import 'package:flutter_application_1/utils/translations.dart';
+import 'package:provider/provider.dart';
 
 class NotificationPreferences {
   bool notifyOnWeatherChange;
@@ -58,84 +61,184 @@ class _NotificationPreferencesDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Notification Preferences'),
-      contentPadding: const EdgeInsets.fromLTRB(8, 20, 8, 24),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.wb_cloudy),
-              title: const Text('Weather changes'),
-              subtitle: const Text('Notify when weather conditions change'),
-              trailing: Switch(
-                value: preferences.notifyOnWeatherChange,
-                onChanged: (bool? value) {
-                  setState(() {
-                    preferences.notifyOnWeatherChange = value ?? false;
-                  });
-                },
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.looks_one),
-              title: const Text('One court left'),
-              subtitle: const Text('Notify when only one court remains'),
-              trailing: Switch(
-                value: preferences.notifyWhenOneLeft,
-                onChanged: (bool? value) {
-                  setState(() {
-                    preferences.notifyWhenOneLeft = value ?? false;
-                  });
-                },
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.block),
-              title: const Text('Courts full'),
-              subtitle: const Text('Notify when all courts are booked'),
-              trailing: Switch(
-                value: preferences.notifyWhenFull,
-                onChanged: (bool? value) {
-                  setState(() {
-                    preferences.notifyWhenFull = value ?? false;
-                  });
-                },
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.notifications_active),
-              title: const Text('Courts become available'),
-              subtitle: const Text('Notify when courts become available'),
-              trailing: Switch(
-                value: preferences.notifyWhenAvailable,
-                onChanged: (bool? value) {
-                  setState(() {
-                    preferences.notifyWhenAvailable = value ?? false;
-                  });
-                },
-              ),
-            ),
-          ],
-        ),
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () {
-            widget.onSave(preferences);
-            Navigator.of(context).pop();
-          },
-          child: const Text('Save'),
-        ),
-      ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Title
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).shadowColor.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  TranslationHelper.translate('notification_preferences',
+                          localeProvider.locale.languageCode) ??
+                      'Notification Preferences',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
+            ),
+          ),
+          // Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Weather changes notification
+                  _buildNotificationOption(
+                    icon: Icons.wb_cloudy,
+                    title: 'Weather changes',
+                    subtitle: 'Notify when weather conditions change',
+                    value: preferences.notifyOnWeatherChange,
+                    onChanged: (value) {
+                      setState(() {
+                        preferences.notifyOnWeatherChange = value ?? false;
+                      });
+                    },
+                  ),
+                  const Divider(height: 1),
+
+                  // One court left notification
+                  _buildNotificationOption(
+                    icon: Icons.looks_one,
+                    title: 'One court left',
+                    subtitle: 'Notify when only one court remains',
+                    value: preferences.notifyWhenOneLeft,
+                    onChanged: (value) {
+                      setState(() {
+                        preferences.notifyWhenOneLeft = value ?? false;
+                      });
+                    },
+                  ),
+                  const Divider(height: 1),
+
+                  // Courts full notification
+                  _buildNotificationOption(
+                    icon: Icons.block,
+                    title: 'Courts full',
+                    subtitle: 'Notify when all courts are booked',
+                    value: preferences.notifyWhenFull,
+                    onChanged: (value) {
+                      setState(() {
+                        preferences.notifyWhenFull = value ?? false;
+                      });
+                    },
+                  ),
+                  const Divider(height: 1),
+
+                  // Courts available notification
+                  _buildNotificationOption(
+                    icon: Icons.notifications_active,
+                    title: 'Courts become available',
+                    subtitle: 'Notify when courts become available',
+                    value: preferences.notifyWhenAvailable,
+                    onChanged: (value) {
+                      setState(() {
+                        preferences.notifyWhenAvailable = value ?? false;
+                      });
+                    },
+                  ),
+
+                  // Add padding at the bottom to account for the sticky buttons
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+          // Sticky buttons at the bottom
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(16)),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).shadowColor.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(TranslationHelper.translate(
+                          'cancel', localeProvider.locale.languageCode) ??
+                      'Cancel'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    widget.onSave(preferences);
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(TranslationHelper.translate(
+                          'save', localeProvider.locale.languageCode) ??
+                      'Save'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Function(bool?) onChanged,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        icon,
+        color: Theme.of(context).colorScheme.primary,
+        size: 24,
+      ),
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyLarge,
+      ),
+      subtitle: Text(
+        subtitle,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      trailing: Switch(
+        value: value,
+        onChanged: onChanged,
+        activeColor: Theme.of(context).colorScheme.primary,
+      ),
     );
   }
 }
