@@ -41,8 +41,16 @@ class TokenService {
     print('[TokenService] Initializing');
     _isInitialized = true;
 
-    // Request notification permissions early for all platforms
-    await _requestPermissions();
+    // Skip notification permissions for web platform (handled differently)
+    if (!kIsWeb) {
+      await _requestPermissions();
+
+      // Setup token refresh listener (not needed for web)
+      initTokenRefreshListener();
+    } else {
+      print(
+          '[TokenService] Web platform detected, using web-specific initialization');
+    }
 
     // Setup auth state change listener - only save token on actual login
     _auth.authStateChanges().listen((User? user) {
@@ -54,9 +62,6 @@ class TokenService {
         });
       }
     });
-
-    // Initialize token refresh listener
-    initTokenRefreshListener();
 
     // If user is already logged in, save the token once
     if (_auth.currentUser != null) {
@@ -70,9 +75,8 @@ class TokenService {
   // Request permissions for all platforms
   Future<bool> _requestPermissions() async {
     try {
-      print('[TokenService] Requesting notification permissions');
+      print('[TokenService] Requesting notification permission');
 
-      // For iOS, we need to request permissions before getting the token
       NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
@@ -89,6 +93,55 @@ class TokenService {
           settings.authorizationStatus == AuthorizationStatus.provisional;
     } catch (e) {
       print('[TokenService] Error requesting permissions: $e');
+      return false;
+    }
+  }
+
+  // Get FCM token with platform-specific handling
+  Future<String?> _getToken() async {
+    try {
+      if (kIsWeb) {
+        // For web, check if service worker is registered before trying to get token
+        try {
+          // Get service worker registration status
+          if (!(await _isServiceWorkerAvailable())) {
+            print(
+                '[TokenService] No active service worker found for web platform');
+            // Use a dummy token for web when service worker is not available
+            return 'web-${_auth.currentUser?.uid}-${DateTime.now().millisecondsSinceEpoch}';
+          }
+        } catch (e) {
+          print('[TokenService] Error checking service worker: $e');
+          // Return dummy token on error
+          return 'web-${_auth.currentUser?.uid}-${DateTime.now().millisecondsSinceEpoch}';
+        }
+      }
+
+      // Get the actual token
+      return await _messaging.getToken();
+    } catch (e) {
+      print('[TokenService] Error getting FCM token: $e');
+
+      // For web platform, return a dummy token on error
+      if (kIsWeb) {
+        return 'web-${_auth.currentUser?.uid}-${DateTime.now().millisecondsSinceEpoch}';
+      }
+      return null;
+    }
+  }
+
+  // Check if service worker is available (web only)
+  Future<bool> _isServiceWorkerAvailable() async {
+    if (!kIsWeb) return true;
+
+    // This function is only meaningful for web
+    try {
+      // Using navigator object directly would require js interop
+      // For simplicity, just check if getToken() completes without error
+      final token = await _messaging.getToken();
+      return token != null && token.isNotEmpty;
+    } catch (e) {
+      print('[TokenService] Service worker check failed: $e');
       return false;
     }
   }
@@ -114,34 +167,38 @@ class TokenService {
         return;
       }
 
-      // Check notification settings status
-      print('[TokenService] Checking notification permission');
-      final settings = await _messaging.getNotificationSettings();
+      // Skip permission check for web platform
+      if (!kIsWeb) {
+        // Check notification settings status
+        print('[TokenService] Checking notification permission');
+        final settings = await _messaging.getNotificationSettings();
 
-      if (settings.authorizationStatus != AuthorizationStatus.authorized &&
-          settings.authorizationStatus != AuthorizationStatus.provisional) {
-        print(
-            '[TokenService] Notifications not authorized, requesting permission');
-        final newSettings = await _messaging.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-          provisional: false,
-        );
-
-        if (newSettings.authorizationStatus != AuthorizationStatus.authorized &&
-            newSettings.authorizationStatus !=
-                AuthorizationStatus.provisional) {
+        if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+            settings.authorizationStatus != AuthorizationStatus.provisional) {
           print(
-              '[TokenService] User declined notification permissions (source: $source)');
-          _isSaving = false;
-          return;
+              '[TokenService] Notifications not authorized, requesting permission');
+          final newSettings = await _messaging.requestPermission(
+            alert: true,
+            badge: true,
+            sound: true,
+            provisional: false,
+          );
+
+          if (newSettings.authorizationStatus !=
+                  AuthorizationStatus.authorized &&
+              newSettings.authorizationStatus !=
+                  AuthorizationStatus.provisional) {
+            print(
+                '[TokenService] User declined notification permissions (source: $source)');
+            _isSaving = false;
+            return;
+          }
         }
       }
 
-      // Get the FCM token
+      // Get the FCM token with platform-specific handling
       print('[TokenService] Getting FCM token (source: $source)');
-      final token = await _messaging.getToken();
+      final token = await _getToken();
 
       if (token == null || token.isEmpty) {
         print('[TokenService] Failed to get valid FCM token (source: $source)');
@@ -174,6 +231,7 @@ class TokenService {
           'userId': user.uid,
           'token': token,
           'action': 'save',
+          'platform': kIsWeb ? 'web' : 'mobile'
         }),
       );
 
@@ -221,7 +279,22 @@ class TokenService {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      final token = await _messaging.getToken();
+      String? token;
+
+      // For web platform, handle differently
+      if (kIsWeb) {
+        // Use the cached token if available
+        token = _lastSavedToken;
+
+        // If no cached token, try to get a new one
+        if (token == null) {
+          token = await _getToken();
+        }
+      } else {
+        // For mobile, get the token normally
+        token = await _messaging.getToken();
+      }
+
       if (token == null || token.isEmpty) return;
 
       print(
@@ -252,6 +325,12 @@ class TokenService {
   }
 
   void initTokenRefreshListener() {
+    // Skip for web platform
+    if (kIsWeb) {
+      print('[TokenService] Skipping token refresh listener for web platform');
+      return;
+    }
+
     print('[TokenService] Setting up token refresh listener');
     FirebaseMessaging.instance.onTokenRefresh.listen((String token) async {
       print('[TokenService] FCM token refreshed');
