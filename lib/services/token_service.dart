@@ -6,7 +6,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 
+// Make TokenService a proper singleton
 class TokenService {
+  // Singleton instance
+  static final TokenService _instance = TokenService._internal();
+
+  // Factory constructor to return the same instance
+  factory TokenService() {
+    return _instance;
+  }
+
+  // Private constructor for singleton
+  TokenService._internal();
+
+  // Class members
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final String _apiUrl =
@@ -37,7 +50,7 @@ class TokenService {
       if (user != null) {
         // Delay token save to avoid race conditions
         Future.delayed(Duration(milliseconds: 500), () {
-          saveToken();
+          saveToken('auth_state_change');
         });
       }
     });
@@ -49,7 +62,7 @@ class TokenService {
     if (_auth.currentUser != null) {
       // Small delay to let the app fully initialize
       Future.delayed(Duration(milliseconds: 1000), () {
-        saveToken();
+        saveToken('initialization');
       });
     }
   }
@@ -81,19 +94,22 @@ class TokenService {
   }
 
   // Save or update token with debouncing to prevent multiple calls
-  Future<void> saveToken() async {
+  Future<void> saveToken([String source = 'unknown']) async {
     // Don't allow concurrent save operations
     if (_isSaving) {
-      print('[TokenService] Token save already in progress, skipping');
+      print(
+          '[TokenService] Token save already in progress, skipping (source: $source)');
       return;
     }
 
     _isSaving = true;
+    print('[TokenService] Starting token save (source: $source)');
 
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        print('[TokenService] Cannot save token: No user logged in');
+        print(
+            '[TokenService] Cannot save token: No user logged in (source: $source)');
         _isSaving = false;
         return;
       }
@@ -116,18 +132,19 @@ class TokenService {
         if (newSettings.authorizationStatus != AuthorizationStatus.authorized &&
             newSettings.authorizationStatus !=
                 AuthorizationStatus.provisional) {
-          print('[TokenService] User declined notification permissions');
+          print(
+              '[TokenService] User declined notification permissions (source: $source)');
           _isSaving = false;
           return;
         }
       }
 
       // Get the FCM token
-      print('[TokenService] Getting FCM token');
+      print('[TokenService] Getting FCM token (source: $source)');
       final token = await _messaging.getToken();
 
       if (token == null || token.isEmpty) {
-        print('[TokenService] Failed to get valid FCM token');
+        print('[TokenService] Failed to get valid FCM token (source: $source)');
         _isSaving = false;
         return;
       }
@@ -137,13 +154,14 @@ class TokenService {
       if (token == _lastSavedToken &&
           _lastSaveTime != null &&
           now.difference(_lastSaveTime!).inMinutes < 5) {
-        print('[TokenService] Token already saved recently, skipping');
+        print(
+            '[TokenService] Token already saved recently, skipping (source: $source)');
         _isSaving = false;
         return;
       }
 
       print(
-          "[TokenService] Got token: ${token.substring(0, min(token.length, 10))}...");
+          "[TokenService] Got token: ${token.substring(0, min(token.length, 10))}... (source: $source)");
       print("[TokenService] Making POST request to save token");
 
       final response = await http.post(
@@ -159,10 +177,11 @@ class TokenService {
         }),
       );
 
-      print("[TokenService] Response status: ${response.statusCode}");
+      print(
+          "[TokenService] Response status: ${response.statusCode} (source: $source)");
 
       if (response.statusCode == 200) {
-        print('[TokenService] Token saved successfully');
+        print('[TokenService] Token saved successfully (source: $source)');
         // Update last saved token info
         _lastSavedToken = token;
         _lastSaveTime = now;
@@ -171,7 +190,7 @@ class TokenService {
         throw Exception('Failed to save token: ${response.body}');
       }
     } catch (e) {
-      print('[TokenService] Error saving token: $e');
+      print('[TokenService] Error saving token: $e (source: $source)');
       print('[TokenService] Stack trace: ${StackTrace.current}');
     } finally {
       _isSaving = false;
@@ -245,7 +264,7 @@ class TokenService {
       _lastSaveTime = null;
 
       // Save the new token
-      saveToken();
+      saveToken('token_refresh');
     });
   }
 

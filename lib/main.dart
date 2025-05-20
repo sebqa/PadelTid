@@ -86,7 +86,8 @@ Future<void> main() async {
   if (FirebaseAuth.instance.currentUser != null) {
     print(
         '[main] User is logged in: ${FirebaseAuth.instance.currentUser!.uid}');
-    TokenService().saveToken();
+    // We're now using TokenService initialize in HomePage, so don't call saveToken here
+    // TokenService().saveToken();
   } else {
     print('[main] No user is logged in');
   }

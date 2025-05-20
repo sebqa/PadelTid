@@ -65,6 +65,8 @@ class _HomePageState extends State<HomePage>
   final DocumentService documentService = DocumentService();
   bool _isInitialized = false; // Add flag to track initialization
   Map<String, List<Document>>? _cachedDocuments; // Add cache for documents
+  bool _tokenServiceInitialized =
+      false; // Add flag to track token service initialization
 
   @override
   void initState() {
@@ -92,8 +94,12 @@ class _HomePageState extends State<HomePage>
     _controller.forward();
     _initializeApp();
 
-    // Initialize token service properly
-    _tokenService.initialize();
+    // Initialize token service properly - but only once
+    if (!_tokenServiceInitialized) {
+      print('[HomePage] Initializing TokenService for the first time');
+      _tokenService.initialize();
+      _tokenServiceInitialized = true;
+    }
 
     localeProvider = Provider.of<LocaleProvider>(context, listen: false);
 
