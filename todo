@@ -1,13 +1,10 @@
-Premium features
-- detailed weather forecast for each timeslot
-    - basic weather during the next two hours
-    - additional weather parameters like pressure, humidity, wind speed, wind direction, etc.
-    - estimation of ball bounciness based on weather parameters
-- detailed court information
-- additional filter based notifications
+Fix 
+Home page sometimes reloads when opening dialogs or returning from other pages on Android
+Notifications on iOS stopped working
+Weather symbol and data doesnt match most recent data
+Notification preference dialog and filter dialog not same visual
 
-notifications
-- club specific notifications
-    - specify clubs in notifcation preferences
 
-firebase auth on api gateway
+Improvements
+aws lambda cold start
+
