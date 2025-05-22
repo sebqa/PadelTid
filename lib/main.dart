@@ -320,7 +320,14 @@ class MyApp extends StatelessWidget {
               onBackground: Color(0xFF1D1D1D),
               onSurface: Color(0xFF1D1D1D),
             ),
-            useMaterial3: true,
+            useMaterial3: false,
+            iconTheme: IconThemeData(
+              color: Color(0xFF00875A),
+              size: 24,
+            ),
+            primaryIconTheme: IconThemeData(
+              color: Colors.white,
+            ),
             textTheme: TextTheme(
               headlineLarge: TextStyle(
                 fontSize: 28,
