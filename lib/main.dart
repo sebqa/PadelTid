@@ -321,8 +321,6 @@ class MyApp extends StatelessWidget {
               onSurface: Color(0xFF1D1D1D),
             ),
             cardTheme: CardTheme(
-              color: Colors.white,
-              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
