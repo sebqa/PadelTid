@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter_application_1/model/padel_ball_behavior.dart';
 
 class DetailedWeather {
