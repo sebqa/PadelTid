@@ -162,137 +162,131 @@ class _DocumentWidgetState extends State<DocumentWidget> {
                 // Content column
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Top row: Time and location info
+                      // Top row: Time and weather metrics
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Time
-                          Text(
-                            widget.document.time,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          // Location info with right alignment
-                          Padding(
-                            padding: EdgeInsets.only(right: 0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${widget.document.totalClubs} ${TranslationHelper.translate('location', languageCode)} | ${widget.document.totalAvailableSlots} ${TranslationHelper.translate('courts', languageCode)}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                          // Time and SubscribingIcon
+                          Row(
+                            children: [
+                              Text(
+                                widget.document.time,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                SizedBox(width: 4),
-                                FollowingIcon(document: widget.document),
-                              ],
-                            ),
+                              ),
+                            ],
+                          ),
+                          // Weather metrics
+                          Row(
+                            children: [
+                              // Temperature
+                              Row(
+                                children: [
+                                  Icon(Icons.thermostat,
+                                      size: 16,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    '${widget.document.airTemperature}${TranslationHelper.translate('temperature_unit', languageCode)}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                ' | ',
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                              ),
+                              // Wind
+                              Row(
+                                children: [
+                                  Icon(Icons.air,
+                                      size: 16,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    '${widget.document.windSpeed}${TranslationHelper.translate('meters_per_second', languageCode)}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                ' | ',
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                              ),
+                              // Precipitation
+                              Row(
+                                children: [
+                                  Icon(Icons.umbrella,
+                                      size: 16,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    '${widget.document.precipitationProbability}${TranslationHelper.translate('percent', languageCode)}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      SizedBox(height: 10),
-                      // Bottom row: Weather metrics (right-aligned)
-                      Padding(
-                        padding: EdgeInsets.only(right: 0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Temperature
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.thermostat,
-                                    size: 16,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant),
-                                SizedBox(width: 2),
-                                Text(
-                                  '${widget.document.airTemperature}${TranslationHelper.translate('temperature_unit', languageCode)}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                      SizedBox(height: 6),
+                      // Bottom row: Location info
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${widget.document.totalClubs} ${widget.document.totalClubs == 1 ? TranslationHelper.translate('location', languageCode) : TranslationHelper.translate('locations', languageCode)} | ${widget.document.totalAvailableSlots} ${widget.document.totalAvailableSlots == 1 ? TranslationHelper.translate('court', languageCode) : TranslationHelper.translate('courts', languageCode)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
                             ),
-                            Text(
-                              ' | ',
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                            ),
-                            // Wind
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.air,
-                                    size: 16,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant),
-                                SizedBox(width: 2),
-                                Text(
-                                  '${widget.document.windSpeed}${TranslationHelper.translate('meters_per_second', languageCode)}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              ' | ',
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                            ),
-                            // Precipitation
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.umbrella,
-                                    size: 16,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant),
-                                SizedBox(width: 2),
-                                Text(
-                                  '${widget.document.precipitationProbability}${TranslationHelper.translate('percent', languageCode)}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                          ),
+                          FollowingIcon(document: widget.document),
+                        ],
                       ),
                     ],
                   ),
