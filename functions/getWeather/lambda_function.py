@@ -51,8 +51,19 @@ def insert_weather(data, host, club_name):
             next_hour = entry['data'].get('next_12_hours', {})
         
         if next_hour:
-            # Get precipitation probability from the appropriate source
-            precipitation_probability = next_hour.get('details', {}).get('probability_of_precipitation', 0)
+            # Get instant weather details
+            instant_details = entry['data']['instant']['details']
+            wind_speed = instant_details.get('wind_speed', 0)
+            air_temperature = instant_details.get('air_temperature', 0)
+            
+            # Get precipitation probability from the most accurate forecast available
+            precipitation_probability = 0
+            if entry['data'].get('next_1_hours', {}).get('details', {}).get('probability_of_precipitation') is not None:
+                precipitation_probability = entry['data']['next_1_hours']['details']['probability_of_precipitation']
+            elif entry['data'].get('next_6_hours', {}).get('details', {}).get('probability_of_precipitation') is not None:
+                precipitation_probability = entry['data']['next_6_hours']['details']['probability_of_precipitation']
+            elif entry['data'].get('next_12_hours', {}).get('details', {}).get('probability_of_precipitation') is not None:
+                precipitation_probability = entry['data']['next_12_hours']['details']['probability_of_precipitation']
             
             # Get symbol code from the most accurate forecast available
             symbol_code = None
@@ -65,9 +76,7 @@ def insert_weather(data, host, club_name):
             else:
                 symbol_code = "null"
                 
-            wind_speed = entry['data']['instant']['details'].get('wind_speed', 0)        
             dt = datetime.strptime(entry["time"], "%Y-%m-%dT%H:%M:%SZ")
-            air_temperature = entry['data']['instant']['details'].get('air_temperature', 0)
             dt_utc_plus_2 = dt + timedelta(hours=2)
 
             date_string = dt_utc_plus_2.strftime("%Y-%m-%d")
@@ -78,6 +87,12 @@ def insert_weather(data, host, club_name):
             if time_string in interPolateTime and not entry['data'].get('next_1_hours', {}).get('details', {}):
                 index = timeseries.index(entry)
                 next_entry = timeseries[index+1]
+                
+                # Get next entry's instant details
+                next_instant_details = next_entry['data']['instant']['details']
+                next_wind_speed = next_instant_details.get('wind_speed', 0)
+                next_air_temperature = next_instant_details.get('air_temperature', 0)
+                
                 for i in range(1,6):
                     new_dt = dt + timedelta(hours=i+2)
                     new_date_string = new_dt.strftime("%Y-%m-%d")
@@ -88,11 +103,21 @@ def insert_weather(data, host, club_name):
                         'time': new_time_string
                     }
                     
-                    currentWindSpeed = wind_speed
-                    nextWindSpeed = next_entry['data']['instant']['details'].get('wind_speed', 0)
-                    new_wind_speed = currentWindSpeed + ((nextWindSpeed - currentWindSpeed) * (i / 4))
-                    new_air_temperature = air_temperature + ((next_entry['data']['instant']['details'].get('air_temperature', 0) - air_temperature) * (i / 4))
-                    new_precipitation_probability = precipitation_probability + ((next_entry['data']['instant']['details'].get('precipitation_probability', 0) - precipitation_probability) * (i / 4))
+                    # Linear interpolation of instant weather values
+                    new_wind_speed = wind_speed + ((next_wind_speed - wind_speed) * (i / 4))
+                    new_air_temperature = air_temperature + ((next_air_temperature - air_temperature) * (i / 4))
+                    
+                    # Get next entry's precipitation probability
+                    next_precipitation_probability = 0
+                    if next_entry['data'].get('next_1_hours', {}).get('details', {}).get('probability_of_precipitation') is not None:
+                        next_precipitation_probability = next_entry['data']['next_1_hours']['details']['probability_of_precipitation']
+                    elif next_entry['data'].get('next_6_hours', {}).get('details', {}).get('probability_of_precipitation') is not None:
+                        next_precipitation_probability = next_entry['data']['next_6_hours']['details']['probability_of_precipitation']
+                    elif next_entry['data'].get('next_12_hours', {}).get('details', {}).get('probability_of_precipitation') is not None:
+                        next_precipitation_probability = next_entry['data']['next_12_hours']['details']['probability_of_precipitation']
+                    
+                    # Linear interpolation of precipitation probability
+                    new_precipitation_probability = precipitation_probability + ((next_precipitation_probability - precipitation_probability) * (i / 4))
                     if new_precipitation_probability < 0:
                         new_precipitation_probability = 0
 
@@ -124,9 +149,9 @@ def insert_weather(data, host, club_name):
             update_object = {
                 '$set': {
                     f'clubs.{club_name}.weather': {
-                        'wind_speed': wind_speed,
-                        'precipitation_probability': precipitation_probability,
-                        'air_temperature': air_temperature,
+                        'wind_speed': round(wind_speed, 1),
+                        'precipitation_probability': round(precipitation_probability, 1),
+                        'air_temperature': round(air_temperature, 1),
                         'symbol_code': symbol_code,
                         'last_updated': datetime.utcnow().isoformat()
                     }
