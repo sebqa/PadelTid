@@ -320,15 +320,7 @@ class MyApp extends StatelessWidget {
               onBackground: Color(0xFF1D1D1D),
               onSurface: Color(0xFF1D1D1D),
             ),
-            cardTheme: CardTheme(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: Color(0xFFEEEEEE),
-                  width: 1,
-                ),
-              ),
-            ),
+            useMaterial3: true,
             textTheme: TextTheme(
               headlineLarge: TextStyle(
                 fontSize: 28,
