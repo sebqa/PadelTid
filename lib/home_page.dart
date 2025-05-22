@@ -811,6 +811,8 @@ class _HomePageState extends State<HomePage>
                                 Icon(
                                   Icons.notifications_outlined,
                                   size: 28, // Slightly larger icon
+                                  color:
+                                      Colors.black, // Match settings icon color
                                 ),
                                 Consumer<NotificationHistoryService>(
                                   builder:
