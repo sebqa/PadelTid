@@ -30,24 +30,70 @@ class DetailedWeather {
   factory DetailedWeather.fromJson(Map<String, dynamic> json) {
     final instant = json['data']['instant']['details'];
     final next1Hour = json['data']['next_1_hours'];
+    final next6Hours = json['data']['next_6_hours'];
+    final next12Hours = json['data']['next_12_hours'];
+
+    // Get precipitation probability from the most accurate forecast available
+    double precipitationProbability = 0.0;
+    if (next1Hour != null &&
+        next1Hour['details'] != null &&
+        next1Hour['details']['probability_of_precipitation'] != null) {
+      precipitationProbability =
+          next1Hour['details']['probability_of_precipitation'].toDouble();
+    } else if (next6Hours != null &&
+        next6Hours['details'] != null &&
+        next6Hours['details']['probability_of_precipitation'] != null) {
+      precipitationProbability =
+          next6Hours['details']['probability_of_precipitation'].toDouble();
+    } else if (next12Hours != null &&
+        next12Hours['details'] != null &&
+        next12Hours['details']['probability_of_precipitation'] != null) {
+      precipitationProbability =
+          next12Hours['details']['probability_of_precipitation'].toDouble();
+    }
+
+    // Get symbol code from the most accurate forecast available
+    String symbolCode = 'cloudy';
+    if (next1Hour != null &&
+        next1Hour['summary'] != null &&
+        next1Hour['summary']['symbol_code'] != null) {
+      symbolCode = next1Hour['summary']['symbol_code'];
+    } else if (next6Hours != null &&
+        next6Hours['summary'] != null &&
+        next6Hours['summary']['symbol_code'] != null) {
+      symbolCode = next6Hours['summary']['symbol_code'];
+    } else if (next12Hours != null &&
+        next12Hours['summary'] != null &&
+        next12Hours['summary']['symbol_code'] != null) {
+      symbolCode = next12Hours['summary']['symbol_code'];
+    }
+
+    // Get precipitation amount from the most accurate forecast available
+    double precipitation = 0.0;
+    if (next1Hour != null &&
+        next1Hour['details'] != null &&
+        next1Hour['details']['precipitation_amount'] != null) {
+      precipitation = next1Hour['details']['precipitation_amount'].toDouble();
+    } else if (next6Hours != null &&
+        next6Hours['details'] != null &&
+        next6Hours['details']['precipitation_amount'] != null) {
+      precipitation = next6Hours['details']['precipitation_amount'].toDouble();
+    } else if (next12Hours != null &&
+        next12Hours['details'] != null &&
+        next12Hours['details']['precipitation_amount'] != null) {
+      precipitation = next12Hours['details']['precipitation_amount'].toDouble();
+    }
 
     return DetailedWeather(
       time: DateTime.parse(json['time']),
       airTemperature: instant['air_temperature'].toDouble(),
       windSpeed: instant['wind_speed'].toDouble(),
       windDirection: instant['wind_from_direction'].toDouble(),
-      precipitation: next1Hour != null && next1Hour['details'] != null
-          ? next1Hour['details']['precipitation_amount'].toDouble()
-          : 0.0,
+      precipitation: precipitation,
       humidity: instant['relative_humidity'].toDouble(),
       airPressure: instant['air_pressure_at_sea_level'].toDouble(),
-      symbolCode: next1Hour != null && next1Hour['summary'] != null
-          ? next1Hour['summary']['symbol_code']
-          : 'cloudy',
-      precipitationProbability:
-          next1Hour != null && next1Hour['details'] != null
-              ? next1Hour['details']['probability_of_precipitation'].toDouble()
-              : 0.0,
+      symbolCode: symbolCode,
+      precipitationProbability: precipitationProbability,
     );
   }
 }
