@@ -16,7 +16,7 @@ settings = get_settings()
 # Initialize FastAPI app
 app = FastAPI(
     title="PadelTid API", 
-    version="1.0.0",
+    version="1.0.1",  # Updated to trigger redeployment
     description="Consolidated PadelTid API - migrated from AWS Lambda"
 )
 
