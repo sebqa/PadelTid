@@ -42,8 +42,51 @@ class PadelService:
             logger.error(f"Error in get_user_follows: {str(e)}")
             return []
     
+    def save_user_preferences(self, user_id, preferences):
+        """Save user filter preferences to the database with denormalized structure"""
+        try:
+            if not user_id:
+                return
+            
+            # Extract base preferences
+            base_preferences = {
+                "notifyOnMatchingCourts": preferences.get("notifyOnMatchingCourts", False),
+                "showUnavailableSlots": preferences.get("notification_show_unavailable_courts", False),
+                "locations": preferences.get("locations", [])
+            }
+            
+            # Create location-specific preference structure
+            location_preferences = {}
+            for location in preferences.get("locations", []):
+                location_preferences[location] = {
+                    "wind_threshold": preferences.get("notification_wind_threshold"),
+                    "min_temp": preferences.get("notification_temperature_threshold"),
+                    "precip_threshold": preferences.get("notification_precipitation_threshold")
+                }
+
+            # Complete preferences structure
+            optimized_preferences = {
+                **base_preferences,
+                "locationPreferences": location_preferences
+            }
+
+            # Update the user document
+            result = self.db_padeltid()['users'].update_one(
+                {"_id": user_id}, 
+                {"$set": {"filterPreferences": optimized_preferences}},
+                upsert=False  # Don't create a new user if not found
+            )
+            
+            if result.modified_count > 0:
+                logger.info(f"Updated filter preferences for user: {user_id}")
+            else:
+                logger.info(f"No changes made to filter preferences for user: {user_id}")
+                
+        except Exception as e:
+            logger.error(f"Error saving user preferences: {str(e)}")
+    
     async def get_recommendations(self, user_id: str, locations: list):
-        """Get recommended padel times for a specific user"""
+        """Get recommended padel times for a specific user based on their preferences"""
         try:
             # Validate user exists
             user = self.db_padeltid()['users'].find_one({"_id": user_id})
@@ -56,15 +99,15 @@ class PadelService:
             # Get user follow data to mark documents as followed
             user_follows = self.get_user_follows(user_id)
                 
-            # Default weather thresholds
-            default_wind = 4.0
-            default_precip = 10.0
-            default_temp = 5.0
+            # Default weather thresholds if not in user preferences
+            default_wind = 4.0  # Default wind threshold (m/s)
+            default_precip = 10.0  # Default precipitation probability (%)
+            default_temp = 5.0  # Default minimum temperature (°C)
             
             current_time = datetime.now()
             current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
             
-            # Base query
+            # Base query - similar to filtered documents but with user-specific thresholds
             query = {
                 '$expr': {
                     '$and': [
@@ -86,7 +129,7 @@ class PadelService:
                     {f'clubs.{club}.weather.wind_speed': {'$lte': default_wind}},
                     {f'clubs.{club}.weather.precipitation_probability': {'$lte': default_precip}},
                     {f'clubs.{club}.weather.air_temperature': {'$gte': default_temp}},
-                    {f'clubs.{club}.available_slots': {'$gt': 0}}
+                    {f'clubs.{club}.available_slots': {'$gt': 0}}  # Only available slots for recommendations
                 ]
                     
                 club_conditions.append({'$and': base_conditions})
@@ -103,7 +146,7 @@ class PadelService:
             for club in locations:
                 projection[f'clubs.{club}'] = 1
 
-            # Get results with limit
+            # Get results with limit to avoid too many recommendations
             collection = self.db_padel_times()['times']
             results = list(collection.find(query, projection).sort([("date", 1), ("time", 1)]).limit(20))
             
@@ -113,9 +156,11 @@ class PadelService:
                 filtered_clubs = {}
                 
                 for name, data in doc.get('clubs', {}).items():
+                    # Skip if club data is missing or not in requested clubs
                     if data is None or name not in locations:
                         continue
                     
+                    # Skip if club doesn't have both weather and availability data
                     if 'weather' not in data or 'available_slots' not in data:
                         continue
                         
@@ -123,26 +168,35 @@ class PadelService:
                     if available_slots > 0:
                         filtered_clubs[name] = data
                 
-                if filtered_clubs:
+                if filtered_clubs:  # Only include document if it has valid clubs
                     # Format date and time for follow check
                     date_to_follow_id = (
-                        doc['date'].replace('-', '') +
-                        doc['time'].split(':')[0].zfill(2) +
-                        doc['time'].split(':')[1].zfill(2) +
-                        "00"
+                        doc['date'].replace('-', '') +  # YYYYMMDD
+                        doc['time'].split(':')[0].zfill(2) +  # HH (padded with zeros)
+                        doc['time'].split(':')[1].zfill(2) +  # MM (padded with zeros)
+                        "00"  # Add seconds
                     )
+                    
+                    logger.info(f"Document date: {doc['date']}, time: {doc['time']}")
+                    logger.info(f"Generated follow ID: {date_to_follow_id}")
                     
                     is_followed = False
                     preferences = None
                     
                     if user_id:
+                        logger.info(f"Checking follows for user_id: {user_id}")
+                        # Find this document in user's follows
                         for follow in user_follows:
+                            logger.info(f"Checking follow: {follow}")
                             if isinstance(follow, dict):
                                 follow_id = follow.get('id', '')
+                                logger.info(f"Comparing follow ID {follow_id} with {date_to_follow_id}")
                                 if follow_id == date_to_follow_id:
+                                    logger.info(f"Found matching follow!")
                                     is_followed = True
                                     if 'preferences' in follow:
                                         preferences = follow['preferences']
+                                        logger.info(f"Found preferences: {preferences}")
                                     break
                     
                     cleaned_doc = {
@@ -152,8 +206,12 @@ class PadelService:
                         'followed': is_followed
                     }
                     
+                    # Include preferences in the response if available
                     if preferences:
+                        logger.info(f"Adding preferences to response for {date_to_follow_id}: {preferences}")
                         cleaned_doc['preferences'] = preferences
+                    else:
+                        logger.info(f"No preferences found for {date_to_follow_id}")
                     
                     cleaned_results.append(cleaned_doc)
 
@@ -161,6 +219,139 @@ class PadelService:
             
         except Exception as e:
             logger.error(f"Error in get_recommendations: {str(e)}")
+            raise e
+    
+    async def get_filtered_documents(self, wind_speed_threshold: float, precipitation_probability_threshold: float, 
+                                    temperature_threshold: float, show_unavailable_slots: bool, 
+                                    locations: list, user_id: str = None):
+        """Get filtered padel documents based on weather and location criteria"""
+        try:
+            user_follows = self.get_user_follows(user_id) if user_id else []
+            
+            current_time = datetime.now()
+            current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Base query
+            query = {
+                '$expr': {
+                    '$and': [
+                        {'$gt': [{'$concat': ['$date', ' ', '$time']}, current_time_str]},
+                        {'$or': [
+                            {'$regexMatch': {'input': '$time', 'regex': '^0[6-9]:'}},
+                            {'$regexMatch': {'input': '$time', 'regex': '^1[0-9]:'}},
+                            {'$regexMatch': {'input': '$time', 'regex': '^2[0-4]:'}}
+                        ]}
+                    ]
+                }
+            }
+            
+            # Determine which clubs to include
+            clubs_to_check = locations if locations else []
+            if not clubs_to_check:
+                # If no specific locations provided, get all available clubs
+                clubs_collection = self.db_padel_times()['clubs']
+                clubs_to_check = clubs_collection.distinct('name')
+            
+            # Add weather and location conditions
+            club_conditions = []
+            for club in clubs_to_check:
+                base_conditions = [
+                    {f'clubs.{club}': {'$exists': True}},
+                    {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
+                    {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}},
+                    {f'clubs.{club}.weather.air_temperature': {'$gte': temperature_threshold}},
+                ]
+                
+                if not show_unavailable_slots:
+                    base_conditions.append({f'clubs.{club}.available_slots': {'$gt': 0}})
+                    
+                club_conditions.append({'$and': base_conditions})
+                
+            query['$or'] = club_conditions
+
+            # Create projection to only return necessary fields
+            projection = {
+                '_id': 0,
+                'date': 1,
+                'time': 1,
+            }
+            # Add only the requested clubs to the projection
+            for club in clubs_to_check:
+                projection[f'clubs.{club}'] = 1
+
+            # Add sort to the query - sort by date and time
+            collection = self.db_padel_times()['times']
+            results = list(collection.find(query, projection).sort([("date", 1), ("time", 1)]))
+            
+            # Clean up results to remove empty clubs and handle available slots
+            cleaned_results = []
+            for doc in results:
+                filtered_clubs = {}
+                
+                for name, data in doc.get('clubs', {}).items():
+                    # Skip if club data is missing or not in requested clubs
+                    if data is None or name not in clubs_to_check:
+                        continue
+                    
+                    # Skip if club doesn't have both weather and availability data
+                    if 'weather' not in data or 'available_slots' not in data:
+                        continue
+                        
+                    available_slots = data.get('available_slots', 0)
+                    if show_unavailable_slots or available_slots > 0:
+                        filtered_clubs[name] = data
+                
+                if filtered_clubs:  # Only include document if it has valid clubs
+                    # Format date and time for follow check
+                    date_to_follow_id = (
+                        doc['date'].replace('-', '') +  # YYYYMMDD
+                        doc['time'].split(':')[0].zfill(2) +  # HH (padded with zeros)
+                        doc['time'].split(':')[1].zfill(2) +  # MM (padded with zeros)
+                        "00"  # Add seconds
+                    )
+                    
+                    logger.info(f"Document date: {doc['date']}, time: {doc['time']}")
+                    logger.info(f"Generated follow ID: {date_to_follow_id}")
+                    
+                    is_followed = False
+                    preferences = None
+                    
+                    if user_id:
+                        logger.info(f"Checking follows for user_id: {user_id}")
+                        # Find this document in user's follows
+                        for follow in user_follows:
+                            logger.info(f"Checking follow: {follow}")
+                            if isinstance(follow, dict):
+                                follow_id = follow.get('id', '')
+                                logger.info(f"Comparing follow ID {follow_id} with {date_to_follow_id}")
+                                if follow_id == date_to_follow_id:
+                                    logger.info(f"Found matching follow!")
+                                    is_followed = True
+                                    if 'preferences' in follow:
+                                        preferences = follow['preferences']
+                                        logger.info(f"Found preferences: {preferences}")
+                                    break
+                    
+                    cleaned_doc = {
+                        'date': doc['date'],
+                        'time': doc['time'],
+                        'clubs': filtered_clubs,
+                        'followed': is_followed
+                    }
+                    
+                    # Include preferences in the response if available
+                    if preferences:
+                        logger.info(f"Adding preferences to response for {date_to_follow_id}: {preferences}")
+                        cleaned_doc['preferences'] = preferences
+                    else:
+                        logger.info(f"No preferences found for {date_to_follow_id}")
+                    
+                    cleaned_results.append(cleaned_doc)
+
+            return cleaned_results
+            
+        except Exception as e:
+            logger.error(f"Error in get_filtered_documents: {str(e)}")
             raise e
     
     async def get_document_by_id(self, doc_id: str):
