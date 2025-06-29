@@ -1,0 +1,29 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+venv/
+env/
+
+# Documentation
+*.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log 
