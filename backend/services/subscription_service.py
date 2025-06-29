@@ -1,5 +1,5 @@
 import stripe
-from config.database import get_db_padeltid
+from config.database import get_db_padeltid, is_stripe_ready, get_stripe_error
 from config.settings import get_settings
 import logging
 
@@ -10,9 +10,30 @@ class SubscriptionService:
         self.db = get_db_padeltid
         self.settings = get_settings()
     
+    def _check_stripe_availability(self):
+        """Check if Stripe is available and return error if not"""
+        if not is_stripe_ready():
+            stripe_error = get_stripe_error()
+            return {
+                "error": "Stripe not configured",
+                "message": "Subscription features are not available. Stripe configuration required.",
+                "details": stripe_error,
+                "required_env_vars": [
+                    "STRIPE_SECRET_KEY",
+                    "STRIPE_MONTHLY_PRICE_ID", 
+                    "STRIPE_YEARLY_PRICE_ID"
+                ]
+            }
+        return None
+    
     async def check_subscription(self, user_id: str):
         """Check subscription status for a user"""
         try:
+            # Check if Stripe is available
+            stripe_check = self._check_stripe_availability()
+            if stripe_check:
+                return stripe_check
+                
             logger.info(f"Checking subscription for user: {user_id}")
             
             # Find user in MongoDB
@@ -85,6 +106,11 @@ class SubscriptionService:
     async def create_subscription(self, data: dict):
         """Create a new subscription"""
         try:
+            # Check if Stripe is available
+            stripe_check = self._check_stripe_availability()
+            if stripe_check:
+                return stripe_check
+                
             # TODO: Implement logic from createSubscription Lambda
             return {
                 "message": "Subscription creation endpoint - implement from createSubscription Lambda",
@@ -97,6 +123,11 @@ class SubscriptionService:
     async def cancel_subscription(self, data: dict):
         """Cancel a subscription"""
         try:
+            # Check if Stripe is available
+            stripe_check = self._check_stripe_availability()
+            if stripe_check:
+                return stripe_check
+                
             # TODO: Implement logic from cancelSubscription Lambda
             return {
                 "message": "Subscription cancellation endpoint - implement from cancelSubscription Lambda",
@@ -109,6 +140,11 @@ class SubscriptionService:
     async def get_invoices(self, user_id: str):
         """Get user invoices"""
         try:
+            # Check if Stripe is available
+            stripe_check = self._check_stripe_availability()
+            if stripe_check:
+                return stripe_check
+                
             # TODO: Implement logic from getInvoices Lambda
             return {
                 "message": "Get invoices endpoint - implement from getInvoices Lambda",
