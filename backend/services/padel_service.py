@@ -355,13 +355,42 @@ class PadelService:
             raise e
     
     async def get_document_by_id(self, doc_id: str):
-        """Get document by ID"""
+        """Get document by ID - migrated from getDocumentById Lambda"""
         try:
-            # TODO: Implement logic from getDocumentById Lambda
-            return {
-                "message": f"Document {doc_id} endpoint - implement from getDocumentById Lambda",
-                "documentId": doc_id
-            }
+            if not doc_id:
+                raise ValueError("Missing documentId parameter")
+            
+            # Validate document ID format (should be YYYYMMDDHHMMSS - 14 characters)
+            if len(doc_id) != 14 or not doc_id.isdigit():
+                raise ValueError("Invalid documentId format. Expected YYYYMMDDHHMMSS")
+            
+            # Parse date and time from document ID (format: YYYYMMDDHHMMSS)
+            date_str = f"{doc_id[0:4]}-{doc_id[4:6]}-{doc_id[6:8]}"  # YYYY-MM-DD
+            time_str = f"{doc_id[8:10]}:{doc_id[10:12]}:00"  # HH:MM:SS
+            
+            logger.info(f"Searching for document with date: {date_str}, time: {time_str}")
+            
+            # Query the database for the specific document
+            collection = self.db_padel_times()['times']
+            document = collection.find_one({
+                'date': date_str,
+                'time': time_str
+            })
+            
+            if not document:
+                logger.info(f"Document not found for ID: {doc_id}")
+                raise ValueError("Document not found")
+            
+            # Convert MongoDB ObjectId to string for JSON serialization
+            if '_id' in document:
+                document['_id'] = str(document['_id'])
+            
+            logger.info(f"Successfully retrieved document for ID: {doc_id}")
+            return document
+            
+        except ValueError as e:
+            logger.error(f"Validation error in get_document_by_id: {str(e)}")
+            raise e
         except Exception as e:
             logger.error(f"Error in get_document_by_id: {str(e)}")
             raise e 
