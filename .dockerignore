@@ -1,0 +1,41 @@
+# Flutter/Android/iOS files
+android/
+ios/
+lib/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.dart_tool/
+pubspec.lock
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+venv/
+env/
+
+# Documentation (already deployed)
+*.md
+functions/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log 
