@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
-from routes import clubs, subscriptions, padel, weather, auth, notifications
+from routes import clubs, subscriptions, padel, weather, auth, notifications, users
 from config.database import init_database, is_database_ready, is_stripe_ready, get_database_error, get_stripe_error
 from config.settings import get_settings
 
@@ -48,6 +48,7 @@ app.include_router(padel.router, prefix="/api", tags=["padel"])
 app.include_router(weather.router, prefix="/api", tags=["weather"])
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(notifications.router, prefix="/api", tags=["notifications"])
+app.include_router(users.router, prefix="/api", tags=["users"])
 
 # Health check endpoint
 @app.get("/")
@@ -80,7 +81,8 @@ async def detailed_health():
             "weather_updates": db_ready,
             "subscriptions": db_ready and stripe_ready,
             "authentication": db_ready,
-            "notifications": db_ready
+            "notifications": db_ready,
+            "user_properties": db_ready
         },
         "version": "1.0.0"
     }
