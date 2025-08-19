@@ -22,7 +22,8 @@ async def get_padel_times(
     notification_wind_threshold: Optional[float] = Query(default=None, description="Notification wind threshold"),
     notification_precipitation_threshold: Optional[float] = Query(default=None, description="Notification precipitation threshold"),
     notification_temperature_threshold: Optional[float] = Query(default=None, description="Notification temperature threshold"),
-    notification_show_unavailable_courts: str = Query(default="false", description="Show unavailable courts in notifications")
+    notification_show_unavailable_courts: str = Query(default="false", description="Show unavailable courts in notifications"),
+    court_type: str = Query(default="both", description="Court type filter (indoor/outdoor/both)")
 ):
     """
     Get padel times - matches the original getPadelTid Lambda function
@@ -66,13 +67,14 @@ async def get_padel_times(
                 temperature_threshold,
                 show_unavailable_slots,
                 locations_list,
-                user_id
+                user_id,
+                court_type
             )
             
             # Get recommended documents
             recommended_results = []
             if user_id:
-                recommended_results = await padel_service.get_recommendations(user_id, locations_list)
+                recommended_results = await padel_service.get_recommendations(user_id, locations_list, court_type)
             
             # Return both in the response
             return {
@@ -88,7 +90,7 @@ async def get_padel_times(
             if not locations_list:
                 raise HTTPException(status_code=400, detail="locations is required for recommendation requests")
                 
-            return await padel_service.get_recommendations(user_id, locations_list)
+            return await padel_service.get_recommendations(user_id, locations_list, court_type)
         
         # Default case: get filtered documents
         return await padel_service.get_filtered_documents(
@@ -97,7 +99,8 @@ async def get_padel_times(
             temperature_threshold,
             show_unavailable_slots,
             locations_list,
-            user_id
+            user_id,
+            court_type
         )
         
     except Exception as e:

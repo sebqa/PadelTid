@@ -85,7 +85,7 @@ class PadelService:
         except Exception as e:
             logger.error(f"Error saving user preferences: {str(e)}")
     
-    async def get_recommendations(self, user_id: str, locations: list):
+    async def get_recommendations(self, user_id: str, locations: list, court_type: str = "both"):
         """Get recommended padel times for a specific user based on their preferences"""
         try:
             # Validate user exists
@@ -126,11 +126,47 @@ class PadelService:
             for club in locations:
                 base_conditions = [
                     {f'clubs.{club}': {'$exists': True}},
-                    {f'clubs.{club}.weather.wind_speed': {'$lte': default_wind}},
-                    {f'clubs.{club}.weather.precipitation_probability': {'$lte': default_precip}},
-                    {f'clubs.{club}.weather.air_temperature': {'$gte': default_temp}},
                     {f'clubs.{club}.available_slots': {'$gt': 0}}  # Only available slots for recommendations
                 ]
+                
+                # Handle court type filtering and weather conditions for recommendations
+                if court_type == "indoor":
+                    # Indoor courts: only filter by court type, no weather conditions
+                    base_conditions.append({f'clubs.{club}.court_type': 'indoor'})
+                elif court_type == "outdoor":
+                    # Outdoor courts: filter by court type OR missing court_type (assume outdoor) AND weather conditions
+                    base_conditions.extend([
+                        {
+                            '$or': [
+                                {f'clubs.{club}.court_type': 'outdoor'},
+                                {f'clubs.{club}.court_type': {'$exists': False}}  # Assume outdoor if not specified
+                            ]
+                        },
+                        {f'clubs.{club}.weather.wind_speed': {'$lte': default_wind}},
+                        {f'clubs.{club}.weather.precipitation_probability': {'$lte': default_precip}},
+                        {f'clubs.{club}.weather.air_temperature': {'$gte': default_temp}},
+                    ])
+                else:  # court_type == "both"
+                    # Both court types: indoor courts OR outdoor courts (including missing court_type) that meet weather conditions
+                    weather_conditions = {
+                        '$or': [
+                            {f'clubs.{club}.court_type': 'indoor'},
+                            {
+                                '$and': [
+                                    {
+                                        '$or': [
+                                            {f'clubs.{club}.court_type': 'outdoor'},
+                                            {f'clubs.{club}.court_type': {'$exists': False}}  # Assume outdoor if not specified
+                                        ]
+                                    },
+                                    {f'clubs.{club}.weather.wind_speed': {'$lte': default_wind}},
+                                    {f'clubs.{club}.weather.precipitation_probability': {'$lte': default_precip}},
+                                    {f'clubs.{club}.weather.air_temperature': {'$gte': default_temp}},
+                                ]
+                            }
+                        ]
+                    }
+                    base_conditions.append(weather_conditions)
                     
                 club_conditions.append({'$and': base_conditions})
                 
@@ -223,7 +259,7 @@ class PadelService:
     
     async def get_filtered_documents(self, wind_speed_threshold: float, precipitation_probability_threshold: float, 
                                     temperature_threshold: float, show_unavailable_slots: bool, 
-                                    locations: list, user_id: str = None):
+                                    locations: list, user_id: str = None, court_type: str = "both"):
         """Get filtered padel documents based on weather and location criteria"""
         try:
             user_follows = self.get_user_follows(user_id) if user_id else []
@@ -257,10 +293,46 @@ class PadelService:
             for club in clubs_to_check:
                 base_conditions = [
                     {f'clubs.{club}': {'$exists': True}},
-                    {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
-                    {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}},
-                    {f'clubs.{club}.weather.air_temperature': {'$gte': temperature_threshold}},
                 ]
+                
+                # Handle court type filtering and weather conditions
+                if court_type == "indoor":
+                    # Indoor courts: only filter by court type, no weather conditions
+                    base_conditions.append({f'clubs.{club}.court_type': 'indoor'})
+                elif court_type == "outdoor":
+                    # Outdoor courts: filter by court type OR missing court_type (assume outdoor) AND weather conditions
+                    base_conditions.extend([
+                        {
+                            '$or': [
+                                {f'clubs.{club}.court_type': 'outdoor'},
+                                {f'clubs.{club}.court_type': {'$exists': False}}  # Assume outdoor if not specified
+                            ]
+                        },
+                        {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
+                        {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}},
+                        {f'clubs.{club}.weather.air_temperature': {'$gte': temperature_threshold}},
+                    ])
+                else:  # court_type == "both"
+                    # Both court types: indoor courts OR outdoor courts (including missing court_type) that meet weather conditions
+                    weather_conditions = {
+                        '$or': [
+                            {f'clubs.{club}.court_type': 'indoor'},
+                            {
+                                '$and': [
+                                    {
+                                        '$or': [
+                                            {f'clubs.{club}.court_type': 'outdoor'},
+                                            {f'clubs.{club}.court_type': {'$exists': False}}  # Assume outdoor if not specified
+                                        ]
+                                    },
+                                    {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
+                                    {f'clubs.{club}.weather.precipitation_probability': {'$lte': precipitation_probability_threshold}},
+                                    {f'clubs.{club}.weather.air_temperature': {'$gte': temperature_threshold}},
+                                ]
+                            }
+                        ]
+                    }
+                    base_conditions.append(weather_conditions)
                 
                 if not show_unavailable_slots:
                     base_conditions.append({f'clubs.{club}.available_slots': {'$gt': 0}})
