@@ -178,100 +178,147 @@ def process_filter_matching_users(users_collection, doc_id, current_doc, previou
     
     total_notifications = 0
     
-    # Get all users with notifyOnMatchingCourts enabled (with batching)
-    batch_size = 100
-    processed_users = 0
-    
-    for skip in range(0, 10000, batch_size):
-        # Find users who have notifications enabled and at least one token
-        users_batch = users_collection.find(
-            {
-                "filterPreferences.notifyOnMatchingCourts": True,
-                "tokens": {"$exists": True, "$ne": []},
-                "follows.id": {"$ne": doc_id}  # Not already following
-            },
+    # Process each club that has changed and find users with relevant preferences
+    for club_id, current_club_data in current_doc.get('clubs', {}).items():
+        previous_club_data = previous_doc.get('clubs', {}).get(club_id, {})
+        
+        # Skip if no previous data for comparison
+        if not previous_club_data:
+            continue
+            
+        current_club_data['club_id'] = club_id
+        previous_club_data['club_id'] = club_id
+        
+        print(f"Processing club {club_id}")
+        
+        # Get current weather data for this club
+        current_weather = current_club_data.get('weather', {})
+        current_slots = current_club_data.get('available_slots', 0)
+        
+        if not current_weather:
+            print(f"No weather data for club {club_id}, skipping")
+            continue
+            
+        wind_speed = current_weather.get('wind_speed')
+        precip_prob = current_weather.get('precipitation_probability')
+        temperature = current_weather.get('air_temperature')
+        
+        # Build weather-based query conditions - ALL thresholds must be met
+        weather_and_conditions = []
+        
+        # Handle wind speed thresholds
+        if wind_speed is not None:
+            weather_and_conditions.append({
+                "$or": [
+                    {f"filterPreferences.locationPreferences.{club_id}.wind_threshold": {"$gte": wind_speed}},
+                    {"filterPreferences.wind_speed_threshold": {"$gte": wind_speed}},
+                    {"filterPreferences.wind_speed_threshold": {"$exists": False}}  # No threshold set
+                ]
+            })
+        
+        # Handle precipitation thresholds
+        if precip_prob is not None:
+            weather_and_conditions.append({
+                "$or": [
+                    {f"filterPreferences.locationPreferences.{club_id}.precip_threshold": {"$gte": precip_prob}},
+                    {"filterPreferences.precipitation_probability_threshold": {"$gte": precip_prob}},
+                    {"filterPreferences.precipitation_probability_threshold": {"$exists": False}}  # No threshold set
+                ]
+            })
+        
+        # Handle temperature thresholds
+        if temperature is not None:
+            weather_and_conditions.append({
+                "$or": [
+                    {f"filterPreferences.locationPreferences.{club_id}.min_temp": {"$lte": temperature}},
+                    {"filterPreferences.temperature_threshold": {"$lte": temperature}},
+                    {"filterPreferences.temperature_threshold": {"$exists": False}}  # No threshold set
+                ]
+            })
+        
+        # Handle availability preferences
+        availability_condition = None
+        if current_slots == 0:
+            # Only users who want to see unavailable slots
+            availability_condition = {"filterPreferences.showUnavailableSlots": True}
+        else:
+            # Users who want available slots OR users who want to see unavailable slots
+            availability_condition = {
+                "$or": [
+                    {"filterPreferences.showUnavailableSlots": {"$ne": False}},
+                    {"filterPreferences.showUnavailableSlots": {"$exists": False}}  # Default behavior
+                ]
+            }
+        
+        # Build the complete query
+        query = {
+            "filterPreferences.notifyOnMatchingCourts": True,
+            "filterPreferences.locations": club_id,
+            "tokens": {"$exists": True, "$ne": []},
+            "follows.id": {"$ne": doc_id}  # Not already following
+        }
+        
+        # Add all conditions using $and - ALL must be met
+        and_conditions = []
+        and_conditions.extend(weather_and_conditions)  # All weather conditions must be met
+        if availability_condition:
+            and_conditions.append(availability_condition)
+        
+        if and_conditions:
+            query["$and"] = and_conditions
+        
+        print(f"Query for club {club_id}: {query}")
+        
+        # Get users who match the weather/availability criteria for this club
+        club_users = users_collection.find(
+            query,
             projection={
                 "_id": 1, 
                 "tokens": 1, 
                 "filterPreferences": 1
             }
-        ).skip(skip).limit(batch_size)
+        )
         
-        batch_count = 0
-        batch_notifications = 0
+        club_notifications = 0
+        users_processed = 0
         
-        for user in users_batch:
-            batch_count += 1
-            processed_users += 1
+        for user in club_users:
+            users_processed += 1
             user_id = user.get('_id')
-            print(f"Processing user: {user_id}")
             
             # Get user preferences
             filter_prefs = user.get('filterPreferences', {})
-            # Add user_id to preferences for logging purposes
             filter_prefs['_user_id'] = user_id
-            show_unavailable = filter_prefs.get('showUnavailableSlots', False)
             
             # Get their token
             tokens = user.get('tokens', [])
             if not tokens:
-                print(f"User {user_id} has no tokens, skipping")
                 continue
                 
-            # Get the most recent token
             most_recent_token = max(tokens, key=lambda x: x['lastUsedAt'])
             token = most_recent_token['token']
             
-            # Check each club the user is interested in
-            for club_id in filter_prefs.get('locations', []):
-                # Get current and previous club data
-                current_club_data = current_doc.get('clubs', {}).get(club_id, {})
-                previous_club_data = previous_doc.get('clubs', {}).get(club_id, {})
-                
-                if current_club_data:
-                    current_club_data['club_id'] = club_id
-                if previous_club_data:
-                    previous_club_data['club_id'] = club_id
-                
-                # Skip if no data for this club
-                if not current_club_data or not previous_club_data:
-                    print(f"Missing data for club {club_id}, skipping")
-                    continue
-                
-                # Check availability
-                current_available = current_club_data.get('available_slots', 0) > 0
-                
-                # Skip unavailable courts if user doesn't want to see them
-                if not current_available and not show_unavailable:
-                    print(f"Skipping unavailable club {club_id} (showUnavailableSlots=False)")
-                    continue
-                
-                # Check if the court previously matched the user's filter
-                previous_match = check_filter_match(previous_club_data, filter_prefs)
-                
-                # Check if the court currently matches the user's filter
-                current_match = check_filter_match(current_club_data, filter_prefs)
-                
-                print(f"Club {club_id} for user {user_id}: Previous match: {previous_match}, Current match: {current_match}")
-                
-                # Only notify if the court previously didn't match but now does
-                if not previous_match and current_match:
-                    notification_body = "New court matches your filter criteria"
-                    print(f"Sending notification for club {club_id} to user {user_id}")
-                    
-                    sent = send_notification_to_user(user, token, title, notification_body, doc_id, club_id)
-                    if sent:
-                        total_notifications += 1
-                        batch_notifications += 1
-                        break  # Only send one notification per user
+            # Check if the court previously matched the user's filter
+            previous_match = check_filter_match(previous_club_data, filter_prefs)
             
-        print(f"Batch {skip//batch_size + 1} processed: {batch_count} users, {batch_notifications} notifications sent")
+            # Check if the court currently matches the user's filter
+            current_match = check_filter_match(current_club_data, filter_prefs)
+            
+            print(f"Club {club_id} for user {user_id}: Previous match: {previous_match}, Current match: {current_match}")
+            
+            # Only notify if the court previously didn't match but now does
+            if not previous_match and current_match:
+                notification_body = "New court matches your filter criteria"
+                print(f"Sending notification for club {club_id} to user {user_id}")
+                
+                sent = send_notification_to_user(user, token, title, notification_body, doc_id, club_id)
+                if sent:
+                    total_notifications += 1
+                    club_notifications += 1
         
-        # If we got fewer users than the batch size, we're done
-        if batch_count < batch_size:
-            break
+        print(f"Club {club_id}: Processed {users_processed} users, sent {club_notifications} notifications")
     
-    print(f"Filter notification processing complete. Processed {processed_users} users, sent {total_notifications} notifications")
+    print(f"Filter notification processing complete. Total sent: {total_notifications}")
     return total_notifications
 
 def check_filter_match(club_data, filter_prefs):
