@@ -78,7 +78,8 @@ def getCourts(date):
             'latitude': club['latitude'],
             'longitude': club['longitude'],
             'available_slots': available_slots,
-            'total_courts': total_courts
+            'total_courts': total_courts,
+            'court_type': 'outdoor'
         }
 
         # Update or insert the document while preserving weather data
