@@ -50,20 +50,39 @@ def getCourts(date):
             if session_date > current_datetime or (session_date.date() == current_datetime.date() and session_time > current_datetime.time()):
                 date_from_counts[session["date"]][session["from"]] += 1
 
+    # Get court definitions from club document (fallback to default courts if not specified)
+    courts_config = club.get('courts', [
+        {"name": "Court 1", "court_type": "outdoor"},
+        {"name": "Court 2", "court_type": "outdoor"},
+        {"name": "Court 3", "court_type": "outdoor"},
+        {"name": "Court 4", "court_type": "outdoor"}
+    ])
+    total_courts = len(courts_config)
+
     # Find and list available slots
     has_available_slots = []
-    total_courts = club['total_courts']  # Get total courts from club document
-
     for date, from_counts in date_from_counts.items():
         for from_time, count in from_counts.items():
             available_slots = total_courts - count
-            has_available_slots.append((date, from_time, available_slots))
+            
+            # Determine which specific courts are available
+            courts_status = []
+            for i, court_config in enumerate(courts_config):
+                is_available = i < available_slots  # First N courts are available
+                courts_status.append({
+                    "name": court_config["name"],
+                    "court_type": court_config["court_type"],
+                    "available": is_available
+                })
+            
+            has_available_slots.append((date, from_time, available_slots, courts_status))
 
     # Print out the result
-    for date, from_time, available_slots in sorted(has_available_slots):
-        print(f"Date: {date}, From time: {from_time}, Available slots: {available_slots}")
+    for date, from_time, available_slots, courts_status in sorted(has_available_slots):
+        available_courts = [c["name"] for c in courts_status if c["available"]]
+        print(f"Date: {date}, From time: {from_time}, Available courts: {available_courts}")
 
-    for date, from_time, available_slots in sorted(has_available_slots):
+    for date, from_time, available_slots, courts_status in sorted(has_available_slots):
         # Create a filter for the document
         filter = {
             'date': date,
@@ -79,7 +98,8 @@ def getCourts(date):
             'longitude': club['longitude'],
             'available_slots': available_slots,
             'total_courts': total_courts,
-            'court_type': 'outdoor'
+            # Add individual court objects
+            'courts': courts_status
         }
 
         # Update or insert the document while preserving weather data
