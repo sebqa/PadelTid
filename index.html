@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="PADELTID">
+  <meta name="theme-color" content="#00875A">
+
+  <!-- iOS meta tags & icons -->
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="PADELTID">
+  <link rel="apple-touch-icon" href="assets/icon/logo.svg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/icon/logo.svg"/>
+
+  <!-- Add these lines for favicon/tab icon support -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon/logo.svg">
+  <link rel="alternate icon"  type="image/svg+xml" href="assets/icon/logo.svg">
+  <link rel="mask-icon"  type="image/svg+xml" href="assets/icon/logo.svg" color="#00875A">
+
+  <!-- Keep your existing SVG links, but add at least one PNG icon for iOS -->
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icon/logo180.png">
+
+  <title>PADELTID</title>
+  <link rel="manifest" href="manifest.json">
+  
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #00875A;
+    }
+
+    .initial-loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      margin: 0 4px;
+      background: white;
+      border-radius: 50%;
+      animation: dot-fade 1s infinite;
+    }
+
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dot-fade {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+  </style>
+  
+  <script>
+    // iOS Safari history fix
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+      // Create a fixed history state
+      history.pushState(null, document.title, location.href);
+      
+      // Block all attempts to use the back button
+      window.addEventListener('popstate', function() {
+        history.pushState(null, document.title, location.href);
+      });
+    }
+  </script>
+  
+  <!-- Flutter initialization -->
+  <script src="flutter.js" defer></script>
+
+  <!-- Add these preloaded images in the head section -->
+  <link rel="preload" href="assets/icon/notification_icon.png" as="image">
+  <link rel="preload" href="assets/icon/logo.svg" as="image">
+
+  <meta name="google-signin-client_id" content="1569540045-6sum7mkn15ue13l7rqlfem11if8s2kuc.apps.googleusercontent.com" />
+</head>
+<body>
+  <div class="initial-loader">
+    <div style="display: flex;">
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+    </div>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // More aggressive iOS handling
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+      window.addEventListener('load', function() {
+        // Prevent all touch events that could trigger back gesture
+        document.addEventListener('touchstart', function(e) {
+          if (e.touches.length === 1 && e.touches[0].clientX < 50) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', function(e) {
+          if (e.touches.length === 1 && e.touches[0].clientX < 50) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        
+        // Fix for iOS Safari history
+        window.history.scrollRestoration = 'manual';
+      });
+    }
+  </script>
+  <script>
+    // Add this to your existing script in index.html
+    // Preconnect to your API domains
+    let links = [
+      {rel: 'preconnect', href: 'https://tco4ce372f.execute-api.eu-north-1.amazonaws.com'},
+      {rel: 'preconnect', href: 'https://rvhxwa55v5.execute-api.eu-north-1.amazonaws.com'},
+      {rel: 'preconnect', href: 'https://kgzbg5117d.execute-api.eu-north-1.amazonaws.com'},
+      {rel: 'preconnect', href: 'https://4ui8jbkcgc.execute-api.eu-north-1.amazonaws.com'}
+    ];
+    
+    links.forEach(attributes => {
+      let link = document.createElement('link');
+      Object.keys(attributes).forEach(key => link.setAttribute(key, attributes[key]));
+      document.head.appendChild(link);
+    });
+    
+    // Implement critical path CSS inline to avoid render blocking
+    // and move non-critical CSS to be loaded asynchronously
+  </script>
+  <script>
+    // Completely disable Firebase Messaging in the browser context
+    window.disableFCMInFlutter = true;
+    
+    // Store a flag to indicate we're handling notifications via service worker only
+    localStorage.setItem('notification_handler', 'service_worker_only');
+    
+    // Intercept any Firebase Messaging initialization
+    window.firebaseMessagingOverride = {
+      get: function() { 
+        console.log('Preventing Firebase Messaging initialization in app');
+        return { getToken: () => Promise.resolve("DISABLED") };
+      }
+    };
+    
+    // Override Firebase method
+    Object.defineProperty(window, 'firebase', {
+      get: function() {
+        return {
+          messaging: function() { 
+            console.log('Firebase messaging requested but disabled');
+            return { getToken: () => Promise.resolve("DISABLED") };
+          }
+        };
+      },
+      configurable: true
+    });
+  </script>
+  <script>
+    // Add this before the other firebase-related scripts
+    // Force-disable Firebase on-page messaging for web
+    window.disableFCMInFlutter = true;
+
+    // Determine if we're running as a PWA
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                  window.navigator.standalone || 
+                  document.referrer.includes('android-app://');
+    
+    // Store this globally
+    window.isPWA = isPWA;
+    console.log('Running as PWA:', isPWA);
+    
+    // Replace your service worker registration with this more aggressive version
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async function() {
+        // Completely unregister all service workers
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        console.log('Found', registrations.length, 'service worker registrations');
+        
+        for (const registration of registrations) {
+          console.log("Unregistering service worker", registration.scope);
+          await registration.unregister();
+        }
+        
+        // Clear cache to ensure clean state
+        if ('caches' in window) {
+          try {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+            console.log('Cleared all caches');
+          } catch (e) {
+            console.error('Failed to clear caches', e);
+          }
+        }
+        
+        // Wait a bit to ensure complete cleanup
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Register the service worker fresh
+        try {
+          const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
+            scope: './',
+            updateViaCache: 'none'
+          });
+          console.log('Service worker registered:', registration.scope);
+          
+          // Force update
+          await registration.update();
+          
+          // Detect if we have an updated service worker
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            console.log('New service worker installing');
+            
+            newWorker.addEventListener('statechange', () => {
+              console.log('Service worker state:', newWorker.state);
+            });
+          });
+        } catch (error) {
+          console.error('Service worker registration failed:', error);
+        }
+      });
+    }
+  </script>
+  <script src="notification_handler.js"></script>
+  <script>
+    // Bridge between service worker and Flutter
+    (function() {
+      let lastDocumentId = null;
+      let lastClickTime = 0;
+      const debounceTime = 3000; // 3 seconds
+      
+      window.addEventListener('message', function(event) {
+        console.log('Window received message:', event.data);
+        
+        // Check if this is a notification click
+        if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
+          const documentId = event.data.documentId;
+          const now = Date.now();
+          
+          // Debounce duplicate clicks
+          if (documentId === lastDocumentId && now - lastClickTime < debounceTime) {
+            console.log('Debouncing duplicate notification click for document:', documentId);
+            return;
+          }
+          
+          // Update tracking variables
+          lastDocumentId = documentId;
+          lastClickTime = now;
+          
+          // If Flutter is ready, call the handler directly
+          if (window.handleNotificationClick) {
+            window.handleNotificationClick(documentId);
+          } else {
+            // Store the message to process when Flutter is ready
+            window.pendingNotificationClick = documentId;
+          }
+        }
+      });
+      
+      // Also listen for service worker messages
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener('message', function(event) {
+          console.log('Service worker message received:', event.data);
+          // Forward to window message handler
+          window.dispatchEvent(new MessageEvent('message', {
+            data: event.data
+          }));
+        });
+      }
+    })();
+  </script>
+  <script>
+    // Function to check for background notifications
+    window.checkForBackgroundNotifications = function() {
+      if (!window.indexedDB) {
+        console.log('IndexedDB not supported');
+        return;
+      }
+      
+      const DB_NAME = 'notifications_db';
+      const STORE_NAME = 'background_notifications';
+      
+      const request = indexedDB.open(DB_NAME, 1);
+      
+      request.onerror = function(event) {
+        console.error('Error opening IndexedDB:', event.target.error);
+      };
+      
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        
+        const getAllRequest = store.getAll();
+        
+        getAllRequest.onsuccess = function(event) {
+          const notifications = event.target.result;
+          console.log(`Found ${notifications.length} background notifications to process`);
+          
+          // Process each notification
+          if (notifications.length > 0) {
+            const deleteRequests = [];
+            
+            notifications.forEach(function(notification) {
+              // Pass to Flutter
+              if (window.processBackgroundNotification) {
+                window.processBackgroundNotification(JSON.stringify(notification));
+                
+                // Mark as processed by deleting
+                const deleteRequest = store.delete(notification.id);
+                deleteRequests.push(deleteRequest);
+              }
+            });
+            
+            // Wait for all deletes to complete
+            Promise.all(deleteRequests.map(req => new Promise((resolve) => {
+              req.onsuccess = resolve;
+            }))).then(() => {
+              console.log('All notifications processed and removed');
+            });
+          }
+        };
+        
+        getAllRequest.onerror = function(event) {
+          console.error('Error getting notifications:', event.target.error);
+        };
+      };
+    };
+    
+    // Check if service worker is active and supports background sync
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(function(registration) {
+        console.log('Service worker is ready');
+      });
+    }
+  </script>
+  <script>
+    // Simplified notification tracking functions
+    
+    // Check if there are pending notifications
+    window.hasPendingNotifications = function() {
+      try {
+        // Check localStorage for simplicity
+        const count = parseInt(localStorage.getItem('pending_notification_count') || '0');
+        console.log('Checked for pending notifications, found:', count);
+        return count > 0;
+      } catch (e) {
+        console.error('Error checking pending notifications:', e);
+        return false;
+      }
+    };
+    
+    // Reset notification count
+    window.resetPendingNotificationsCount = function() {
+      try {
+        localStorage.setItem('pending_notification_count', '0');
+        console.log('Reset pending notification count');
+        return true;
+      } catch (e) {
+        console.error('Error resetting notification count:', e);
+        return false;
+      }
+    };
+  </script>
+  <script>
+    // Listen for direct messages from service worker
+    navigator.serviceWorker.addEventListener('message', function(event) {
+      console.log('Received message from service worker:', event.data);
+      
+      if (event.data && event.data.type === 'NOTIFICATION_RECEIVED_BACKGROUND') {
+        // Handle detailed notification data
+        if (event.data.notificationData) {
+          // Get existing notifications
+          let storedNotifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+          
+          // Add the new notification
+          storedNotifications.push(event.data.notificationData);
+          
+          // Save back to localStorage
+          localStorage.setItem('pending_notifications', JSON.stringify(storedNotifications));
+          localStorage.setItem('pending_notification_count', storedNotifications.length.toString());
+          
+          console.log('Saved detailed notification from service worker');
+        } else {
+          // Backward compatibility - increment simple counter
+          const pendingCount = parseInt(localStorage.getItem('pending_notification_count') || '0');
+          localStorage.setItem('pending_notification_count', (pendingCount + 1).toString());
+        }
+      }
+    });
+    
+    // Create a function to get and clear pending notifications
+    window.getPendingNotifications = function() {
+      try {
+        const notifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+        // Clear after retrieving
+        localStorage.setItem('pending_notifications', '[]');
+        localStorage.setItem('pending_notification_count', '0');
+        console.log('Retrieved and cleared pending notifications:', notifications);
+        return JSON.stringify(notifications);
+      } catch (e) {
+        console.error('Error retrieving notifications:', e);
+        return '[]';
+      }
+    };
+  </script>
+  <script>
+    // Function to migrate notifications from IndexedDB to localStorage
+    window.checkForBackgroundNotificationsInIndexedDB = function() {
+      return new Promise((resolve, reject) => {
+        try {
+          const DB_NAME = 'background_notifications_db';
+          const STORE_NAME = 'notifications';
+          
+          const dbRequest = indexedDB.open(DB_NAME, 1);
+          
+          dbRequest.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            }
+          };
+          
+          dbRequest.onerror = function(event) {
+            console.error('Error opening IndexedDB:', event.target.error);
+            resolve([]); // Return empty array on error
+          };
+          
+          dbRequest.onsuccess = function(event) {
+            try {
+              const db = event.target.result;
+              const transaction = db.transaction([STORE_NAME], 'readwrite');
+              const store = transaction.objectStore(STORE_NAME);
+              
+              const request = store.getAll();
+              
+              request.onsuccess = function() {
+                const notifications = request.result || [];
+                console.log('Retrieved background notifications from IndexedDB:', notifications.length);
+                
+                if (notifications.length > 0) {
+                  // Clear all notifications from store
+                  const clearRequest = store.clear();
+                  clearRequest.onsuccess = function() {
+                    console.log('Successfully cleared IndexedDB notifications after retrieval');
+                  };
+                  
+                  // Add to localStorage for our bridge
+                  const storedNotifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+                  
+                  // Combine notifications
+                  const allNotifications = [...storedNotifications, ...notifications];
+                  
+                  // Save back to localStorage
+                  localStorage.setItem('pending_notifications', JSON.stringify(allNotifications));
+                  localStorage.setItem('pending_notification_count', allNotifications.length.toString());
+                  
+                  console.log('Migrated IndexedDB notifications to localStorage:', notifications.length);
+                }
+                
+                // Return the notifications we found
+                resolve(notifications);
+              };
+              
+              request.onerror = function(event) {
+                console.error('Error retrieving notifications:', event.target.error);
+                resolve([]); // Return empty array on error
+              };
+              
+              transaction.oncomplete = function() {
+                db.close();
+              };
+            } catch (e) {
+              console.error('Error in IndexedDB transaction:', e);
+              resolve([]); // Return empty on error
+            }
+          };
+        } catch (e) {
+          console.error('Error checking IndexedDB notifications:', e);
+          resolve([]); // Return empty on error
+        }
+      });
+    };
+    
+    // Enhanced version of getPendingNotifications that also checks IndexedDB
+    window.getPendingNotifications = function() {
+      return new Promise((resolve) => {
+        // First check IndexedDB and migrate any notifications
+        window.checkForBackgroundNotificationsInIndexedDB().then(() => {
+          try {
+            // Now get the combined notifications from localStorage
+            const notifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+            
+            // Clear after retrieving
+            localStorage.setItem('pending_notifications', '[]');
+            localStorage.setItem('pending_notification_count', '0');
+            
+            console.log('Retrieved and cleared pending notifications:', notifications.length);
+            resolve(JSON.stringify(notifications));
+          } catch (e) {
+            console.error('Error retrieving notifications:', e);
+            resolve('[]');
+          }
+        });
+      });
+    };
+    
+    // Make getPendingNotifications synchronous for JS interop
+    window.getPendingNotificationsSync = function() {
+      try {
+        // Just get notifications from localStorage for sync operation
+        // IndexedDB will be checked separately by our async function
+        const notifications = JSON.parse(localStorage.getItem('pending_notifications') || '[]');
+        return JSON.stringify(notifications);
+      } catch (e) {
+        console.error('Error retrieving notifications synchronously:', e);
+        return '[]';
+      }
+    };
+    
+    // Check IndexedDB on page load
+    if ('indexedDB' in window) {
+      window.checkForBackgroundNotificationsInIndexedDB();
+    }
+  </script>
+  <script>
+    // Global notification handler that works more reliably
+    const NOTIFICATIONS_KEY = 'padeltid_background_notifications';
+    
+    // Listen for messages from service worker
+    navigator.serviceWorker.addEventListener('message', function(event) {
+      console.log('[Client] Received message from SW:', event.data);
+      
+      if (event.data && event.data.type === 'STORE_BACKGROUND_NOTIFICATION') {
+        console.log('[Client] Storing notification from SW:', event.data.notificationData);
+        storeBackgroundNotification(event.data.notificationData);
+      }
+      
+      if (event.data && event.data.type === 'NOTIFICATION_CLICKED') {
+        console.log('[Client] Notification clicked:', event.data);
+        // Mark as processed
+        markNotificationProcessed(event.data.notificationId);
+        
+        // Handle navigation if available
+        if (event.data.documentId && window._handleNotificationClick) {
+          window._handleNotificationClick(event.data.documentId);
+        }
+      }
+    });
+    
+    // Store a notification 
+    function storeBackgroundNotification(notification) {
+      try {
+        // Get existing notifications
+        let notifications = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]');
+        
+        // Add the new notification
+        notifications.push(notification);
+        
+        // Save back to localStorage
+        localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+        
+        // Set the total count for easier checking
+        localStorage.setItem('notification_count', notifications.length);
+        
+        console.log('[Client] Saved notification, total:', notifications.length);
+      } catch (e) {
+        console.error('[Client] Error storing notification:', e);
+      }
+    }
+    
+    // Check for background notifications (this also retrieves and clears them)
+    window.checkPendingNotifications = function() {
+      const notifications = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]');
+      console.log('[Client] Checking pending notifications, found:', notifications.length);
+      
+      // Check IndexedDB too - this is async but will sync later
+      checkIndexedDBNotifications();
+      
+      return JSON.stringify(notifications);
+    };
+    
+    // Mark notification as processed
+    function markNotificationProcessed(notificationId) {
+      if (!notificationId) return;
+      
+      try {
+        // Update in localStorage
+        let notifications = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]');
+        const updated = notifications.map(n => {
+          if (n.id === notificationId) {
+            return {...n, processed: true};
+          }
+          return n;
+        });
+        
+        localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updated));
+        
+        // Also update in IndexedDB if possible
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          const tx = db.transaction('notifications', 'readwrite');
+          const store = tx.objectStore('notifications');
+          
+          const req = store.get(notificationId);
+          req.onsuccess = function() {
+            const notification = req.result;
+            if (notification) {
+              notification.processed = true;
+              store.put(notification);
+            }
+          };
+          
+          tx.oncomplete = function() {
+            db.close();
+          };
+        };
+      } catch (e) {
+        console.error('[Client] Error marking notification processed:', e);
+      }
+    }
+    
+    // Clear processed notifications - FIX FOR IDBKeyRange ISSUE
+    window.clearProcessedNotifications = function() {
+      try {
+        // Clear from localStorage
+        let notifications = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]');
+        const remaining = notifications.filter(n => !n.processed);
+        
+        localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(remaining));
+        localStorage.setItem('notification_count', remaining.length);
+        
+        // Clear from IndexedDB too - FIXED VERSION
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          
+          // Make sure the store exists
+          if (!db.objectStoreNames.contains('notifications')) {
+            console.log('[Client] No notifications store found in DB');
+            return;
+          }
+          
+          const tx = db.transaction('notifications', 'readwrite');
+          const store = tx.objectStore('notifications');
+          
+          // Use getAllKeys to get all notification IDs first
+          const req = store.getAllKeys();
+          
+          req.onsuccess = function(event) {
+            const allKeys = event.target.result || [];
+            console.log('[Client] Found ' + allKeys.length + ' notifications to check for deletion');
+            
+            if (allKeys.length === 0) return;
+            
+            // For each key, get the notification and check if processed
+            const deletePromises = [];
+            
+            allKeys.forEach(key => {
+              const getReq = store.get(key);
+              
+              getReq.onsuccess = function() {
+                const notification = getReq.result;
+                // Only delete if processed is true
+                if (notification && notification.processed === true) {
+                  store.delete(key);
+                  console.log('[Client] Deleted processed notification: ' + key);
+                }
+              };
+            });
+          };
+          
+          tx.oncomplete = function() {
+            console.log('[Client] Completed notification cleanup');
+            db.close();
+          };
+        };
+      } catch (e) {
+        console.error('[Client] Error clearing processed notifications:', e);
+      }
+    };
+    
+    // Check if there are any pending notifications
+    window.hasPendingNotifications = function() {
+      const count = parseInt(localStorage.getItem('notification_count') || '0');
+      return count > 0;
+    };
+    
+    // Function to check IndexedDB for notifications
+    function checkIndexedDBNotifications() {
+      try {
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        
+        dbPromise.onupgradeneeded = function(event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('notifications')) {
+            const store = db.createObjectStore('notifications', { keyPath: 'id' });
+            // DO NOT create the 'processed' index - we'll use JavaScript filtering instead
+          }
+        };
+        
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          const tx = db.transaction('notifications', 'readwrite');
+          const store = tx.objectStore('notifications');
+          
+          // Get ALL notifications - don't use index to filter
+          const req = store.getAll();
+          
+          req.onsuccess = function() {
+            const allNotifications = req.result || [];
+            console.log('[Client] Found notifications in IndexedDB:', allNotifications.length);
+            
+            // Filter in JavaScript instead of using the index
+            const unprocessedNotifications = allNotifications.filter(notif => notif.processed !== true);
+            
+            if (unprocessedNotifications.length > 0) {
+              // Merge with localStorage notifications
+              const existingNotifications = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]');
+              const combinedNotifications = [...existingNotifications, ...unprocessedNotifications];
+              
+              // Update localStorage
+              localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(combinedNotifications));
+              localStorage.setItem('notification_count', combinedNotifications.length);
+              
+              console.log('[Client] Merged notifications from IndexedDB to localStorage');
+              
+              // Mark these as processed in IndexedDB
+              unprocessedNotifications.forEach(notification => {
+                notification.processed = true;
+                store.put(notification);
+              });
+            }
+          };
+          
+          tx.oncomplete = function() {
+            db.close();
+          };
+        };
+      } catch (e) {
+        console.error('[Client] Error checking IndexedDB notifications:', e);
+      }
+    }
+    
+    // Run an initial check on page load
+    checkIndexedDBNotifications();
+  </script>
+  <script>
+    // Function to completely clear all notifications in IndexedDB and localStorage
+    window.clearAllNotifications = function() {
+      try {
+        console.log('[Client] Clearing ALL notifications from storage');
+        
+        // 1. Clear from localStorage
+        localStorage.setItem(NOTIFICATIONS_KEY, '[]');
+        localStorage.setItem('notification_count', '0');
+        localStorage.setItem('pending_notifications', '[]');
+        localStorage.setItem('pending_notification_count', '0');
+        
+        // 2. Clear from older format if it exists
+        localStorage.removeItem('notification_history');
+        
+        // 3. Clear from IndexedDB
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          
+          // Check if store exists
+          if (!db.objectStoreNames.contains('notifications')) {
+            return;
+          }
+          
+          const tx = db.transaction('notifications', 'readwrite');
+          const store = tx.objectStore('notifications');
+          
+          // Clear the entire store
+          const clearReq = store.clear();
+          
+          clearReq.onsuccess = function() {
+            console.log('[Client] Successfully cleared all notifications from IndexedDB');
+          };
+          
+          tx.oncomplete = function() {
+            db.close();
+          };
+        };
+        
+        // Also clear any notifications in the debug logs DB
+        try {
+          const logsDb = indexedDB.open('padeltid_debug_logs', 1);
+          logsDb.onsuccess = function(event) {
+            const db = event.target.result;
+            if (db.objectStoreNames.contains('logs')) {
+              const tx = db.transaction('logs', 'readwrite');
+              const store = tx.objectStore('logs');
+              store.clear();
+            }
+            db.close();
+          };
+        } catch (e) {
+          console.error('[Client] Error clearing debug logs:', e);
+        }
+        
+        return true;
+      } catch (e) {
+        console.error('[Client] Error in clearAllNotifications:', e);
+        return false;
+      }
+    };
+  </script>
+  <script>
+    // Flag to track if notifications were recently cleared
+    let notificationsClearedTimestamp = 0;
+    
+    // When clearing all notifications, also set this flag
+    const originalClearAll = window.clearAllNotifications;
+    window.clearAllNotifications = function() {
+      const result = originalClearAll ? originalClearAll() : true;
+      notificationsClearedTimestamp = Date.now();
+      return result;
+    };
+    
+    // Helper to check if notifications were cleared recently
+    window.wasNotificationsClearedRecently = function() {
+      // Consider "recently" as within the last minute
+      const ONE_MINUTE = 60 * 1000;
+      return (Date.now() - notificationsClearedTimestamp) < ONE_MINUTE;
+    };
+  </script>
+  <script>
+    // Function to completely remove a notification by ID from all storage
+    window.removeNotificationById = function(id) {
+      if (!id) return false;
+      
+      console.log('[Client] Removing notification by ID:', id);
+      
+      try {
+        // 1. Remove from localStorage
+        let notifications = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]');
+        const initialLength = notifications.length;
+        
+        notifications = notifications.filter(n => n.id !== id);
+        
+        localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+        localStorage.setItem('notification_count', notifications.length);
+        
+        // 2. Remove from IndexedDB
+        const dbPromise = indexedDB.open('padeltid_notifications_db', 1);
+        
+        dbPromise.onsuccess = function(event) {
+          const db = event.target.result;
+          
+          // Check if store exists
+          if (!db.objectStoreNames.contains('notifications')) {
+            return;
+          }
+          
+          const tx = db.transaction('notifications', 'readwrite');
+          const store = tx.objectStore('notifications');
+          
+          // Delete the notification by ID
+          const deleteReq = store.delete(id);
+          
+          deleteReq.onsuccess = function() {
+            console.log('[Client] Successfully removed notification from IndexedDB:', id);
+          };
+          
+          tx.oncomplete = function() {
+            db.close();
+          };
+        };
+        
+        return initialLength !== notifications.length; // Return true if removed
+      } catch (e) {
+        console.error('[Client] Error removing notification by ID:', e);
+        return false;
+      }
+    };
+  </script>
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    const serviceWorkerVersion = "81012134";
+  </script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+
+    // Handle client-side routing
+    window.addEventListener('popstate', function(event) {
+      // This ensures Flutter handles the route change
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
+  <script>
+    // Handle the stored path from 404.html
+    if (sessionStorage.redirect) {
+      const redirect = sessionStorage.redirect;
+      sessionStorage.removeItem('redirect');
+      window.history.replaceState(null, null, redirect);
+    }
+  </script>
+</body>
+</html>
