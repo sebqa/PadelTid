@@ -55,7 +55,11 @@ def getCourts(date):
         {"name": "Court 1", "court_type": "outdoor"},
         {"name": "Court 2", "court_type": "outdoor"},
         {"name": "Court 3", "court_type": "outdoor"},
-        {"name": "Court 4", "court_type": "outdoor"}
+        {"name": "Court 4", "court_type": "outdoor"},
+        {"name": "Court 5", "court_type": "outdoor"},
+        {"name": "Court 6", "court_type": "outdoor"},
+        {"name": "Court 7", "court_type": "outdoor"},
+        {"name": "Court 8", "court_type": "outdoor"}
     ])
     total_courts = len(courts_config)
 
