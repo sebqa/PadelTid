@@ -98,6 +98,10 @@ class PadelService:
             
             # Get user follow data to mark documents as followed
             user_follows = self.get_user_follows(user_id)
+            
+            # Get user preferences to determine if unavailable slots should be shown
+            user_preferences = user.get('filterPreferences', {})
+            show_unavailable_slots = user_preferences.get('showUnavailableSlots', False)
                 
             # Default weather thresholds if not in user preferences
             default_wind = 4.0  # Default wind threshold (m/s)
@@ -126,29 +130,34 @@ class PadelService:
             for club in locations:
                 base_conditions = [
                     {f'clubs.{club}': {'$exists': True}},
-                    {f'clubs.{club}.available_slots': {'$gt': 0}}  # Only available slots for recommendations
                 ]
+                
+                # Only filter by available slots if show_unavailable_slots is False
+                if not show_unavailable_slots:
+                    base_conditions.append({f'clubs.{club}.available_slots': {'$gt': 0}})
                 
                 # Handle court type filtering with individual court objects for recommendations
                 if court_type == "indoor":
-                    # Indoor courts: must have available indoor courts, no weather conditions
+                    # Indoor courts: must have indoor courts, no weather conditions
+                    court_match_conditions = {'court_type': 'indoor'}
+                    if not show_unavailable_slots:
+                        court_match_conditions['available'] = True
+                        
                     base_conditions.append({
                         f'clubs.{club}.courts': {
-                            '$elemMatch': {
-                                'court_type': 'indoor',
-                                'available': True
-                            }
+                            '$elemMatch': court_match_conditions
                         }
                     })
                 elif court_type == "outdoor":
-                    # Outdoor courts: must have available outdoor courts AND meet weather conditions
+                    # Outdoor courts: must have outdoor courts AND meet weather conditions
+                    court_match_conditions = {'court_type': 'outdoor'}
+                    if not show_unavailable_slots:
+                        court_match_conditions['available'] = True
+                        
                     base_conditions.extend([
                         {
                             f'clubs.{club}.courts': {
-                                '$elemMatch': {
-                                    'court_type': 'outdoor',
-                                    'available': True
-                                }
+                                '$elemMatch': court_match_conditions
                             }
                         },
                         {f'clubs.{club}.weather.wind_speed': {'$lte': default_wind}},
@@ -156,25 +165,26 @@ class PadelService:
                         {f'clubs.{club}.weather.air_temperature': {'$gte': default_temp}},
                     ])
                 else:  # court_type == "both"
-                    # Either indoor available OR (outdoor available AND weather good)
+                    # Either indoor OR (outdoor AND weather good)
+                    indoor_match_conditions = {'court_type': 'indoor'}
+                    outdoor_match_conditions = {'court_type': 'outdoor'}
+                    
+                    if not show_unavailable_slots:
+                        indoor_match_conditions['available'] = True
+                        outdoor_match_conditions['available'] = True
+                    
                     weather_conditions = {
                         '$or': [
                             {
                                 f'clubs.{club}.courts': {
-                                    '$elemMatch': {
-                                        'court_type': 'indoor',
-                                        'available': True
-                                    }
+                                    '$elemMatch': indoor_match_conditions
                                 }
                             },
                             {
                                 '$and': [
                                     {
                                         f'clubs.{club}.courts': {
-                                            '$elemMatch': {
-                                                'court_type': 'outdoor',
-                                                'available': True
-                                            }
+                                            '$elemMatch': outdoor_match_conditions
                                         }
                                     },
                                     {f'clubs.{club}.weather.wind_speed': {'$lte': default_wind}},
@@ -219,7 +229,7 @@ class PadelService:
                         continue
                         
                     available_slots = data.get('available_slots', 0)
-                    if available_slots > 0:
+                    if show_unavailable_slots or available_slots > 0:
                         filtered_clubs[name] = data
                 
                 if filtered_clubs:  # Only include document if it has valid clubs
@@ -315,24 +325,26 @@ class PadelService:
                 
                 # Handle court type filtering with individual court objects
                 if court_type == "indoor":
-                    # Indoor courts: must have available indoor courts, no weather conditions
+                    # Indoor courts: must have indoor courts, no weather conditions
+                    court_match_conditions = {'court_type': 'indoor'}
+                    if not show_unavailable_slots:
+                        court_match_conditions['available'] = True
+                        
                     base_conditions.append({
                         f'clubs.{club}.courts': {
-                            '$elemMatch': {
-                                'court_type': 'indoor',
-                                'available': True
-                            }
+                            '$elemMatch': court_match_conditions
                         }
                     })
                 elif court_type == "outdoor":
-                    # Outdoor courts: must have available outdoor courts AND meet weather conditions
+                    # Outdoor courts: must have outdoor courts AND meet weather conditions
+                    court_match_conditions = {'court_type': 'outdoor'}
+                    if not show_unavailable_slots:
+                        court_match_conditions['available'] = True
+                        
                     base_conditions.extend([
                         {
                             f'clubs.{club}.courts': {
-                                '$elemMatch': {
-                                    'court_type': 'outdoor',
-                                    'available': True
-                                }
+                                '$elemMatch': court_match_conditions
                             }
                         },
                         {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
@@ -340,25 +352,26 @@ class PadelService:
                         {f'clubs.{club}.weather.air_temperature': {'$gte': temperature_threshold}},
                     ])
                 else:  # court_type == "both"
-                    # Either indoor available OR (outdoor available AND weather good)
+                    # Either indoor OR (outdoor AND weather good)
+                    indoor_match_conditions = {'court_type': 'indoor'}
+                    outdoor_match_conditions = {'court_type': 'outdoor'}
+                    
+                    if not show_unavailable_slots:
+                        indoor_match_conditions['available'] = True
+                        outdoor_match_conditions['available'] = True
+                    
                     weather_conditions = {
                         '$or': [
                             {
                                 f'clubs.{club}.courts': {
-                                    '$elemMatch': {
-                                        'court_type': 'indoor',
-                                        'available': True
-                                    }
+                                    '$elemMatch': indoor_match_conditions
                                 }
                             },
                             {
                                 '$and': [
                                     {
                                         f'clubs.{club}.courts': {
-                                            '$elemMatch': {
-                                                'court_type': 'outdoor',
-                                                'available': True
-                                            }
+                                            '$elemMatch': outdoor_match_conditions
                                         }
                                     },
                                     {f'clubs.{club}.weather.wind_speed': {'$lte': wind_speed_threshold}},
